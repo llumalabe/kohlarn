@@ -1,9 +1,38 @@
+# Dependencies
 node_modules/
+
+# Environment variables
 .env
-.DS_Store
+.env.local
+.env.production
+
+# Service Account (sensitive)
+service-account.json
+service-account-base64.txt
+
+# Data files
+data/likes.json
+data/stats.json
+
+# Logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-data/likes.json
-data/stats.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Vercel
+.vercel
+
+# Build
+dist/
+build/
