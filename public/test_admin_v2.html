@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Admin V2 Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Admin V2 Login Test</h1>
+    
+    <div class="test-box">
+        <h2>1. ทดสอบ API Login</h2>
+        <button onclick="testLoginAPI()">Test Login API</button>
+        <div id="apiResult"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>2. ทดสอบ Element IDs</h2>
+        <button onclick="testElements()">Test Elements</button>
+        <div id="elementsResult"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>3. ทดสอบเปิดหน้า Admin V2</h2>
+        <button onclick="window.open('/admin_v2.html', '_blank')">Open Admin V2</button>
+        <button onclick="window.open('/admin.html', '_blank')">Open Admin V1 (เปรียบเทียบ)</button>
+    </div>
+
+    <div class="test-box">
+        <h2>4. Server Status</h2>
+        <button onclick="testServer()">Test Server</button>
+        <div id="serverResult"></div>
+    </div>
+
+    <script>
+        async function testLoginAPI() {
+            const result = document.getElementById('apiResult');
+            result.innerHTML = '<div class="status info">กำลังทดสอบ...</div>';
+            
+            try {
+                const response = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: '123456' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.innerHTML = `
+                        <div class="status success">
+                            ✅ Login API ทำงานได้!<br>
+                            User: ${data.user.nickname} (@${data.user.username})<br>
+                            Role: ${data.user.role || 'N/A'}<br>
+                            Temporary: ${data.isTemporary ? 'Yes' : 'No'}
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = `<div class="status error">❌ ${data.error}</div>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function testElements() {
+            const result = document.getElementById('elementsResult');
+            
+            // สร้าง iframe ชั่วคราวเพื่อโหลด admin_v2.html
+            const iframe = document.createElement('iframe');
+            iframe.src = '/admin_v2.html';
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+            
+            setTimeout(() => {
+                const doc = iframe.contentDocument;
+                const elements = {
+                    'loginScreen': doc.getElementById('loginScreen'),
+                    'adminDashboard': doc.getElementById('adminDashboard'),
+                    'username': doc.getElementById('username'),
+                    'password': doc.getElementById('password'),
+                    'sidebar': doc.getElementById('sidebar'),
+                    'sidebarNickname': doc.getElementById('sidebarNickname'),
+                    'sidebarUsername': doc.getElementById('sidebarUsername'),
+                    'pageTitle': doc.getElementById('pageTitle'),
+                    'currentVisitors': doc.getElementById('currentVisitors'),
+                    'totalVisits': doc.getElementById('totalVisits'),
+                    'totalHotels': doc.getElementById('totalHotels'),
+                    'totalLikes': doc.getElementById('totalLikes')
+                };
+                
+                let html = '<div class="status info"><strong>Element Check:</strong><br><br>';
+                let allFound = true;
+                
+                for (const [name, element] of Object.entries(elements)) {
+                    if (element) {
+                        html += `✅ ${name}<br>`;
+                    } else {
+                        html += `❌ ${name} - NOT FOUND!<br>`;
+                        allFound = false;
+                    }
+                }
+                
+                html += '<br>';
+                if (allFound) {
+                    html += '<strong style="color: green;">✅ All elements found!</strong>';
+                } else {
+                    html += '<strong style="color: red;">❌ Some elements missing!</strong>';
+                }
+                html += '</div>';
+                
+                result.innerHTML = html;
+                document.body.removeChild(iframe);
+            }, 1000);
+        }
+
+        async function testServer() {
+            const result = document.getElementById('serverResult');
+            result.innerHTML = '<div class="status info">กำลังทดสอบ...</div>';
+            
+            try {
+                const tests = [
+                    { name: 'Hotels API', url: '/api/hotels' },
+                    { name: 'Filters API', url: '/api/filters' },
+                    { name: 'Admin V2 HTML', url: '/admin_v2.html' },
+                    { name: 'Admin V2 CSS', url: '/css/admin_v2.css' },
+                    { name: 'Admin V2 JS', url: '/js/admin_v2.js' }
+                ];
+                
+                let html = '<div class="status info">';
+                
+                for (const test of tests) {
+                    try {
+                        const response = await fetch(test.url);
+                        if (response.ok) {
+                            html += `✅ ${test.name} (${response.status})<br>`;
+                        } else {
+                            html += `⚠️ ${test.name} (${response.status})<br>`;
+                        }
+                    } catch (error) {
+                        html += `❌ ${test.name} - ${error.message}<br>`;
+                    }
+                }
+                
+                html += '</div>';
+                result.innerHTML = html;
+            } catch (error) {
+                result.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Auto test on load
+        window.onload = () => {
+            console.log('Test page loaded. Click buttons to run tests.');
+        };
+    </script>
+</body>
+</html>

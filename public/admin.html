@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#667eea">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Admin Panel - Koh Larn Hotels</title>
+    <link rel="stylesheet" href="css/admin_v2.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <h1><i class="fas fa-shield-alt"></i> Admin Login</h1>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">ชื่อผู้ใช้:</label>
+                    <input type="text" id="username" required placeholder="ใส่ชื่อผู้ใช้">
+                </div>
+                <div class="form-group">
+                    <label for="password">รหัสผ่าน:</label>
+                    <input type="password" id="password" required placeholder="ใส่รหัสผ่าน">
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
+                </button>
+            </form>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px; font-size: 0.9rem;">
+                <p style="margin: 0 0 8px 0; font-weight: 600; color: #1976d2;">
+                    <i class="fas fa-info-circle"></i> สำหรับการทดสอบ:
+                </p>
+                <p style="margin: 0; color: #424242;">
+                    ชื่อผู้ใช้: <strong style="color: #1976d2; font-family: monospace;">admin</strong><br>
+                    รหัสผ่าน: <strong style="color: #1976d2; font-family: monospace; font-size: 1.1rem;">123456</strong>
+                </p>
+                <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #666;">
+                    (ใช้สำหรับทดสอบระบบ - สามารถลบได้ทุกเมื่อ)
+                </p>
+            </div>
+            
+            <a href="/" class="back-link">
+                <i class="fas fa-arrow-left"></i> กลับหน้าแรก
+            </a>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div class="admin-dashboard" id="adminDashboard" style="display: none;">
+        <header class="admin-header">
+            <div class="container">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h1><i class="fas fa-tachometer-alt"></i> แผงควบคุม Admin</h1>
+                        <p id="welcomeMessage" style="margin: 5px 0 0 0; color: #fff; opacity: 0.9;"></p>
+                    </div>
+                    <div class="header-actions">
+                        <a href="/" class="btn btn-secondary">
+                            <i class="fas fa-home"></i> หน้าแรก
+                        </a>
+                        <button class="btn btn-danger" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- Navigation Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="stats">
+                    <i class="fas fa-chart-line"></i> สถิติ
+                </button>
+                <button class="tab-btn" data-tab="hotels">
+                    <i class="fas fa-hotel"></i> จัดการโรงแรม
+                </button>
+                <button class="tab-btn" data-tab="filters">
+                    <i class="fas fa-filter"></i> จัดการตัวกรอง
+                </button>
+                <button class="tab-btn" data-tab="activity">
+                    <i class="fas fa-history"></i> ประวัติการแก้ไข
+                </button>
+                <button class="tab-btn" data-tab="likes">
+                    <i class="fas fa-heart"></i> สถิติการกดหัวใจ
+                </button>
+            </div>
+
+            <!-- Stats Tab -->
+            <div class="tab-content active" id="statsTab">
+                <h2>สถิติการเข้าชม</h2>
+                
+                <!-- Period Selection -->
+                <div class="period-selector">
+                    <button class="period-btn active" data-period="day">รายวัน</button>
+                    <button class="period-btn" data-period="week">รายสัปดาห์</button>
+                    <button class="period-btn" data-period="month">รายเดือน</button>
+                    <button class="period-btn" data-period="year">รายปี</button>
+                </div>
+
+                <!-- Realtime Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card realtime">
+                        <i class="fas fa-users"></i>
+                        <h3>ผู้เข้าชมแบบ Real-time</h3>
+                        <p class="stat-value" id="realtimeVisits">0</p>
+                        <small>5 นาทีล่าสุด</small>
+                    </div>
+
+                    <div class="stat-card">
+                        <i class="fas fa-eye"></i>
+                        <h3>การเข้าชมทั้งหมด</h3>
+                        <p class="stat-value" id="totalVisits">0</p>
+                    </div>
+
+                    <div class="stat-card">
+                        <i class="fas fa-user-check"></i>
+                        <h3>ผู้เข้าชมไม่ซ้ำ (Unique)</h3>
+                        <p class="stat-value" id="uniqueVisits">0</p>
+                    </div>
+
+                    <div class="stat-card">
+                        <i class="fas fa-heart"></i>
+                        <h3>ยอดกดหัวใจทั้งหมด</h3>
+                        <p class="stat-value" id="totalLikes">0</p>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="chart-container">
+                    <canvas id="visitsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Hotels Management Tab -->
+            <div class="tab-content" id="hotelsTab">
+                <div class="tab-header">
+                    <h2>จัดการโรงแรม</h2>
+                    <button class="btn btn-primary" id="addHotelBtn">
+                        <i class="fas fa-plus"></i> เพิ่มโรงแรม
+                    </button>
+                </div>
+
+                <div class="hotels-table" id="hotelsTable">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>กำลังโหลด...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters Management Tab -->
+            <div class="tab-content" id="filtersTab">
+                <div class="tab-header">
+                    <h2>จัดการตัวกรอง</h2>
+                    <button class="btn btn-primary" id="addFilterBtn">
+                        <i class="fas fa-plus"></i> เพิ่มตัวกรอง
+                    </button>
+                </div>
+
+                <div class="filters-table" id="filtersTable">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>กำลังโหลด...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Log Tab -->
+            <div class="tab-content" id="activityTab">
+                <h2>ประวัติการแก้ไข</h2>
+                <p style="color: #666; margin-bottom: 20px;">
+                    <i class="fas fa-info-circle"></i> แสดงการทำงานของผู้ใช้งานแบบ Real-time
+                </p>
+
+                <div class="activity-log" id="activityLog">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>กำลังโหลด...</p>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" id="activityPagination" style="display: none;">
+                    <button class="btn btn-secondary" id="prevPage">
+                        <i class="fas fa-chevron-left"></i> ก่อนหน้า
+                    </button>
+                    <span id="pageInfo">หน้า 1 จาก 1</span>
+                    <button class="btn btn-secondary" id="nextPage">
+                        ถัดไป <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Likes Statistics Tab -->
+            <div class="tab-content" id="likesTab">
+                <h2>สถิติการกดหัวใจ</h2>
+
+                <!-- Sort Options -->
+                <div class="sort-options">
+                    <label>เรียงตาม:</label>
+                    <button class="sort-btn active" data-sort="most">
+                        <i class="fas fa-sort-amount-down"></i> มากที่สุด
+                    </button>
+                    <button class="sort-btn" data-sort="least">
+                        <i class="fas fa-sort-amount-up"></i> น้อยที่สุด
+                    </button>
+                    <button class="sort-btn" data-sort="recent">
+                        <i class="fas fa-clock"></i> ล่าสุด
+                    </button>
+                </div>
+
+                <div class="likes-stats" id="likesStats">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>กำลังโหลด...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hotel Form Modal -->
+    <div class="modal" id="hotelFormModal">
+        <div class="modal-content large">
+            <span class="close">&times;</span>
+            <h2 id="formTitle">เพิ่มโรงแรม</h2>
+            <form id="hotelForm">
+                <input type="hidden" id="hotelId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nameTh">ชื่อโรงแรม (ไทย)*</label>
+                        <input type="text" id="nameTh" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nameEn">ชื่อโรงแรม (English)*</label>
+                        <input type="text" id="nameEn" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="images">รูปภาพ (URL, คั่นด้วยเครื่องหมายจุลภาค)*</label>
+                    <textarea id="images" rows="3" required></textarea>
+                    <small>ตัวอย่าง: https://example.com/image1.jpg, https://example.com/image2.jpg</small>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="priceStart">ราคาเริ่มต้น (บาท)*</label>
+                        <input type="number" id="priceStart" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxGuests">รองรับผู้เข้าพัก (คน)*</label>
+                        <input type="number" id="maxGuests" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>สิ่งอำนวยความสะดวก:</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="beachfront"> ติดทะเล</label>
+                        <label><input type="checkbox" id="breakfast"> รวมอาหารเช้า</label>
+                        <label><input type="checkbox" id="freeShuttle"> ฟรีรถรับส่ง</label>
+                        <label><input type="checkbox" id="freeMotorcycle"> ฟรีมอไซค์</label>
+                        <label><input type="checkbox" id="bathtub"> มีอ่างอาบน้ำ</label>
+                        <label><input type="checkbox" id="poolVilla"> พลูวิลล่า</label>
+                        <label><input type="checkbox" id="poolTable"> โต๊ะพลู</label>
+                    </div>
+                </div>
+
+                <h3>ข้อมูลธนาคาร</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bankName">ชื่อธนาคาร</label>
+                        <input type="text" id="bankName">
+                    </div>
+                    <div class="form-group">
+                        <label for="accountName">ชื่อบัญชี</label>
+                        <input type="text" id="accountName">
+                    </div>
+                    <div class="form-group">
+                        <label for="accountNumber">เลขบัญชี</label>
+                        <input type="text" id="accountNumber">
+                    </div>
+                </div>
+
+                <h3>ช่องทางติดต่อ</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="phone">เบอร์โทร</label>
+                        <input type="tel" id="phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="facebook">Facebook</label>
+                        <input type="text" id="facebook">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="line">Line ID</label>
+                        <input type="text" id="line">
+                    </div>
+                    <div class="form-group">
+                        <label for="website">Website</label>
+                        <input type="url" id="website">
+                    </div>
+                </div>
+
+                <h3>แผนที่</h3>
+                <div class="form-group">
+                    <label for="mapUrl">Google Maps URL</label>
+                    <input type="url" id="mapUrl">
+                </div>
+                <div class="form-group">
+                    <label for="mapEmbed">Google Maps Embed Code</label>
+                    <textarea id="mapEmbed" rows="3"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> บันทึก
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('hotelFormModal')">
+                        <i class="fas fa-times"></i> ยกเลิก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Filter Form Modal -->
+    <div class="modal" id="filterFormModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('filterFormModal')">&times;</span>
+            <h2 id="filterFormTitle">เพิ่มตัวกรอง</h2>
+            <form id="filterForm">
+                <input type="hidden" id="filterId">
+                
+                <div class="form-group">
+                    <label for="filterNameTh">ชื่อตัวกรอง (ไทย)*</label>
+                    <input type="text" id="filterNameTh" required placeholder="เช่น ติดทะเล">
+                </div>
+
+                <div class="form-group">
+                    <label for="filterNameEn">ชื่อตัวกรอง (English)*</label>
+                    <input type="text" id="filterNameEn" required placeholder="e.g. Beachfront">
+                </div>
+
+                <div class="form-group">
+                    <label for="filterIcon">ไอคอน (Font Awesome)*</label>
+                    <input type="text" id="filterIcon" required placeholder="fa-umbrella-beach">
+                    <small>ดูรายการไอคอนได้ที่ <a href="https://fontawesome.com/icons" target="_blank">fontawesome.com/icons</a></small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> บันทึก
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('filterFormModal')">
+                        <i class="fas fa-times"></i> ยกเลิก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

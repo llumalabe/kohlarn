@@ -1,0 +1,47 @@
+[
+  {
+    "id": "type-resort",
+    "nameTh": "รีสอร์ท",
+    "nameEn": "Resort",
+    "icon": "fa-umbrella-beach",
+    "color": "#f093fb",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "type-hostel",
+    "nameTh": "โฮสเทล",
+    "nameEn": "Hostel",
+    "icon": "fa-bed",
+    "color": "#43e97b",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "type-guesthouse",
+    "nameTh": "เกสต์เฮาส์",
+    "nameEn": "Guesthouse",
+    "icon": "fa-house-user",
+    "color": "#fa709a",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "type-1760023412533",
+    "nameTh": "ๅๅ",
+    "nameEn": "ๅๅ",
+    "icon": "fa-hotel",
+    "color": "#667eea",
+    "createdAt": "2025-10-09T15:23:33.090Z",
+    "updatedAt": "2025-10-09T15:23:33.090Z"
+  },
+  {
+    "id": "type-1760023540927",
+    "nameTh": "ๅ/-",
+    "nameEn": "ๅ/-",
+    "icon": "fa-hotel",
+    "color": "#667eea",
+    "createdAt": "2025-10-09T15:25:41.498Z",
+    "updatedAt": "2025-10-09T15:25:41.498Z"
+  }
+]

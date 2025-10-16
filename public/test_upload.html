@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .upload-box {
+            border: 2px dashed #667eea;
+            padding: 30px;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .preview {
+            margin-top: 20px;
+            max-width: 300px;
+        }
+        .preview img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🧪 ทดสอบระบบอัพโหลดรูปภาพ</h1>
+    
+    <div class="upload-box">
+        <h3>เลือกรูปภาพ (JPG, PNG, GIF, WebP)</h3>
+        <input type="file" id="imageFile" accept="image/*" style="margin-bottom: 10px;">
+        <br>
+        <button onclick="testUpload()">🚀 ทดสอบอัพโหลด</button>
+        
+        <div id="status"></div>
+        <div id="preview" class="preview"></div>
+    </div>
+
+    <script>
+        async function testUpload() {
+            const statusDiv = document.getElementById('status');
+            const previewDiv = document.getElementById('preview');
+            const fileInput = document.getElementById('imageFile');
+            
+            // Clear previous status
+            statusDiv.innerHTML = '';
+            previewDiv.innerHTML = '';
+            
+            console.log('🔍 เริ่มทดสอบ...');
+            
+            // Check file input
+            if (!fileInput) {
+                statusDiv.innerHTML = '<div class="status error">❌ ไม่พบ input field</div>';
+                console.error('❌ ไม่พบ input field');
+                return;
+            }
+            console.log('✅ พบ input field');
+            
+            // Check files
+            if (!fileInput.files || fileInput.files.length === 0) {
+                statusDiv.innerHTML = '<div class="status error">❌ กรุณาเลือกไฟล์ก่อน</div>';
+                console.error('❌ ไม่มีไฟล์');
+                return;
+            }
+            console.log('✅ มีไฟล์:', fileInput.files[0].name);
+            
+            const file = fileInput.files[0];
+            
+            // Validate file size
+            console.log('📦 ขนาดไฟล์:', (file.size / 1024 / 1024).toFixed(2), 'MB');
+            if (file.size > 5 * 1024 * 1024) {
+                statusDiv.innerHTML = '<div class="status error">❌ ไฟล์ใหญ่เกิน 5MB</div>';
+                console.error('❌ ไฟล์ใหญ่เกิน');
+                return;
+            }
+            console.log('✅ ขนาดไฟล์ OK');
+            
+            // Validate file type
+            console.log('📄 ประเภทไฟล์:', file.type);
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                statusDiv.innerHTML = '<div class="status error">❌ รองรับเฉพาะ JPG, PNG, GIF, WebP</div>';
+                console.error('❌ ประเภทไฟล์ไม่รองรับ');
+                return;
+            }
+            console.log('✅ ประเภทไฟล์ OK');
+            
+            // Create FormData
+            const formData = new FormData();
+            formData.append('image', file);
+            console.log('📦 สร้าง FormData แล้ว');
+            
+            // Show uploading status
+            statusDiv.innerHTML = '<div class="status info">⏳ กำลังอัพโหลด...</div>';
+            console.log('🚀 เริ่มอัพโหลด...');
+            
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('📡 Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('📦 Response data:', data);
+                
+                if (data.success && data.imageUrl) {
+                    statusDiv.innerHTML = '<div class="status success">✅ อัพโหลดสำเร็จ!<br>URL: ' + data.imageUrl + '</div>';
+                    previewDiv.innerHTML = '<img src="' + data.imageUrl + '" alt="Preview">';
+                    console.log('✅ อัพโหลดสำเร็จ:', data.imageUrl);
+                } else {
+                    statusDiv.innerHTML = '<div class="status error">❌ ' + (data.error || 'เกิดข้อผิดพลาด') + '</div>';
+                    console.error('❌ Error:', data.error);
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<div class="status error">❌ เกิดข้อผิดพลาด: ' + error.message + '</div>';
+                console.error('❌ Exception:', error);
+            }
+        }
+        
+        // Auto test when file is selected
+        document.getElementById('imageFile').addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                console.log('📁 เลือกไฟล์:', this.files[0].name);
+            }
+        });
+        
+        console.log('✅ Test page loaded');
+        console.log('📍 ทดสอบได้ที่: http://localhost:3000/test_upload.html');
+    </script>
+</body>
+</html>

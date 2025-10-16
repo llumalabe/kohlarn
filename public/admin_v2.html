@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#667eea">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Admin Panel - Koh Larn Hotels</title>
+    <link rel="stylesheet" href="css/admin_v2.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <h1><i class="fas fa-shield-alt"></i> Admin Login</h1>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">ชื่อผู้ใช้:</label>
+                    <input type="text" id="username" required placeholder="ใส่ชื่อผู้ใช้">
+                </div>
+                <div class="form-group">
+                    <label for="password">รหัสผ่าน:</label>
+                    <input type="password" id="password" required placeholder="ใส่รหัสผ่าน">
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
+                </button>
+            </form>
+            
+            <a href="/" class="back-link">
+                <i class="fas fa-arrow-left"></i> กลับหน้าแรก
+            </a>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div class="admin-dashboard" id="adminDashboard" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-hotel"></i>
+                    <span>Control Panel</span>
+                </div>
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- User Profile -->
+            <div class="sidebar-user">
+                <div class="user-avatar-lg">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-info">
+                    <div id="sidebarNickname" class="user-nickname"></div>
+                    <div id="sidebarUsername" class="user-username"></div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="sidebar-nav">
+                <!-- Home and Logout Buttons at Top -->
+                <div class="nav-top-actions">
+                    <a href="/" class="nav-item nav-home" target="_blank">
+                        <i class="fas fa-home"></i>
+                        <span>หน้าแรก</span>
+                        <i class="fas fa-external-link-alt nav-external"></i>
+                    </a>
+                    <a href="#" class="nav-item nav-logout" onclick="logout(); return false;">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>ออกจากระบบ</span>
+                    </a>
+                </div>
+
+                <div class="nav-divider"></div>
+
+                <a href="#" id="navDashboard" class="nav-item active" data-page="stats" onclick="navigateTo('stats', event)">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" id="navHotels" class="nav-item" data-page="hotels" onclick="navigateTo('hotels', event)">
+                    <i class="fas fa-hotel"></i>
+                    <span>โรงแรม</span>
+                    <span class="badge" id="hotelsCount">0</span>
+                </a>
+                
+                <!-- Management Dropdown Menu -->
+                <div class="nav-dropdown" id="navManagement">
+                    <a href="#" class="nav-item dropdown-toggle" onclick="toggleDropdown(event)">
+                        <i class="fas fa-cog"></i>
+                        <span>การจัดการ</span>
+                        <i class="fas fa-chevron-down dropdown-icon"></i>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="#" class="dropdown-item" data-page="filters" onclick="navigateTo('filters', event)">
+                            <i class="fas fa-star"></i>
+                            <span>สิ่งอำนวยความสะดวก</span>
+                        </a>
+                        <a href="#" class="dropdown-item" data-page="accommodation-types" onclick="navigateTo('accommodation-types', event)">
+                            <i class="fas fa-building"></i>
+                            <span>ประเภทที่พัก</span>
+                        </a>
+                        <a href="#" class="dropdown-item" data-page="roomtypes" onclick="navigateTo('roomtypes', event)">
+                            <i class="fas fa-door-open"></i>
+                            <span>ประเภทห้องพัก</span>
+                        </a>
+                        <a href="#" class="dropdown-item" data-page="websettings" onclick="navigateTo('websettings', event)">
+                            <i class="fas fa-palette"></i>
+                            <span>แก้ไขหน้าเว็บไซต์</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <a href="#" id="navActivity" class="nav-item" data-page="activity" onclick="navigateTo('activity', event)">
+                    <i class="fas fa-history"></i>
+                    <span>ประวัติการแก้ไข</span>
+                </a>
+                <a href="#" id="navLikes" class="nav-item" data-page="likes" onclick="navigateTo('likes', event)">
+                    <i class="fas fa-heart"></i>
+                    <span>สถิติทั้งหมด</span>
+                </a>
+                <a href="#" id="navMembers" class="nav-item" data-page="members" onclick="navigateTo('members', event)">
+                    <i class="fas fa-users"></i>
+                    <span>ระบบสมาชิก</span>
+                </a>
+            </nav>
+
+            <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+                <div class="footer-info">
+                    <small><i class="fas fa-hotel"></i> ระบบโรงแรม v.1</small>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 id="pageTitle"><i class="fas fa-chart-line"></i> Dashboard</h1>
+                <div class="quick-actions">
+                    <button onclick="openAddHotelModal()" class="btn-quick" id="addHotelBtnHeader" title="เพิ่มโรงแรม">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button onclick="location.reload()" class="btn-quick" title="รีเฟรช">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Wrapper -->
+            <div class="content-wrapper">
+                <!-- Stats Page -->
+                <div class="page-content active" id="statsPage">
+                    <div class="page-header">
+                        <h2>สถิติการเข้าชม</h2>
+                        <div class="period-selector">
+                            <button class="period-btn active" data-period="day">รายวัน</button>
+                            <button class="period-btn" data-period="week">สัปดาห์</button>
+                            <button class="period-btn" data-period="month">เดือน</button>
+                            <button class="period-btn" data-period="year">ปี</button>
+                            <button class="period-btn" data-period="all">ทั้งหมด</button>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <i class="fas fa-users"></i>
+                            <h3>ผู้เข้าชมเว็บไซต์</h3>
+                            <div class="stat-value" id="totalVisits">0</div>
+                            <small id="periodLabel">วันนี้</small>
+                        </div>
+                        <div class="stat-card stat-card-clicks">
+                            <i class="fas fa-mouse-pointer"></i>
+                            <h3>คลิกการ์ดโรงแรม</h3>
+                            <div class="stat-value" id="hotelClicks">0</div>
+                            <small id="clicksPeriodLabel">วันนี้</small>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-hotel"></i>
+                            <h3>โรงแรมทั้งหมด</h3>
+                            <div class="stat-value" id="totalHotels">0</div>
+                            <small>รายการ</small>
+                        </div>
+                        <div class="stat-card stat-card-likes">
+                            <i class="fas fa-heart"></i>
+                            <h3>จำนวนหัวใจ</h3>
+                            <div class="stat-value" id="totalLikes">0</div>
+                            <small id="likesPeriodLabel">วันนี้</small>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activities -->
+                    <div class="recent-activities-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-clock"></i> กิจกรรมล่าสุด</h3>
+                            <span class="realtime-badge">
+                                <i class="fas fa-circle"></i> Real-time
+                            </span>
+                        </div>
+                        <div class="activity-feed" id="activityFeed">
+                            <div class="loading-activity">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>กำลังโหลดกิจกรรม...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hotels Page -->
+                <div class="page-content" id="hotelsPage">
+                    <div class="page-header">
+                        <h2>จัดการโรงแรม</h2>
+                        <button id="addHotelBtn" onclick="openAddHotelModal()" class="btn btn-success">
+                            <i class="fas fa-plus"></i> เพิ่มโรงแรม
+                        </button>
+                    </div>
+
+                    <!-- Search and Filter Box -->
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="hotelSearchInput" placeholder="ค้นหาชื่อโรงแรม, เจ้าของ, หรือรหัส ID..." onkeyup="searchHotels()">
+                    </div>
+
+                    <!-- Status Filter -->
+                    <div class="filter-section" style="margin: 20px 0;">
+                        <label style="font-weight: 600; margin-right: 15px; color: #2c3e50;">
+                            <i class="fas fa-filter"></i> กรองตามสถานะ:
+                        </label>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-primary active" onclick="filterHotelsByStatus('all')" id="filterAll">
+                                <i class="fas fa-th"></i> ทั้งหมด
+                            </button>
+                            <button class="btn btn-sm btn-success" onclick="filterHotelsByStatus('active')" id="filterActive">
+                                <i class="fas fa-check-circle"></i> เปิด
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="filterHotelsByStatus('inactive')" id="filterInactive">
+                                <i class="fas fa-times-circle"></i> ปิด
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="data-table">
+                        <table id="hotelsTable">
+                            <thead>
+                                <tr>
+                                    <!-- Mobile Headers (4 columns) -->
+                                    <th class="mobile-show mobile-col-id">ID</th>
+                                    <th class="mobile-show mobile-col-img">รูป</th>
+                                    <th class="mobile-show mobile-col-name">ชื่อโรงแรม</th>
+                                    <th class="mobile-show mobile-col-status">สถานะ</th>
+                                    
+                                    <!-- Desktop Headers (10 columns) -->
+                                    <th class="desktop-show" style="width: 100px;">ID</th>
+                                    <th class="desktop-show" style="width: 80px;">รูป</th>
+                                    <th class="desktop-show">ชื่อโรงแรม</th>
+                                    <th class="desktop-show">ชื่อเจ้าของ</th>
+                                    <th class="desktop-show" style="width: 280px;">สถานะ & จัดการ</th>
+                                    <th class="desktop-show" style="width: 100px;">คลิก</th>
+                                    <th class="desktop-show" style="width: 100px;">หัวใจ</th>
+                                    <th class="desktop-show">แก้ไขล่าสุด</th>
+                                    <th class="desktop-show" style="width: 130px;">เบอร์ติดต่อ</th>
+                                    <th class="desktop-show" style="width: 150px;">เวลา</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Filters/Amenities Page -->
+                <div class="page-content" id="filtersPage">
+                    <div class="page-header">
+                        <h2>จัดการสิ่งอำนวยความสะดวก</h2>
+                        <button onclick="openAddFilterModal()" class="btn btn-success">
+                            <i class="fas fa-plus"></i> เพิ่มสิ่งอำนวยความสะดวก
+                        </button>
+                    </div>
+
+                    <div class="filters-grid" id="filtersList">
+                        <div style="text-align: center; padding: 40px; color: #999;">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <p style="margin-top: 15px;">กำลังโหลด...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accommodation Types Page -->
+                <div class="page-content" id="accommodationTypesPage">
+                    <div class="page-header">
+                        <h2>จัดการประเภทที่พัก</h2>
+                        <button onclick="openAddAccommodationTypeModal()" class="btn btn-success">
+                            <i class="fas fa-plus"></i> เพิ่มประเภทที่พัก
+                        </button>
+                    </div>
+
+                    <div class="filters-grid" id="accommodationTypesList">
+                        <div style="text-align: center; padding: 40px; color: #999;">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <p style="margin-top: 15px;">กำลังโหลด...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Room Types Page -->
+                <div class="page-content" id="roomtypesPage">
+                    <div class="page-header">
+                        <h2>จัดการประเภทห้องพัก</h2>
+                        <button onclick="openAddRoomTypeModal()" class="btn btn-success">
+                            <i class="fas fa-plus"></i> เพิ่มประเภทห้องพัก
+                        </button>
+                    </div>
+
+                    <div class="filters-grid" id="roomTypesList">
+                        <div style="text-align: center; padding: 40px; color: #999;">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <p style="margin-top: 15px;">กำลังโหลด...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Page -->
+                <div class="page-content" id="activityPage">
+                    <div class="page-header">
+                        <h2>ประวัติการแก้ไข</h2>
+                        <div class="activity-filters">
+                            <input type="text" 
+                                   id="activitySearchInput" 
+                                   class="search-input" 
+                                   placeholder="🔍 ค้นหาชื่อโรงแรม..." 
+                                   oninput="filterActivity()"
+                                   style="flex: 1; max-width: 300px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">
+                            <select id="activityTypeFilter" class="filter-select" onchange="filterActivity()">
+                                <option value="all">ทั้งหมด</option>
+                                <option value="hotel">โรงแรม</option>
+                                <option value="amenity">สิ่งอำนวยความสะดวก</option>
+                                <option value="roomtype">ประเภทห้องพัก</option>
+                            </select>
+                            <select id="activityActionFilter" class="filter-select" onchange="filterActivity()">
+                                <option value="all">ทุกการกระทำ</option>
+                                <option value="latest">ล่าสุด</option>
+                                <option value="add">เพิ่ม</option>
+                                <option value="edit">แก้ไข</option>
+                                <option value="delete">ลบ</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="activity-list" id="activityList"></div>
+                    
+                    <div class="pagination">
+                        <button onclick="prevPage()" class="btn btn-secondary" id="prevBtn">
+                            <i class="fas fa-chevron-left"></i> ก่อนหน้า
+                        </button>
+                        <span id="pageInfo">หน้า 1</span>
+                        <button onclick="nextPage()" class="btn btn-secondary" id="nextBtn">
+                            ถัดไป <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Likes Page -->
+                <div class="page-content" id="likesPage">
+                    <div class="page-header">
+                        <h2>สถิติทั้งหมด</h2>
+                        <div class="sort-options">
+                            <button class="sort-btn active" data-sort="likes" onclick="sortStats('likes')">
+                                <i class="fas fa-heart"></i> หัวใจ
+                            </button>
+                            <button class="sort-btn" data-sort="clicks" onclick="sortStats('clicks')">
+                                <i class="fas fa-mouse-pointer"></i> การ์ด
+                            </button>
+                            <div class="sort-divider"></div>
+                            <button class="sort-btn active" data-order="most" onclick="sortOrder('most')">
+                                <i class="fas fa-sort-amount-down"></i> มากสุด
+                            </button>
+                            <button class="sort-btn" data-order="least" onclick="sortOrder('least')">
+                                <i class="fas fa-sort-amount-up"></i> น้อยสุด
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Period and Search Filters -->
+                    <div class="stats-filters" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button class="period-btn active" data-period="day" onclick="changeStatsPeriod('day')">
+                                <i class="fas fa-calendar-day"></i> รายวัน
+                            </button>
+                            <button class="period-btn" data-period="week" onclick="changeStatsPeriod('week')">
+                                <i class="fas fa-calendar-week"></i> รายสัปดาห์
+                            </button>
+                            <button class="period-btn" data-period="month" onclick="changeStatsPeriod('month')">
+                                <i class="fas fa-calendar-alt"></i> รายเดือน
+                            </button>
+                            <button class="period-btn" data-period="year" onclick="changeStatsPeriod('year')">
+                                <i class="fas fa-calendar"></i> รายปี
+                            </button>
+                            <button class="period-btn" data-period="all" onclick="changeStatsPeriod('all')">
+                                <i class="fas fa-infinity"></i> ทั้งหมด
+                            </button>
+                        </div>
+                        <input type="text" 
+                               id="statsSearchInput" 
+                               class="search-input" 
+                               placeholder="🔍 ค้นหาชื่อโรงแรม..." 
+                               oninput="filterStatsSearch()"
+                               style="flex: 1; max-width: 300px; padding: 10px 14px; border: 2px solid var(--light); border-radius: 8px;">
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="stats-summary">
+                        <div class="summary-card summary-likes">
+                            <div class="summary-icon">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <div class="summary-info">
+                                <h4>รวมหัวใจทั้งหมด</h4>
+                                <div class="summary-value" id="totalLikesSum">0</div>
+                            </div>
+                        </div>
+                        <div class="summary-card summary-clicks">
+                            <div class="summary-icon">
+                                <i class="fas fa-mouse-pointer"></i>
+                            </div>
+                            <div class="summary-info">
+                                <h4>รวมการคลิกการ์ด</h4>
+                                <div class="summary-value" id="totalClicksSum">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="likes-list" id="likesList"></div>
+                </div>
+
+                <!-- WebSettings Page -->
+                <div class="page-content" id="websettingsPage">
+                    <div class="page-header">
+                        <h2><i class="fas fa-palette"></i> แก้ไขหน้าเว็บไซต์</h2>
+                        <button onclick="saveWebSettings()" class="btn btn-success">
+                            <i class="fas fa-save"></i> บันทึกการเปลี่ยนแปลง
+                        </button>
+                    </div>
+
+                    <div class="websettings-container">
+                        <!-- Site Names Section -->
+                        <div class="settings-section">
+                            <h3><i class="fas fa-heading"></i> ชื่อเว็บไซต์</h3>
+                            <div class="settings-grid">
+                                <div class="form-group">
+                                    <label for="siteNameTh">
+                                        <i class="fas fa-flag"></i> ชื่อภาษาไทย
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="siteNameTh" 
+                                        placeholder="ค้นหาโรงแรมเกาะล้าน"
+                                        oninput="previewChanges()">
+                                </div>
+                                <div class="form-group">
+                                    <label for="siteNameEn">
+                                        <i class="fas fa-flag"></i> ชื่อภาษาอังกฤษ
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="siteNameEn" 
+                                        placeholder="Koh Larn Hotel Search Engine"
+                                        oninput="previewChanges()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Site Name Colors Section -->
+                        <div class="settings-section">
+                            <h3><i class="fas fa-text-height"></i> สีชื่อเว็บไซต์</h3>
+                            <div class="settings-grid">
+                                <div class="form-group">
+                                    <label for="siteNameThColor">
+                                        <i class="fas fa-palette"></i> สีชื่อภาษาไทย
+                                    </label>
+                                    <div class="color-input-wrapper">
+                                        <input 
+                                            type="color" 
+                                            id="siteNameThColor" 
+                                            oninput="previewChanges()">
+                                        <input 
+                                            type="text" 
+                                            id="siteNameThColorText" 
+                                            placeholder="#2d3436"
+                                            oninput="syncColorPicker('siteNameThColor', this.value); previewChanges()">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="siteNameEnColor">
+                                        <i class="fas fa-palette"></i> สีชื่อภาษาอังกฤษ
+                                    </label>
+                                    <div class="color-input-wrapper">
+                                        <input 
+                                            type="color" 
+                                            id="siteNameEnColor" 
+                                            oninput="previewChanges()">
+                                        <input 
+                                            type="text" 
+                                            id="siteNameEnColorText" 
+                                            placeholder="#636e72"
+                                            oninput="syncColorPicker('siteNameEnColor', this.value); previewChanges()">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Header Colors Section -->
+                        <div class="settings-section">
+                            <h3><i class="fas fa-paint-brush"></i> สีพื้นหลัง Header</h3>
+                            <div class="settings-grid">
+                                <div class="form-group">
+                                    <label for="headerBgColor">
+                                        <i class="fas fa-palette"></i> สีพื้นหลัง Header
+                                    </label>
+                                    <div class="color-input-wrapper">
+                                        <input 
+                                            type="color" 
+                                            id="headerBgColor" 
+                                            oninput="previewChanges()">
+                                        <input 
+                                            type="text" 
+                                            id="headerBgColorText" 
+                                            placeholder="#ffffff"
+                                            oninput="syncColorPicker('headerBgColor', this.value); previewChanges()">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Body Background Gradient Section -->
+                        <div class="settings-section">
+                            <h3><i class="fas fa-fill-drip"></i> สีพื้นหลังเว็บ (Gradient)</h3>
+                            <div class="settings-grid">
+                                <div class="form-group">
+                                    <label for="bodyBgStart">
+                                        <i class="fas fa-palette"></i> สีเริ่มต้น
+                                    </label>
+                                    <div class="color-input-wrapper">
+                                        <input 
+                                            type="color" 
+                                            id="bodyBgStart" 
+                                            oninput="previewChanges()">
+                                        <input 
+                                            type="text" 
+                                            id="bodyBgStartText" 
+                                            placeholder="#667eea"
+                                            oninput="syncColorPicker('bodyBgStart', this.value); previewChanges()">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="bodyBgEnd">
+                                        <i class="fas fa-palette"></i> สีสิ้นสุด
+                                    </label>
+                                    <div class="color-input-wrapper">
+                                        <input 
+                                            type="color" 
+                                            id="bodyBgEnd" 
+                                            oninput="previewChanges()">
+                                        <input 
+                                            type="text" 
+                                            id="bodyBgEndText" 
+                                            placeholder="#764ba2"
+                                            oninput="syncColorPicker('bodyBgEnd', this.value); previewChanges()">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filter Button Colors Section -->
+                        <div class="settings-section">
+                            <h3><i class="fas fa-filter"></i> สีปุ่มตัวกรอง</h3>
+                            <div class="settings-grid">
+                                <div class="form-group">
+                                    <label for="filterBtnStart">
+                                        <i class="fas fa-palette"></i> สีเริ่มต้น
+                                    </label>
+                                    <div class="color-input-wrapper">
+                                        <input 
+                                            type="color" 
+                                            id="filterBtnStart" 
+                                            oninput="previewChanges()">
+                                        <input 
+                                            type="text" 
+                                            id="filterBtnStartText" 
+                                            placeholder="#667eea"
+                                            oninput="syncColorPicker('filterBtnStart', this.value); previewChanges()">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="filterBtnEnd">
+                                        <i class="fas fa-palette"></i> สีสิ้นสุด
+                                    </label>
+                                    <div class="color-input-wrapper">
+                                        <input 
+                                            type="color" 
+                                            id="filterBtnEnd" 
+                                            oninput="previewChanges()">
+                                        <input 
+                                            type="text" 
+                                            id="filterBtnEndText" 
+                                            placeholder="#764ba2"
+                                            oninput="syncColorPicker('filterBtnEnd', this.value); previewChanges()">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Text Colors Section -->
+                        <div class="settings-section">
+                            <h3><i class="fas fa-id-card"></i> สีข้อความบนการ์ดโรงแรม</h3>
+                            <div class="settings-grid">
+                                <div class="form-group">
+                                    <label for="cardNameColor">
+                                        <i class="fas fa-font"></i> สีชื่อโรงแรม
+                                    </label>
+                                    <div class="color-input-wrapper">
+                                        <input 
+                                            type="color" 
+                                            id="cardNameColor" 
+                                            oninput="previewChanges()">
+                                        <input 
+                                            type="text" 
+                                            id="cardNameColorText" 
+                                            placeholder="#2d3436"
+                                            oninput="syncColorPicker('cardNameColor', this.value); previewChanges()">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cardPriceColor">
+                                        <i class="fas fa-tag"></i> สีราคา
+                                    </label>
+                                    <div class="color-input-wrapper">
+                                        <input 
+                                            type="color" 
+                                            id="cardPriceColor" 
+                                            oninput="previewChanges()">
+                                        <input 
+                                            type="text" 
+                                            id="cardPriceColorText" 
+                                            placeholder="#0066cc"
+                                            oninput="syncColorPicker('cardPriceColor', this.value); previewChanges()">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Favicon Settings -->
+                        <div class="settings-section">
+                            <h3><i class="fas fa-icons"></i> ไอคอนเว็บไซต์ (Favicon)</h3>
+                            <div class="setting-group">
+                                <label for="faviconType">ประเภทไอคอน:</label>
+                                <select id="faviconType" onchange="toggleFaviconInput()">
+                                    <option value="emoji">Emoji</option>
+                                    <option value="url">URL รูปภาพ</option>
+                                </select>
+                            </div>
+                            <div class="setting-group" id="emojiGroup">
+                                <label for="faviconEmoji">Emoji:</label>
+                                <input type="text" id="faviconEmoji" placeholder="🏝️" maxlength="2" oninput="previewChanges()">
+                                <small>ใส่ Emoji 1 ตัว เช่น 🏝️ 🏖️ 🏨 🌴</small>
+                            </div>
+                            <div class="setting-group" id="urlGroup" style="display: none;">
+                                <label for="faviconUrl">URL รูปภาพ:</label>
+                                <input type="url" id="faviconUrl" placeholder="https://example.com/favicon.png" oninput="previewChanges()">
+                                <small>URL ของไฟล์ .ico, .png, .svg (แนะนำขนาด 32x32px หรือ 64x64px)</small>
+                            </div>
+                            <div class="favicon-preview">
+                                <span>ตัวอย่าง: </span>
+                                <span id="faviconPreview" class="favicon-demo">🏝️</span>
+                            </div>
+                        </div>
+
+                        <!-- Live Preview Section -->
+                        <div class="settings-section preview-section">
+                            <h3><i class="fas fa-eye"></i> ตัวอย่างสีแบบเรียลไทม์</h3>
+                            <div class="preview-container">
+                                <div class="preview-header" id="previewHeader">
+                                    <h4>
+                                        <span id="previewHeaderIcon">🏝️</span> 
+                                        <span id="previewSiteNameTh">ค้นหาโรงแรมเกาะล้าน</span>
+                                    </h4>
+                                    <p id="previewSiteNameEn">Koh Larn Hotel Search Engine</p>
+                                </div>
+                                <div class="preview-body" id="previewBody">
+                                    <button class="preview-filter-btn" id="previewFilterBtn">
+                                        <i class="fas fa-filter"></i> แสดงตัวกรองเพิ่มเติม
+                                    </button>
+                                    
+                                    <!-- Preview Hotel Card (มีการ์ดแบบหน้าหลัก) -->
+                                    <div class="preview-hotel-card">
+                                        <div class="preview-hotel-image">
+                                            <img src="https://via.placeholder.com/400x250/667eea/ffffff?text=Hotel+Preview" alt="Hotel Preview">
+                                        </div>
+                                        <div class="preview-hotel-info">
+                                            <h3 class="preview-hotel-name" id="previewHotelName">โรงแรมตัวอย่าง</h3>
+                                            <p class="preview-hotel-name-en">Example Hotel Resort</p>
+                                            <div class="preview-hotel-price-wrapper">
+                                                <span class="preview-hotel-price" id="previewPrice">฿ 1,500</span>
+                                                <span class="preview-price-label"> / คืน</span>
+                                            </div>
+                                            <div class="preview-hotel-features">
+                                                <span class="preview-feature-tag"><i class="fas fa-wifi"></i> WiFi</span>
+                                                <span class="preview-feature-tag"><i class="fas fa-swimming-pool"></i> สระว่ายน้ำ</span>
+                                                <span class="preview-feature-tag"><i class="fas fa-utensils"></i> ร้านอาหาร</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reset Button -->
+                        <div class="settings-actions">
+                            <button onclick="resetToDefaults()" class="btn btn-danger">
+                                <i class="fas fa-undo"></i> รีเซ็ตเป็นค่าเริ่มต้น
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Members Page -->
+                <div class="page-content" id="membersPage">
+                    <div class="page-header">
+                        <h2>ระบบสมาชิก</h2>
+                        <button id="addMemberBtn" onclick="openAddMemberModal()" class="btn btn-success">
+                            <i class="fas fa-user-plus"></i> เพิ่มสมาชิก
+                        </button>
+                    </div>
+
+                    <!-- Members Search and Filter -->
+                    <div class="filter-section" style="margin-bottom: 20px;">
+                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px;">
+                            <div class="form-group" style="margin: 0;">
+                                <label style="margin-bottom: 5px; display: block; font-size: 0.9rem; color: #666;">
+                                    <i class="fas fa-search"></i> ค้นหา
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="memberSearchInput" 
+                                    placeholder="ชื่อสมาชิก, ชื่อโรงแรม, หรือรหัสโรงแรม..." 
+                                    style="width: 100%; padding: 10px 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 0.95rem;"
+                                    oninput="filterMembers()">
+                            </div>
+                            <div id="memberRoleFilterGroup" class="form-group" style="margin: 0;">
+                                <label style="margin-bottom: 5px; display: block; font-size: 0.9rem; color: #666;">
+                                    <i class="fas fa-filter"></i> บทบาท
+                                </label>
+                                <select 
+                                    id="memberRoleFilter" 
+                                    style="width: 100%; padding: 10px 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 0.95rem;"
+                                    onchange="filterMembers()">
+                                    <option value="">ทั้งหมด</option>
+                                    <option value="admin">คณะกรรมการ</option>
+                                    <option value="hotel-owner">เจ้าของโรงแรม</option>
+                                    <option value="user">ผู้ใช้งาน</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin: 0;">
+                                <label style="margin-bottom: 5px; display: block; font-size: 0.9rem; color: #666;">
+                                    <i class="fas fa-sort"></i> เรียงตาม
+                                </label>
+                                <select 
+                                    id="memberSortBy" 
+                                    style="width: 100%; padding: 10px 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 0.95rem;"
+                                    onchange="filterMembers()">
+                                    <option value="nickname">ชื่อ (A-Z)</option>
+                                    <option value="role">บทบาท</option>
+                                    <option value="hotel">โรงแรม</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; align-items: flex-end;">
+                                <button 
+                                    onclick="clearMemberFilters()" 
+                                    class="btn btn-secondary" 
+                                    style="width: 100%; padding: 10px; font-size: 0.95rem;">
+                                    <i class="fas fa-redo"></i> รีเซ็ต
+                                </button>
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px; color: #666; font-size: 0.9rem;" id="memberFilterInfo">
+                            แสดงทั้งหมด <strong id="memberFilterCount">0</strong> รายการ
+                        </div>
+                    </div>
+
+                    <div class="members-grid" id="membersList">
+                        <div style="text-align: center; padding: 40px; color: #999;">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <p style="margin-top: 15px;">กำลังโหลด...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Members Pagination -->
+                    <div class="pagination" id="membersPagination" style="display: none; margin-top: 20px; text-align: center;">
+                        <button onclick="changeMembersPage(-1)" class="btn btn-secondary" id="membersPrevBtn">
+                            <i class="fas fa-chevron-left"></i> ก่อนหน้า
+                        </button>
+                        <span style="margin: 0 15px; color: #666;" id="membersPageInfo">หน้า 1</span>
+                        <button onclick="changeMembersPage(1)" class="btn btn-secondary" id="membersNextBtn">
+                            ถัดไป <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Add/Edit Hotel -->
+    <div id="hotelModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 id="modalTitle"><i class="fas fa-hotel"></i> เพิ่มโรงแรม</h2>
+                <button class="close" onclick="closeHotelModal()">&times;</button>
+            </div>
+            <form id="hotelForm">
+                <!-- ID โรงแรม -->
+                <div class="form-group">
+                    <label>ID โรงแรม (รหัสเฉพาะ) * <small style="color: #666;">เช่น hotel-001 หรือ 001</small></label>
+                    <input type="text" id="hotelId" required placeholder="hotel-001 หรือ 001" pattern="[a-zA-Z0-9\-]+" autocomplete="off" inputmode="text">
+                    <small style="color: #999;">สามารถใส่เลข 0 ด้านหน้าได้ เช่น 001, 0123</small>
+                </div>
+
+                <!-- ชื่อโรงแรม -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ชื่อโรงแรม (ไทย)</label>
+                        <input type="text" id="hotelNameTh" placeholder="โรงแรมทดสอบ">
+                    </div>
+                    <div class="form-group">
+                        <label>ชื่อโรงแรม (อังกฤษ)</label>
+                        <input type="text" id="hotelNameEn" placeholder="Test Hotel">
+                    </div>
+                </div>
+                <small style="color: #3498db; display: block; margin-top: -10px; margin-bottom: 15px;">
+                    <i class="fas fa-info-circle"></i> ใส่ชื่อได้แค่ภาษาเดียว - ระบบจะแสดงชื่อที่มีอัตโนมัติ
+                </small>
+
+                <!-- ชื่อเจ้าของ -->
+                <div class="form-group">
+                    <label>ชื่อเจ้าของโรงแรม *</label>
+                    <input type="text" id="ownerName" required placeholder="นายสมชาย ใจดี">
+                </div>
+
+                <!-- ราคา -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ราคาต่ำสุด (บาท) *</label>
+                        <input type="number" id="minPrice" required min="0" placeholder="500">
+                    </div>
+                    <div class="form-group">
+                        <label>ราคาสูงสุด (บาท)</label>
+                        <input type="number" id="maxPrice" min="0" placeholder="1500">
+                    </div>
+                </div>
+
+                <!-- อัพโหลดรูปภาพ (สูงสุด 5 รูป) -->
+                <div class="form-group">
+                    <label><i class="fas fa-images"></i> รูปภาพโรงแรม (สูงสุด 5 รูป) *</label>
+                    <small style="color: var(--gray); display: block; margin-bottom: 10px;">รูปแรกจะเป็นรูปหลัก</small>
+                    
+                    <!-- Image 1 -->
+                    <div class="image-upload-row" style="margin-bottom: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <label style="margin: 0; font-weight: 600; color: var(--primary);">
+                                <i class="fas fa-star"></i> รูปที่ 1 (หลัก) *
+                            </label>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="file" id="imageFile1" accept="image/*" style="flex: 1;">
+                            <button type="button" onclick="uploadImage(1)" class="btn btn-primary" style="width: auto;">
+                                <i class="fas fa-upload"></i> อัพโหลด
+                            </button>
+                        </div>
+                        <input type="url" id="imageUrl" placeholder="หรือใส่ URL รูปภาพ" style="margin-top: 8px;">
+                        <div id="imagePreview1" style="margin-top: 10px; display: none;">
+                            <img id="previewImg1" style="max-width: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        </div>
+                    </div>
+
+                    <!-- Image 2-5 -->
+                    <div class="image-upload-row" style="margin-bottom: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <label style="margin: 0; font-weight: 600;">รูปที่ 2</label>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="file" id="imageFile2" accept="image/*" style="flex: 1;">
+                            <button type="button" onclick="uploadImage(2)" class="btn btn-primary" style="width: auto;">
+                                <i class="fas fa-upload"></i> อัพโหลด
+                            </button>
+                        </div>
+                        <input type="url" id="imageUrl2" placeholder="หรือใส่ URL รูปภาพ" style="margin-top: 8px;">
+                        <div id="imagePreview2" style="margin-top: 10px; display: none;">
+                            <img id="previewImg2" style="max-width: 150px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        </div>
+                    </div>
+
+                    <div class="image-upload-row" style="margin-bottom: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <label style="margin: 0; font-weight: 600;">รูปที่ 3</label>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="file" id="imageFile3" accept="image/*" style="flex: 1;">
+                            <button type="button" onclick="uploadImage(3)" class="btn btn-primary" style="width: auto;">
+                                <i class="fas fa-upload"></i> อัพโหลด
+                            </button>
+                        </div>
+                        <input type="url" id="imageUrl3" placeholder="หรือใส่ URL รูปภาพ" style="margin-top: 8px;">
+                        <div id="imagePreview3" style="margin-top: 10px; display: none;">
+                            <img id="previewImg3" style="max-width: 150px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        </div>
+                    </div>
+
+                    <div class="image-upload-row" style="margin-bottom: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <label style="margin: 0; font-weight: 600;">รูปที่ 4</label>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="file" id="imageFile4" accept="image/*" style="flex: 1;">
+                            <button type="button" onclick="uploadImage(4)" class="btn btn-primary" style="width: auto;">
+                                <i class="fas fa-upload"></i> อัพโหลด
+                            </button>
+                        </div>
+                        <input type="url" id="imageUrl4" placeholder="หรือใส่ URL รูปภาพ" style="margin-top: 8px;">
+                        <div id="imagePreview4" style="margin-top: 10px; display: none;">
+                            <img id="previewImg4" style="max-width: 150px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        </div>
+                    </div>
+
+                    <div class="image-upload-row" style="margin-bottom: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <label style="margin: 0; font-weight: 600;">รูปที่ 5</label>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="file" id="imageFile5" accept="image/*" style="flex: 1;">
+                            <button type="button" onclick="uploadImage(5)" class="btn btn-primary" style="width: auto;">
+                                <i class="fas fa-upload"></i> อัพโหลด
+                            </button>
+                        </div>
+                        <input type="url" id="imageUrl5" placeholder="หรือใส่ URL รูปภาพ" style="margin-top: 8px;">
+                        <div id="imagePreview5" style="margin-top: 10px; display: none;">
+                            <img id="previewImg5" style="max-width: 150px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ข้อมูลติดต่อ -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Facebook URL</label>
+                        <input type="url" id="facebookUrl" placeholder="https://facebook.com/yourhotel">
+                    </div>
+                    <div class="form-group">
+                        <label>เว็บไซต์โรงแรม</label>
+                        <input type="url" id="websiteUrl" placeholder="https://www.yourhotel.com">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Line ID</label>
+                        <input type="text" id="lineId" placeholder="@yourhotel">
+                    </div>
+                    <div class="form-group">
+                        <label>เบอร์โทรศัพท์ *</label>
+                        <input type="text" id="phoneNumber" required placeholder="0812345678 หรือ 081-234-5678" autocomplete="off" inputmode="tel">
+                    </div>
+                </div>
+
+                <!-- รองรับลูกค้า -->
+                <div class="form-group">
+                    <label>รองรับลูกค้าได้สูงสุด (คน)</label>
+                    <input type="number" id="maxGuests" min="1" placeholder="4">
+                </div>
+
+                <!-- ตัวกรอง -->
+                <div class="form-group" style="border-top: 2px solid #e0e0e0; padding-top: 20px; margin-top: 20px;">
+                    <label style="font-weight: 600; color: #2c3e50; font-size: 1.1rem; margin-bottom: 15px; display: block;">
+                        <i class="fas fa-filter"></i> สิ่งอำนวยความสะดวก (เลือกได้หลายอัน)
+                    </label>
+                    <div class="checkbox-group" id="filtersCheckboxes" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 15px; background: #f8f9fa; border-radius: 8px; min-height: 60px;">
+                        <div style="grid-column: 1 / -1; text-align: center; color: #999; padding: 20px;">
+                            <i class="fas fa-spinner fa-spin"></i> กำลังโหลดตัวกรอง...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ประเภทที่พัก -->
+                <div class="form-group" style="border-top: 2px solid #e0e0e0; padding-top: 20px; margin-top: 20px;">
+                    <label style="font-weight: 600; color: #2c3e50; font-size: 1.1rem; margin-bottom: 15px; display: block;">
+                        <i class="fas fa-building"></i> ประเภทที่พัก (เลือกได้ 1 รายการเท่านั้น) <span style="color: red;">*</span>
+                    </label>
+                    <div class="radio-group" id="accommodationTypesRadios" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 15px; background: #f8f9fa; border-radius: 8px; min-height: 60px;">
+                        <div style="grid-column: 1 / -1; text-align: center; color: #999; padding: 20px;">
+                            <i class="fas fa-spinner fa-spin"></i> กำลังโหลดประเภทที่พัก...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ประเภทห้องพัก -->
+                <div class="form-group" style="border-top: 2px solid #e0e0e0; padding-top: 20px; margin-top: 20px;">
+                    <label style="font-weight: 600; color: #2c3e50; font-size: 1.1rem; margin-bottom: 15px; display: block;">
+                        <i class="fas fa-door-open"></i> ประเภทห้องพัก (เลือกได้หลายอัน)
+                    </label>
+                    <div class="checkbox-group" id="roomTypesCheckboxes" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 15px; background: #f8f9fa; border-radius: 8px; min-height: 60px;">
+                        <div style="grid-column: 1 / -1; text-align: center; color: #999; padding: 20px;">
+                            <i class="fas fa-spinner fa-spin"></i> กำลังโหลดประเภทห้องพัก...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ข้อมูลบัญชีธนาคาร -->
+                <div class="form-group" style="border-top: 2px solid #e0e0e0; padding-top: 20px; margin-top: 20px;">
+                    <label style="font-weight: 600; color: #2c3e50; font-size: 1.1rem; margin-bottom: 15px; display: block;">
+                        <i class="fas fa-university"></i> ข้อมูลบัญชีธนาคาร
+                    </label>
+                    
+                    <div class="form-group">
+                        <label>ชื่อธนาคาร</label>
+                        <input type="text" id="bankName" placeholder="ธนาคารกรุงเทพ">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>ชื่อบัญชี</label>
+                        <input type="text" id="accountName" placeholder="นายสมชาย ใจดี">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>เลขที่บัญชี</label>
+                        <input type="text" id="accountNumber" placeholder="123-4-56789-0" pattern="[0-9\-]+">
+                    </div>
+                </div>
+
+                <div class="form-actions" style="margin-top: 25px;">
+                    <button type="button" onclick="closeHotelModal()" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> ยกเลิก
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> บันทึก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Add/Edit Filter -->
+    <div id="filterModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="filterModalTitle"><i class="fas fa-star"></i> เพิ่มสิ่งอำนวยความสะดวก</h2>
+                <button class="close" onclick="closeFilterModal()">&times;</button>
+            </div>
+            <form id="filterForm" onsubmit="saveFilter(event)">
+                <input type="hidden" id="filterId">
+                <input type="hidden" id="filterEditMode" value="false">
+                
+                <div class="form-group">
+                    <label>ชื่อสิ่งอำนวยความสะดวก (ไทย) *</label>
+                    <input type="text" id="filterNameTh" required placeholder="เช่น ติดทะเล, ฟรีอาหารเช้า">
+                </div>
+                <div class="form-group">
+                    <label>ชื่อสิ่งอำนวยความสะดวก (อังกฤษ) *</label>
+                    <input type="text" id="filterNameEn" required placeholder="e.g. Beachfront, Free Breakfast">
+                </div>
+                <div class="form-group">
+                    <label>ไอคอน (Font Awesome) *</label>
+                    <input type="text" id="filterIcon" required placeholder="เช่น: fa-wifi, fa-swimming-pool">
+                    <small>ดูไอคอนได้ที่: <a href="https://fontawesome.com/icons" target="_blank">fontawesome.com</a></small>
+                </div>
+                <div class="form-group">
+                    <label>สีของ Badge *</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="color" id="filterColor" value="#667eea" style="width: 60px; height: 40px; border: none; border-radius: 8px; cursor: pointer;">
+                        <input type="text" id="filterColorText" value="#667eea" pattern="^#[0-9A-Fa-f]{6}$" placeholder="#667eea" style="flex: 1;">
+                        <div id="filterColorPreview" style="padding: 8px 16px; border-radius: 20px; background: #667eea; color: white; font-size: 0.9rem; white-space: nowrap;">
+                            <i class="fas fa-tag"></i> ตัวอย่าง
+                        </div>
+                    </div>
+                    <small style="color: #999;">เลือกสีที่ต้องการให้แสดงบนการ์ดโรงแรม</small>
+                </div>
+                <div class="form-actions">
+                    <button type="button" onclick="closeFilterModal()" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> ยกเลิก
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> บันทึก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Add/Edit Accommodation Type -->
+    <div id="accommodationTypeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="accommodationTypeModalTitle"><i class="fas fa-building"></i> เพิ่มประเภทที่พัก</h2>
+                <button class="close" onclick="closeAccommodationTypeModal()">&times;</button>
+            </div>
+            <form id="accommodationTypeForm" onsubmit="saveAccommodationType(event)">
+                <input type="hidden" id="accommodationTypeId">
+                <input type="hidden" id="accommodationTypeEditMode" value="false">
+                
+                <div class="form-group">
+                    <label>ชื่อประเภทที่พัก (ไทย) *</label>
+                    <input type="text" id="accommodationTypeNameTh" required placeholder="เช่น โรงแรม, รีสอร์ท, บังกะโล">
+                </div>
+                <div class="form-group">
+                    <label>ชื่อประเภทที่พัก (อังกฤษ) *</label>
+                    <input type="text" id="accommodationTypeNameEn" required placeholder="e.g. Hotel, Resort, Bungalow">
+                </div>
+                <div class="form-group">
+                    <label>ไอคอน (Font Awesome) *</label>
+                    <input type="text" id="accommodationTypeIcon" required placeholder="เช่น: fa-hotel, fa-building, fa-home">
+                    <small>ดูไอคอนได้ที่: <a href="https://fontawesome.com/icons" target="_blank">fontawesome.com</a></small>
+                </div>
+                <div class="form-group">
+                    <label>สีของ Badge *</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="color" id="accommodationTypeColor" value="#667eea" style="width: 60px; height: 40px; border: none; border-radius: 8px; cursor: pointer;">
+                        <input type="text" id="accommodationTypeColorText" value="#667eea" pattern="^#[0-9A-Fa-f]{6}$" placeholder="#667eea" style="flex: 1;">
+                        <div id="accommodationTypeColorPreview" style="padding: 8px 16px; border-radius: 20px; background: #667eea; color: white; font-size: 0.9rem; white-space: nowrap;">
+                            <i class="fas fa-hotel"></i> ตัวอย่าง
+                        </div>
+                    </div>
+                    <small style="color: #999;">เลือกสีที่ต้องการให้แสดงบนการ์ดโรงแรม</small>
+                </div>
+                <div class="form-actions">
+                    <button type="button" onclick="closeAccommodationTypeModal()" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> ยกเลิก
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> บันทึก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Add/Edit Room Type -->
+    <div id="roomTypeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="roomTypeModalTitle"><i class="fas fa-door-open"></i> เพิ่มประเภทห้องพัก</h2>
+                <button class="close" onclick="closeRoomTypeModal()">&times;</button>
+            </div>
+            <form id="roomTypeForm" onsubmit="saveRoomType(event)">
+                <input type="hidden" id="roomTypeId">
+                <input type="hidden" id="roomTypeEditMode" value="false">
+                
+                <div class="form-group">
+                    <label>ชื่อประเภทห้องพัก (ไทย) *</label>
+                    <input type="text" id="roomTypeNameTh" required placeholder="เช่น ห้องธรรมดา, ห้องดีลักซ์">
+                </div>
+                <div class="form-group">
+                    <label>ชื่อประเภทห้องพัก (อังกฤษ) *</label>
+                    <input type="text" id="roomTypeNameEn" required placeholder="e.g. Standard Room, Deluxe Room">
+                </div>
+                <div class="form-group">
+                    <label>ไอคอน (Font Awesome) *</label>
+                    <input type="text" id="roomTypeIcon" required placeholder="เช่น: fa-bed, fa-door-open, fa-crown">
+                    <small>ดูไอคอนได้ที่: <a href="https://fontawesome.com/icons" target="_blank">fontawesome.com</a></small>
+                </div>
+                <div class="form-group">
+                    <label>สีของ Badge *</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="color" id="roomTypeColor" value="#667eea" style="width: 60px; height: 40px; border: none; border-radius: 8px; cursor: pointer;">
+                        <input type="text" id="roomTypeColorText" value="#667eea" pattern="^#[0-9A-Fa-f]{6}$" placeholder="#667eea" style="flex: 1;">
+                        <div id="roomTypeColorPreview" style="padding: 8px 16px; border-radius: 20px; background: #667eea; color: white; font-size: 0.9rem; white-space: nowrap;">
+                            <i class="fas fa-bed"></i> ตัวอย่าง
+                        </div>
+                    </div>
+                    <small style="color: #999;">เลือกสีที่ต้องการให้แสดงบนการ์ดโรงแรม</small>
+                </div>
+                <div class="form-actions">
+                    <button type="button" onclick="closeRoomTypeModal()" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> ยกเลิก
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> บันทึก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Add/Edit Member -->
+    <div id="memberModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="memberModalTitle"><i class="fas fa-user-plus"></i> เพิ่มสมาชิก</h2>
+                <button class="close" onclick="closeMemberModal()">&times;</button>
+            </div>
+            <form id="memberForm" onsubmit="saveMember(event)">
+                <input type="hidden" id="memberUsername">
+                <input type="hidden" id="memberEditMode" value="false">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Username * <small>(สำหรับเข้าสู่ระบบ)</small></label>
+                        <input type="text" id="memberUsernameInput" required placeholder="username123" pattern="[a-zA-Z0-9_]+" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label>Password * <small>(รหัสผ่าน)</small></label>
+                        <input type="password" id="memberPassword" required placeholder="รหัสผ่าน" autocomplete="new-password">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>ชื่อที่แสดง (Nickname) *</label>
+                    <input type="text" id="memberNickname" required placeholder="เช่น สมชาย ใจดี">
+                </div>
+                
+                <div class="form-group" id="roleGroup">
+                    <label>บทบาท (Role) *</label>
+                    <select id="memberRole" required>
+                        <option value="user">ผู้ใช้งาน</option>
+                        <option value="hotel-owner">เจ้าของโรงแรม</option>
+                        <option value="admin">คณะกรรมการ</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="hotelIdGroup" style="display: none;">
+                    <label>
+                        โรงแรมที่รับผิดชอบ
+                        <span id="currentHotelInfo" style="color: #f39c12; font-size: 0.9em; margin-left: 10px;"></span>
+                    </label>
+                    <select id="memberHotelId">
+                        <option value="">-- ไม่ระบุ --</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" onclick="closeMemberModal()" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> ยกเลิก
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> บันทึก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Hotel Details (Read-only) -->
+    <div id="hotelDetailsModal" class="modal">
+        <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2><i class="fas fa-hotel"></i> รายละเอียดโรงแรม</h2>
+                <button class="close" onclick="closeHotelDetailsModal()">&times;</button>
+            </div>
+            <div id="hotelDetailsContent" style="padding: 15px;">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/admin_v2.js"></script>
+    <!-- hotel_management.js ถูกยกเลิกการใช้งาน - ใช้ฟังก์ชันใน admin_v2.js แทน -->
+</body>
+</html>

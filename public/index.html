@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="ค้นหาโรงแรมในเกาะล้าน พัทยา ราคาดี พร้อมข้อมูลครบครัน">
+    <link rel="icon" id="favicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏝️</text></svg>">
+    <title>ค้นหาโรงแรมเกาะล้าน - Koh Larn Hotel Search</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="header-title">
+                    <h1><span id="headerIcon">🏝️</span> <span id="headerTitle">ค้นหาโรงแรมเกาะล้าน</span></h1>
+                    <p class="subtitle">Koh Larn Hotel Search Engine</p>
+                </div>
+                <div class="header-actions">
+                    <!-- Login/Profile Menu -->
+                    <div class="user-menu" id="userMenu">
+                        <button class="login-btn" id="loginBtn">
+                            <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
+                        </button>
+                        <div class="user-profile" id="userProfile" style="display: none;">
+                            <button class="profile-btn" id="profileBtn">
+                                <i class="fas fa-user-circle"></i>
+                                <span id="userDisplayName">ผู้ใช้งาน</span>
+                            </button>
+                            <div class="profile-dropdown" id="profileDropdown">
+                                <a href="/profile" class="dropdown-item">
+                                    <i class="fas fa-user-cog"></i> โปรไฟล์
+                                </a>
+                                <a href="#" class="dropdown-item" id="logoutBtn">
+                                    <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ</h2>
+                <button class="modal-close" id="closeLoginModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginUsername">
+                            <i class="fas fa-user"></i> ชื่อผู้ใช้
+                        </label>
+                        <input type="text" id="loginUsername" name="username" placeholder="กรอกชื่อผู้ใช้" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">
+                            <i class="fas fa-lock"></i> รหัสผ่าน
+                        </label>
+                        <input type="password" id="loginPassword" name="password" placeholder="กรอกรหัสผ่าน" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
+                        </button>
+                        <button type="button" class="btn-secondary" id="cancelLogin">
+                            ยกเลิก
+                        </button>
+                    </div>
+                    <div class="form-footer">
+                        <p>ยังไม่มีบัญชี? <a href="#" id="showRegisterModal">สมัครสมาชิก</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registration Modal -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-plus"></i> สมัครสมาชิก</h2>
+                <button class="modal-close" id="closeRegisterModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="registerUsername">
+                            <i class="fas fa-user"></i> ชื่อผู้ใช้ <span class="required">*</span>
+                        </label>
+                        <input type="text" id="registerUsername" name="username" placeholder="กรอกชื่อผู้ใช้ (อย่างน้อย 4 ตัวอักษร)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">
+                            <i class="fas fa-lock"></i> รหัสผ่าน <span class="required">*</span>
+                        </label>
+                        <input type="password" id="registerPassword" name="password" placeholder="กรอกรหัสผ่าน (อย่างน้อย 6 ตัวอักษร)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerConfirmPassword">
+                            <i class="fas fa-lock"></i> ยืนยันรหัสผ่าน <span class="required">*</span>
+                        </label>
+                        <input type="password" id="registerConfirmPassword" name="confirmPassword" placeholder="กรอกรหัสผ่านอีกครั้ง" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerNickname">
+                            <i class="fas fa-id-card"></i> ชื่อ-นามสกุล <span class="required">*</span>
+                        </label>
+                        <input type="text" id="registerNickname" name="nickname" placeholder="กรอกชื่อ-นามสกุล" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-user-plus"></i> สมัครสมาชิก
+                        </button>
+                        <button type="button" class="btn-secondary" id="cancelRegister">
+                            ยกเลิก
+                        </button>
+                    </div>
+                    <div class="form-footer">
+                        <p>มีบัญชีอยู่แล้ว? <a href="#" id="showLoginModal">เข้าสู่ระบบ</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <main class="container">
+        <!-- Search & Filter Section -->
+        <section class="search-section">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="ค้นหา: ชื่อโรงแรม, รหัสโรงแรม, ชื่อบัญชีธนาคาร, เลขบัญชี...">
+            </div>
+
+            <!-- Toggle Filters Button -->
+            <button class="toggle-filters" id="toggleFilters">
+                <i class="fas fa-chevron-down"></i>
+                <span>แสดงตัวกรองเพิ่มเติม</span>
+            </button>
+
+            <div class="filters" id="filtersContainer" style="display: none;">
+                <h3><i class="fas fa-hotel"></i> ประเภทที่พัก:</h3>
+                <div class="filter-buttons" id="accommodationTypeButtons">
+                    <div class="loading-filters">
+                        <i class="fas fa-spinner fa-spin"></i> กำลังโหลดประเภทที่พัก...
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 20px;"><i class="fas fa-concierge-bell"></i> สิ่งอำนวยความสะดวก:</h3>
+                <div class="filter-buttons" id="filterButtons">
+                    <div class="loading-filters">
+                        <i class="fas fa-spinner fa-spin"></i> กำลังโหลดสิ่งอำนวยความสะดวก...
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 20px;"><i class="fas fa-bed"></i> ประเภทห้องพัก:</h3>
+                <div class="filter-buttons" id="roomTypeButtons">
+                    <div class="loading-filters">
+                        <i class="fas fa-spinner fa-spin"></i> กำลังโหลดประเภทห้องพัก...
+                    </div>
+                </div>
+
+                <div class="price-filter">
+                    <label for="minPrice">
+                        <i class="fas fa-tag"></i> ราคา:
+                    </label>
+                    <div class="price-inputs">
+                        <input type="number" id="minPrice" min="0" max="100000" step="100" value="0" placeholder="ต่ำสุด">
+                        <span>-</span>
+                        <input type="number" id="maxPrice" min="0" max="100000" step="100" value="100000" placeholder="สูงสุด">
+                        <span>บาท</span>
+                    </div>
+                </div>
+
+                <div class="guest-filter">
+                    <label for="maxGuests">
+                        <i class="fas fa-users"></i> รองรับผู้เข้าพักสูงสุด:
+                    </label>
+                    <input type="number" id="maxGuests" min="1" max="50" value="1">
+                    <span>คน</span>
+                </div>
+
+                <button class="clear-filters" id="clearFilters">
+                    <i class="fas fa-times"></i> ล้างตัวกรอง
+                </button>
+            </div>
+        </section>
+
+        <!-- Results Summary -->
+        <section class="results-summary">
+            <p><i class="fas fa-hotel"></i> พบ <strong id="resultCount">0</strong> โรงแรม จากทั้งหมด <strong id="totalCount">0</strong> โรงแรม</p>
+        </section>
+
+        <!-- Hotels Grid -->
+        <section class="hotels-grid" id="hotelsGrid">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>กำลังโหลดข้อมูล...</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Hotel Detail Modal -->
+    <div class="modal" id="hotelModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Koh Larn Hotel Search. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
