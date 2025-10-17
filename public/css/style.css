@@ -674,7 +674,7 @@ header .subtitle {
 }
 
 .accommodation-badge {
-    position: absolute;
+    position: absolute !important;
     top: 10px;
     left: 10px;
     color: var(--white);
@@ -682,12 +682,13 @@ header .subtitle {
     border-radius: 20px;
     font-size: 0.8rem;
     font-weight: 600;
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 6px;
     backdrop-filter: blur(8px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    z-index: 2;
+    z-index: 2 !important;
+    visibility: visible !important;
 }
 
 .accommodation-badge i {
@@ -757,14 +758,6 @@ header .subtitle {
     min-height: 28px;
 }
 
-.hotel-accommodation-types {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-bottom: 12px;
-    min-height: 28px;
-}
-
 .feature-badge {
     padding: 5px 10px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -780,19 +773,6 @@ header .subtitle {
 }
 
 .room-type-badge {
-    padding: 5px 10px;
-    color: var(--white);
-    border-radius: 15px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.accommodation-type-badge {
     padding: 5px 10px;
     color: var(--white);
     border-radius: 15px;
@@ -1551,20 +1531,31 @@ footer p {
 
 /* Image Carousel Styles */
 .hotel-carousel {
-    position: relative;
-    width: 100%;
-    height: 200px;
-    overflow: hidden;
+    position: relative !important;
+    width: 100% !important;
+    height: 200px !important;
+    overflow: hidden !important;
     border-radius: 12px 12px 0 0;
+    display: block !important;
+    visibility: visible !important;
 }
 
 .carousel-slide {
-    position: absolute;
-    width: 100%;
-    height: 100%;
+    position: absolute !important;
+    width: 100% !important;
+    height: 100% !important;
     top: 0;
     left: 0;
     transition: opacity 0.3s ease;
+}
+
+.carousel-slide.active {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+.carousel-slide:not(.active) {
+    display: none !important;
 }
 
 .carousel-slide img {
@@ -1574,7 +1565,7 @@ footer p {
 }
 
 .carousel-btn {
-    position: absolute;
+    position: absolute !important;
     top: 50%;
     transform: translateY(-50%);
     background: rgba(0, 0, 0, 0.6);
@@ -1584,8 +1575,8 @@ footer p {
     height: 35px;
     border-radius: 50%;
     cursor: pointer;
-    z-index: 10;
-    display: flex;
+    z-index: 10 !important;
+    display: flex !important;
     align-items: center;
     justify-content: center;
     transition: all 0.3s;
