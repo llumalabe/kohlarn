@@ -12,15 +12,26 @@ let canWrite = false;
 try {
   let serviceAccount;
   
+  // Debug: Log environment variable availability
+  console.log('🔍 Debug - Environment variables check:');
+  console.log('  - SERVICE_ACCOUNT_BASE64:', process.env.SERVICE_ACCOUNT_BASE64 ? '✅ Present' : '❌ Missing');
+  console.log('  - SERVICE_ACCOUNT_JSON:', process.env.SERVICE_ACCOUNT_JSON ? '✅ Present' : '❌ Missing');
+  console.log('  - GOOGLE_SHEET_ID:', process.env.GOOGLE_SHEET_ID || '❌ Missing');
+  
   // Try to get service account from environment variable (for cloud deployment)
   if (process.env.SERVICE_ACCOUNT_BASE64) {
     console.log('📦 Using SERVICE_ACCOUNT_BASE64 from environment variable');
     const base64 = process.env.SERVICE_ACCOUNT_BASE64;
     const json = Buffer.from(base64, 'base64').toString('utf8');
     serviceAccount = JSON.parse(json);
+    console.log('✅ Service account loaded from BASE64');
   } else if (process.env.SERVICE_ACCOUNT_JSON) {
     console.log('📦 Using SERVICE_ACCOUNT_JSON from environment variable');
-    serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT_JSON);
+    const jsonString = process.env.SERVICE_ACCOUNT_JSON;
+    console.log('  - JSON string length:', jsonString.length);
+    console.log('  - First 50 chars:', jsonString.substring(0, 50));
+    serviceAccount = JSON.parse(jsonString);
+    console.log('✅ Service account loaded from JSON');
   } else {
     // Fallback to file (for local development)
     const serviceAccountPath = path.join(__dirname, '../service-account.json');
