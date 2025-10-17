@@ -17,7 +17,7 @@ const activityLogService = require('./services/activityLog');
 const filtersService = require('./services/filters');
 const roomTypesService = require('./services/roomTypes');
 const accommodationTypesService = require('./services/accommodationTypes');
-const hotelClicksService = require('./services/hotelClicks');
+const hotelClicksService = require('./services/hotelClicksSheet'); // Use Google Sheets for clicks
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -387,11 +387,13 @@ app.delete('/api/admin/hotels/:id', verifyToken, async (req, res) => {
 app.post('/api/hotels/:id/click', async (req, res) => {
   try {
     const { id } = req.params;
-    const ip = req.ip || req.connection.remoteAddress;
-    const userAgent = req.get('user-agent') || '';
     
-    const result = hotelClicksService.recordClick(id, ip, userAgent);
-    res.json({ success: true, clicks: result.clicks });
+    const result = await hotelClicksService.recordClick(id);
+    if (result.success) {
+      res.json({ success: true, clicks: result.clicks });
+    } else {
+      res.status(400).json({ success: false, error: result.error });
+    }
   } catch (error) {
     console.error('Error recording click:', error);
     res.status(500).json({ success: false, error: 'Failed to record click' });
@@ -402,8 +404,8 @@ app.post('/api/hotels/:id/click', async (req, res) => {
 app.get('/api/hotels/:id/clicks', async (req, res) => {
   try {
     const { id } = req.params;
-    const clicks = hotelClicksService.getHotelClicks(id);
-    res.json({ success: true, clicks });
+    const clickData = await hotelClicksService.getHotelClicks(id);
+    res.json({ success: true, clicks: clickData.count });
   } catch (error) {
     console.error('Error getting clicks:', error);
     res.status(500).json({ success: false, error: 'Failed to get clicks' });
@@ -451,13 +453,17 @@ app.get('/api/admin/stats', verifyToken, async (req, res) => {
     // Get top liked hotels
     const topLikedHotels = await likesService.getTopLikedHotels(10);
     
+    // Get click stats
+    const clickStats = await hotelClicksService.getClickStats();
+    const topClickedHotels = await hotelClicksService.getTopClickedHotels(10);
+    
     const stats = {
       visits: statsService.getVisitStats(period),
       likes: { total: topLikedHotels.reduce((sum, h) => sum + h.likes, 0) },
-      clicks: hotelClicksService.getClickStats(period),
+      clicks: clickStats,
       totalHotels: totalHotels,
       topHotels: topLikedHotels,
-      topClickedHotels: hotelClicksService.getTopClickedHotels(period),
+      topClickedHotels: topClickedHotels,
       realtimeVisits: statsService.getRealtimeVisits()
     };
     
