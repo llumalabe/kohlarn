@@ -849,6 +849,7 @@ function formatTimeAgo(timestamp) {
     // Try to parse different timestamp formats
     if (typeof timestamp === 'string') {
         // Thai date format: "5/10/2568 14:30:45" or "05/10/2568, 14:30:45"
+        // Format is D/M/Y (day/month/year) in Thai format
         if (timestamp.includes('/') && timestamp.includes(',')) {
             // Remove comma and extra spaces
             timestamp = timestamp.replace(/,\s*/g, ' ').trim();
@@ -857,8 +858,8 @@ function formatTimeAgo(timestamp) {
         // Convert Thai year (พ.ศ.) to AD if needed
         const thaiYearMatch = timestamp.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
         if (thaiYearMatch) {
-            const month = thaiYearMatch[1].padStart(2, '0');  // First number is month (M/D/Y format)
-            const day = thaiYearMatch[2].padStart(2, '0');    // Second number is day
+            const day = thaiYearMatch[1].padStart(2, '0');    // First number is day (D/M/Y format)
+            const month = thaiYearMatch[2].padStart(2, '0');  // Second number is month
             let year = parseInt(thaiYearMatch[3]);
             
             // Convert Thai year to AD (subtract 543)
@@ -871,6 +872,9 @@ function formatTimeAgo(timestamp) {
             const timeComponents = timePart.split(':');
             if (timeComponents.length === 3) {
                 timePart = timeComponents.map(t => t.padStart(2, '0')).join(':');
+            } else if (timeComponents.length === 2) {
+                // Add seconds if missing
+                timePart = timeComponents.map(t => t.padStart(2, '0')).join(':') + ':00';
             }
             
             // สร้าง Date object โดยใช้ local timezone (จะเป็น GMT+7 อัตโนมัติ)
