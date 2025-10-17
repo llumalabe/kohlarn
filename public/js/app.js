@@ -829,7 +829,8 @@ async function likeHotel(hotelId) {
         
         const data = await response.json();
         
-        if (data.success) {
+        // Check if response is successful (200-299)
+        if (response.ok && data.success) {
             // Update local data
             const hotel = allHotels.find(h => h.id === hotelId);
             if (hotel) {
