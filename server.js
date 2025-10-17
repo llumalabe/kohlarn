@@ -11,7 +11,7 @@ const session = require('express-session');
 
 const googleSheetsService = require('./services/googleSheets');
 const statsService = require('./services/stats');
-const likesService = require('./services/likes');
+const likesService = require('./services/likesSheet'); // Use Google Sheets for likes
 const usersService = require('./services/users');
 const activityLogService = require('./services/activityLog');
 const filtersService = require('./services/filters');
@@ -414,9 +414,8 @@ app.get('/api/hotels/:id/clicks', async (req, res) => {
 app.post('/api/hotels/:id/like', async (req, res) => {
   try {
     const { id } = req.params;
-    const ip = req.ip || req.connection.remoteAddress;
     
-    const result = likesService.likeHotel(id, ip);
+    const result = await likesService.updateHotelLikes(id, true);
     if (result.success) {
       res.json({ success: true, likes: result.likes });
     } else {
@@ -432,8 +431,8 @@ app.post('/api/hotels/:id/like', async (req, res) => {
 app.get('/api/hotels/:id/likes', async (req, res) => {
   try {
     const { id } = req.params;
-    const likes = likesService.getHotelLikes(id);
-    res.json({ success: true, likes });
+    const likeData = await likesService.getHotelLikes(id);
+    res.json({ success: true, likes: likeData.count });
   } catch (error) {
     console.error('Error getting likes:', error);
     res.status(500).json({ success: false, error: 'Failed to get likes' });
@@ -449,12 +448,15 @@ app.get('/api/admin/stats', verifyToken, async (req, res) => {
     const hotels = await googleSheetsService.getHotels();
     const totalHotels = hotels.length;
     
+    // Get top liked hotels
+    const topLikedHotels = await likesService.getTopLikedHotels(10);
+    
     const stats = {
       visits: statsService.getVisitStats(period),
-      likes: likesService.getLikeStats(period),
+      likes: { total: topLikedHotels.reduce((sum, h) => sum + h.likes, 0) },
       clicks: hotelClicksService.getClickStats(period),
       totalHotels: totalHotels,
-      topHotels: likesService.getTopHotels(period),
+      topHotels: topLikedHotels,
       topClickedHotels: hotelClicksService.getTopClickedHotels(period),
       realtimeVisits: statsService.getRealtimeVisits()
     };
