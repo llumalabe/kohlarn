@@ -911,6 +911,45 @@ async function openHotelModal(hotelId) {
     const name = hotel.nameTh || hotel.nameEn || 'ไม่มีชื่อ';
     const nameEn = hotel.nameTh && hotel.nameEn ? hotel.nameEn : '';
     
+    // Get all images
+    const images = hotel.images && hotel.images.length > 0 ? hotel.images : [hotel.imageUrl || 'https://via.placeholder.com/600x400'];
+    
+    // Get accommodation type data
+    const accommodationTypesList = hotel.accommodationTypes ? hotel.accommodationTypes.split(',').map(at => at.trim()).filter(at => at) : [];
+    const firstAccommodationType = accommodationTypesList.length > 0 ? getAccommodationTypeData(accommodationTypesList[0]) : null;
+    
+    // Create carousel HTML for modal
+    const modalImageHTML = images.length > 1 ? `
+        <div class="modal-carousel" data-hotel-id="${hotel.id}">
+            ${images.map((img, idx) => `
+                <div class="modal-carousel-slide ${idx === 0 ? 'active' : ''}" style="display: ${idx === 0 ? 'block' : 'none'};">
+                    <img src="${img}" alt="${name}" onerror="this.src='https://via.placeholder.com/600x400'">
+                </div>
+            `).join('')}
+            ${images.length > 1 ? `
+                <button class="modal-carousel-btn prev" onclick="event.stopPropagation(); prevModalImage('${hotel.id}')">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="modal-carousel-btn next" onclick="event.stopPropagation(); nextModalImage('${hotel.id}')">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <div class="modal-carousel-indicators">
+                    ${images.map((_, idx) => `<span class="modal-indicator ${idx === 0 ? 'active' : ''}" onclick="event.stopPropagation(); goToModalSlide('${hotel.id}', ${idx})"></span>`).join('')}
+                </div>
+            ` : ''}
+            ${firstAccommodationType ? `<span class="modal-accommodation-badge" style="background: ${firstAccommodationType.color || '#667eea'};">
+                <i class="fas ${firstAccommodationType.icon || 'fa-hotel'}"></i> ${firstAccommodationType.nameTh || firstAccommodationType.nameEn}
+            </span>` : ''}
+        </div>
+    ` : `
+        <div class="detail-image">
+            <img src="${images[0]}" alt="${name}" onerror="this.src='https://via.placeholder.com/600x400'">
+            ${firstAccommodationType ? `<span class="modal-accommodation-badge" style="background: ${firstAccommodationType.color || '#667eea'};">
+                <i class="fas ${firstAccommodationType.icon || 'fa-hotel'}"></i> ${firstAccommodationType.nameTh || firstAccommodationType.nameEn}
+            </span>` : ''}
+        </div>
+    `;
+    
     modalContent.innerHTML = `
         <div class="hotel-detail">
             <div class="detail-header">
@@ -922,9 +961,7 @@ async function openHotelModal(hotelId) {
                 </div>
             </div>
             
-            <div class="detail-image">
-                <img src="${hotel.imageUrl || 'https://via.placeholder.com/600x400'}" alt="${name}" onerror="this.src='https://via.placeholder.com/600x400'">
-            </div>
+            ${modalImageHTML}
             
             <div class="detail-info">
                 <div class="info-row">
@@ -1053,6 +1090,62 @@ function goToSlide(hotelId, index) {
     
     const slides = carousel.querySelectorAll('.carousel-slide');
     const indicators = carousel.querySelectorAll('.indicator');
+    const currentIndex = Array.from(slides).findIndex(slide => slide.classList.contains('active'));
+    
+    if (currentIndex === index) return;
+    
+    slides[currentIndex].classList.remove('active');
+    slides[currentIndex].style.display = 'none';
+    indicators[currentIndex].classList.remove('active');
+    
+    slides[index].classList.add('active');
+    slides[index].style.display = 'block';
+    indicators[index].classList.add('active');
+}
+
+// Modal Carousel Navigation Functions
+function nextModalImage(hotelId) {
+    const carousel = document.querySelector(`.modal-carousel[data-hotel-id="${hotelId}"]`);
+    if (!carousel) return;
+    
+    const slides = carousel.querySelectorAll('.modal-carousel-slide');
+    const indicators = carousel.querySelectorAll('.modal-indicator');
+    const currentIndex = Array.from(slides).findIndex(slide => slide.classList.contains('active'));
+    const nextIndex = (currentIndex + 1) % slides.length;
+    
+    slides[currentIndex].classList.remove('active');
+    slides[currentIndex].style.display = 'none';
+    indicators[currentIndex].classList.remove('active');
+    
+    slides[nextIndex].classList.add('active');
+    slides[nextIndex].style.display = 'block';
+    indicators[nextIndex].classList.add('active');
+}
+
+function prevModalImage(hotelId) {
+    const carousel = document.querySelector(`.modal-carousel[data-hotel-id="${hotelId}"]`);
+    if (!carousel) return;
+    
+    const slides = carousel.querySelectorAll('.modal-carousel-slide');
+    const indicators = carousel.querySelectorAll('.modal-indicator');
+    const currentIndex = Array.from(slides).findIndex(slide => slide.classList.contains('active'));
+    const prevIndex = currentIndex === 0 ? slides.length - 1 : currentIndex - 1;
+    
+    slides[currentIndex].classList.remove('active');
+    slides[currentIndex].style.display = 'none';
+    indicators[currentIndex].classList.remove('active');
+    
+    slides[prevIndex].classList.add('active');
+    slides[prevIndex].style.display = 'block';
+    indicators[prevIndex].classList.add('active');
+}
+
+function goToModalSlide(hotelId, index) {
+    const carousel = document.querySelector(`.modal-carousel[data-hotel-id="${hotelId}"]`);
+    if (!carousel) return;
+    
+    const slides = carousel.querySelectorAll('.modal-carousel-slide');
+    const indicators = carousel.querySelectorAll('.modal-indicator');
     const currentIndex = Array.from(slides).findIndex(slide => slide.classList.contains('active'));
     
     if (currentIndex === index) return;
