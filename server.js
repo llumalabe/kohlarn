@@ -86,6 +86,10 @@ app.use(session({
 app.use(express.json());
 app.use(express.static('public'));
 
+// Trust proxy - Required for Vercel and other reverse proxies
+// This allows express-rate-limit to correctly identify users
+app.set('trust proxy', 1);
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -1118,6 +1122,15 @@ app.post('/api/websettings', verifyToken, async (req, res) => {
       details: error.message 
     });
   }
+});
+
+// Error handlers
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
 // Start server
