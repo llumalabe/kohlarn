@@ -4,14 +4,19 @@ const path = require('path');
 const DATA_DIR = path.join(__dirname, '../data');
 const LIKES_FILE = path.join(DATA_DIR, 'likes.json');
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
-// Initialize likes file if it doesn't exist
-if (!fs.existsSync(LIKES_FILE)) {
-  fs.writeFileSync(LIKES_FILE, JSON.stringify({ hotels: {} }));
+// Ensure data directory exists (only in local environment)
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  
+  // Initialize likes file if it doesn't exist (only in local environment)
+  if (!fs.existsSync(LIKES_FILE)) {
+    fs.writeFileSync(LIKES_FILE, JSON.stringify({ hotels: {} }));
+  }
+} catch (error) {
+  // Ignore errors in serverless/read-only environments (like Vercel)
+  console.log('⚠️  Running in serverless environment - file system is read-only');
 }
 
 /**
@@ -30,7 +35,12 @@ function loadLikes() {
  * Save likes to file
  */
 function saveLikes(likes) {
-  fs.writeFileSync(LIKES_FILE, JSON.stringify(likes, null, 2));
+  try {
+    fs.writeFileSync(LIKES_FILE, JSON.stringify(likes, null, 2));
+  } catch (error) {
+    // Ignore errors in serverless/read-only environments
+    console.log('⚠️  Cannot save likes in serverless environment');
+  }
 }
 
 /**

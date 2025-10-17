@@ -4,14 +4,19 @@ const path = require('path');
 const DATA_DIR = path.join(__dirname, '../data');
 const STATS_FILE = path.join(DATA_DIR, 'stats.json');
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
-// Initialize stats file if it doesn't exist
-if (!fs.existsSync(STATS_FILE)) {
-  fs.writeFileSync(STATS_FILE, JSON.stringify({ visits: [] }));
+// Ensure data directory exists (only in local environment)
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  
+  // Initialize stats file if it doesn't exist (only in local environment)
+  if (!fs.existsSync(STATS_FILE)) {
+    fs.writeFileSync(STATS_FILE, JSON.stringify({ visits: [] }));
+  }
+} catch (error) {
+  // Ignore errors in serverless/read-only environments (like Vercel)
+  console.log('⚠️  Running in serverless environment - file system is read-only');
 }
 
 /**
@@ -30,7 +35,12 @@ function loadStats() {
  * Save stats to file
  */
 function saveStats(stats) {
-  fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2));
+  try {
+    fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2));
+  } catch (error) {
+    // Ignore errors in serverless/read-only environments
+    console.log('⚠️  Cannot save stats in serverless environment');
+  }
 }
 
 /**
