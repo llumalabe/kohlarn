@@ -12,6 +12,7 @@ const session = require('express-session');
 const googleSheetsService = require('./services/googleSheets');
 const statsService = require('./services/stats');
 const likesService = require('./services/likesSheet'); // Use Google Sheets for likes
+const likesHistoryService = require('./services/likesHistorySheet'); // Track daily likes per IP
 const usersService = require('./services/users');
 const activityLogService = require('./services/activityLog');
 const filtersService = require('./services/filters');
@@ -417,6 +418,24 @@ app.post('/api/hotels/:id/like', async (req, res) => {
   try {
     const { id } = req.params;
     
+    // Get IP address (handle proxy)
+    const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for']?.split(',')[0];
+    
+    // Check if this IP has already liked this hotel today
+    const hasLiked = await likesHistoryService.hasLikedToday(id, ipAddress);
+    
+    if (hasLiked) {
+      return res.status(429).json({ 
+        success: false, 
+        error: 'คุณได้กดหัวใจโรงแรมนี้แล้ววันนี้ กรุณากลับมาใหม่พรุ่งนี้',
+        message: 'Already liked today'
+      });
+    }
+    
+    // Record this like in history
+    await likesHistoryService.recordLike(id, ipAddress);
+    
+    // Update total like count
     const result = await likesService.updateHotelLikes(id, true);
     if (result.success) {
       res.json({ success: true, likes: result.likes });

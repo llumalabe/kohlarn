@@ -854,10 +854,12 @@ async function likeHotel(hotelId) {
             // แสดงข้อความสำเร็จ
             showLikeSuccess();
         } else {
-            console.error('Failed to like hotel:', data.error);
+            // แสดง error message (เช่น กดซ้ำในวันเดียวกัน)
+            showLikeError(data.error || 'ไม่สามารถกดหัวใจได้');
         }
     } catch (error) {
         console.error('Error liking hotel:', error);
+        showLikeError('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
     }
 }
 
@@ -878,6 +880,25 @@ function showLikeSuccess() {
             message.remove();
         }, 300);
     }, 2000);
+}
+
+// Show like error message
+function showLikeError(errorMsg) {
+    const message = document.createElement('div');
+    message.className = 'like-error';
+    message.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${errorMsg}`;
+    document.body.appendChild(message);
+    
+    setTimeout(() => {
+        message.classList.add('show');
+    }, 10);
+    
+    setTimeout(() => {
+        message.classList.remove('show');
+        setTimeout(() => {
+            message.remove();
+        }, 300);
+    }, 3000);
 }
 
 // Open hotel modal and track click
