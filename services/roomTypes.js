@@ -9,11 +9,30 @@ let sheets;
 let canWrite = false;
 
 try {
-  const serviceAccountPath = path.join(__dirname, '../service-account.json');
+  let serviceAccount;
   
-  if (fs.existsSync(serviceAccountPath)) {
-    const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-    
+  // Priority 1: Environment variable (base64 encoded) - for Vercel
+  if (process.env.SERVICE_ACCOUNT_BASE64) {
+    console.log('📦 Using SERVICE_ACCOUNT_BASE64 environment variable');
+    const base64 = process.env.SERVICE_ACCOUNT_BASE64;
+    const json = Buffer.from(base64, 'base64').toString('utf8');
+    serviceAccount = JSON.parse(json);
+  }
+  // Priority 2: Environment variable (JSON string) - for other cloud platforms
+  else if (process.env.SERVICE_ACCOUNT_JSON) {
+    console.log('📦 Using SERVICE_ACCOUNT_JSON environment variable');
+    serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT_JSON);
+  }
+  // Priority 3: Local file - for development
+  else {
+    const serviceAccountPath = path.join(__dirname, '../service-account.json');
+    if (fs.existsSync(serviceAccountPath)) {
+      console.log('📦 Using service-account.json file');
+      serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+    }
+  }
+  
+  if (serviceAccount) {
     const auth = new google.auth.GoogleAuth({
       credentials: serviceAccount,
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
@@ -21,13 +40,17 @@ try {
     
     sheets = google.sheets({ version: 'v4', auth });
     canWrite = true;
+    console.log('✅ Using Service Account - Full access (read/write)');
   } else {
     const API_KEY = process.env.GOOGLE_API_KEY;
     sheets = google.sheets({ version: 'v4', auth: API_KEY });
+    console.log('⚠️  Using API Key - Read-only access');
   }
 } catch (error) {
+  console.error('❌ Error loading service account:', error.message);
   const API_KEY = process.env.GOOGLE_API_KEY;
   sheets = google.sheets({ version: 'v4', auth: API_KEY });
+  console.log('⚠️  Fallback to API Key - Read-only access');
 }
 
 const ROOM_TYPES_SHEET = 'RoomTypes';

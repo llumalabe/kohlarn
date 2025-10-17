@@ -1,13 +1,40 @@
 const { google } = require('googleapis');
 const path = require('path');
+const fs = require('fs');
 
 // Initialize Google Sheets API
+let serviceAccount;
+try {
+    // Priority 1: Environment variable (base64 encoded) - for Vercel
+    if (process.env.SERVICE_ACCOUNT_BASE64) {
+        console.log('📦 Using SERVICE_ACCOUNT_BASE64 environment variable');
+        const base64 = process.env.SERVICE_ACCOUNT_BASE64;
+        const json = Buffer.from(base64, 'base64').toString('utf8');
+        serviceAccount = JSON.parse(json);
+    }
+    // Priority 2: Environment variable (JSON string) - for other cloud platforms
+    else if (process.env.SERVICE_ACCOUNT_JSON) {
+        console.log('📦 Using SERVICE_ACCOUNT_JSON environment variable');
+        serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT_JSON);
+    }
+    // Priority 3: Local file - for development
+    else {
+        console.log('📦 Using service-account.json file');
+        const serviceAccountPath = path.join(__dirname, '../service-account.json');
+        serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+    }
+} catch (error) {
+    console.error('❌ Error loading service account:', error.message);
+    throw error;
+}
+
 const auth = new google.auth.GoogleAuth({
-    keyFile: path.join(__dirname, '../service-account.json'),
+    credentials: serviceAccount,
     scopes: ['https://www.googleapis.com/auth/spreadsheets']
 });
 
 const sheets = google.sheets({ version: 'v4', auth });
+console.log('✅ Using Service Account - Full access (read/write)');
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID || '1lrveylO3qD8fZlJWqiyEz3KaRojT3PObzTMqIt1hKNA';
 const SHEET_NAME = 'AccommodationTypes';
 
