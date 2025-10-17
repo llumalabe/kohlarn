@@ -4309,7 +4309,16 @@ function openAddMemberModal() {
     document.getElementById('memberPassword').required = true;
     document.getElementById('memberNickname').value = '';
     document.getElementById('memberRole').value = 'user';
-    document.getElementById('memberHotelId').value = '';
+    
+    // Clear hotel search inputs
+    const searchInput = document.getElementById('memberHotelSearch');
+    const hiddenInput = document.getElementById('memberHotelId');
+    const resultsDiv = document.getElementById('hotelSearchResults');
+    
+    if (searchInput) searchInput.value = '';
+    if (hiddenInput) hiddenInput.value = '';
+    if (resultsDiv) resultsDiv.style.display = 'none';
+    
     document.getElementById('hotelIdGroup').style.display = 'none';
     
     // Load hotels for dropdown
@@ -4371,8 +4380,25 @@ async function editMember(memberUsername) {
             // Load hotels for dropdown first
             await loadHotelsForDropdown();
             
-            // Set hotel ID after hotels are loaded
-            document.getElementById('memberHotelId').value = String(member.hotelId || '');
+            // Set hotel ID and search input after hotels are loaded
+            const searchInput = document.getElementById('memberHotelSearch');
+            const hiddenInput = document.getElementById('memberHotelId');
+            
+            if (member.hotelId && searchInput && hiddenInput) {
+                hiddenInput.value = String(member.hotelId);
+                
+                // Find hotel and set display text
+                const hotel = allHotelsData.find(h => String(h.id) === String(member.hotelId));
+                if (hotel) {
+                    const displayName = hotel.nameTh || hotel.nameEn || 'ไม่มีชื่อ';
+                    searchInput.value = `${hotel.id} - ${displayName}`;
+                } else {
+                    searchInput.value = member.hotelId;
+                }
+            } else if (searchInput && hiddenInput) {
+                searchInput.value = '';
+                hiddenInput.value = '';
+            }
             
             // Show/hide hotel field based on member's role AND current user's role
             const currentHotelInfo = document.getElementById('currentHotelInfo');
@@ -4384,27 +4410,16 @@ async function editMember(memberUsername) {
                 
                 // Show current hotel name if exists
                 if (member.hotelId) {
-                    // Fetch hotels to get the name
-                    try {
-                        const hotelResponse = await fetch('/api/hotels');
-                        const hotelData = await hotelResponse.json();
-                        if (hotelData.success) {
-                            // Compare as strings to handle leading zeros
-                            const hotel = hotelData.data.find(h => String(h.id) === String(member.hotelId));
-                            if (hotel) {
-                                const hotelName = hotel.nameTh || hotel.nameEn || member.hotelId;
-                                if (currentHotelInfo) {
-                                    currentHotelInfo.innerHTML = `<i class="fas fa-building"></i> ปัจจุบัน: <strong style="color: #2c3e50;">${hotel.id} - ${hotelName}</strong>`;
-                                }
-                            } else {
-                                if (currentHotelInfo) {
-                                    currentHotelInfo.innerHTML = `<i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i> ไม่พบข้อมูลโรงแรม (ID: ${member.hotelId})`;
-                                }                            }
-                        }
-                    } catch (err) {
-                        console.error('Error fetching hotel info:', err);
+                    // Use allHotelsData which is already loaded
+                    const hotel = allHotelsData.find(h => String(h.id) === String(member.hotelId));
+                    if (hotel) {
+                        const hotelName = hotel.nameTh || hotel.nameEn || member.hotelId;
                         if (currentHotelInfo) {
-                            currentHotelInfo.innerHTML = `<i class="fas fa-building"></i> Hotel ID: ${member.hotelId}`;
+                            currentHotelInfo.innerHTML = `<i class="fas fa-building"></i> ปัจจุบัน: <strong style="color: #2c3e50;">${hotel.id} - ${hotelName}</strong>`;
+                        }
+                    } else {
+                        if (currentHotelInfo) {
+                            currentHotelInfo.innerHTML = `<i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i> ไม่พบข้อมูลโรงแรม (ID: ${member.hotelId})`;
                         }
                     }
                 } else {
@@ -4518,27 +4533,110 @@ async function deleteMember(memberId, memberName) {
 }
 
 // Load hotels for dropdown
+let allHotelsData = []; // Store all hotels for searching
+
 async function loadHotelsForDropdown() {
     try {
         const response = await fetch('/api/hotels');
         const data = await response.json();
         
         if (data.success) {
-            const select = document.getElementById('memberHotelId');
-            select.innerHTML = '<option value="">-- ไม่ระบุ --</option>';
+            allHotelsData = data.data; // Store for search functionality
             
-            data.data.forEach(hotel => {
-                const option = document.createElement('option');
-                // Keep hotel ID as string to preserve leading zeros
-                option.value = String(hotel.id);
-                option.setAttribute('data-hotel-id', String(hotel.id));
-                option.textContent = `${hotel.id} - ${hotel.nameTh || hotel.nameEn || 'ไม่มีชื่อ'}`;
-                select.appendChild(option);
+            // Setup search functionality
+            const searchInput = document.getElementById('memberHotelSearch');
+            const resultsDiv = document.getElementById('hotelSearchResults');
+            const hiddenInput = document.getElementById('memberHotelId');
+            
+            if (!searchInput) return;
+            
+            // Search on input
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase().trim();
+                
+                if (searchTerm.length === 0) {
+                    resultsDiv.style.display = 'none';
+                    hiddenInput.value = '';
+                    return;
+                }
+                
+                // Filter hotels by ID, nameTh, or nameEn
+                const filteredHotels = allHotelsData.filter(hotel => {
+                    const id = String(hotel.id).toLowerCase();
+                    const nameTh = (hotel.nameTh || '').toLowerCase();
+                    const nameEn = (hotel.nameEn || '').toLowerCase();
+                    
+                    return id.includes(searchTerm) || 
+                           nameTh.includes(searchTerm) || 
+                           nameEn.includes(searchTerm);
+                });
+                
+                displaySearchResults(filteredHotels);
+            });
+            
+            // Close results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+                    resultsDiv.style.display = 'none';
+                }
             });
         }
     } catch (error) {
         console.error('Error loading hotels:', error);
     }
+}
+
+// Display search results
+function displaySearchResults(hotels) {
+    const resultsDiv = document.getElementById('hotelSearchResults');
+    
+    if (hotels.length === 0) {
+        resultsDiv.innerHTML = '<div style="padding: 10px; color: #999; text-align: center;">ไม่พบโรงแรม</div>';
+        resultsDiv.style.display = 'block';
+        return;
+    }
+    
+    let html = '';
+    hotels.forEach(hotel => {
+        const nameTh = hotel.nameTh || '';
+        const nameEn = hotel.nameEn || '';
+        const displayName = nameTh || nameEn || 'ไม่มีชื่อ';
+        const secondaryName = nameTh && nameEn ? `<span style="color: #999; font-size: 0.9em;">${nameEn}</span>` : '';
+        
+        html += `
+            <div 
+                class="hotel-search-item" 
+                onclick="selectHotel('${hotel.id}', '${displayName.replace(/'/g, "\\'")}', '${nameEn.replace(/'/g, "\\'")}', '${nameTh.replace(/'/g, "\\'")}')"
+                style="padding: 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; transition: background 0.2s;"
+                onmouseover="this.style.background='#f8f9fa'"
+                onmouseout="this.style.background='white'"
+            >
+                <div style="font-weight: bold; color: #2c3e50;">
+                    <i class="fas fa-hotel" style="color: #3498db; margin-right: 5px;"></i>
+                    ${hotel.id} - ${displayName}
+                </div>
+                ${secondaryName ? `<div style="margin-left: 25px;">${secondaryName}</div>` : ''}
+            </div>
+        `;
+    });
+    
+    resultsDiv.innerHTML = html;
+    resultsDiv.style.display = 'block';
+}
+
+// Select hotel from search results
+function selectHotel(hotelId, displayName, nameEn, nameTh) {
+    const searchInput = document.getElementById('memberHotelSearch');
+    const hiddenInput = document.getElementById('memberHotelId');
+    const resultsDiv = document.getElementById('hotelSearchResults');
+    
+    // Set values
+    const finalName = nameTh || nameEn || displayName;
+    searchInput.value = `${hotelId} - ${finalName}`;
+    hiddenInput.value = String(hotelId);
+    
+    // Hide results
+    resultsDiv.style.display = 'none';
 }
 
 // Add event listener for role change to show/hide hotel field
@@ -4547,11 +4645,17 @@ document.addEventListener('DOMContentLoaded', function() {
     if (roleSelect) {
         roleSelect.addEventListener('change', function() {
             const hotelIdGroup = document.getElementById('hotelIdGroup');
+            const searchInput = document.getElementById('memberHotelSearch');
+            const hiddenInput = document.getElementById('memberHotelId');
+            const resultsDiv = document.getElementById('hotelSearchResults');
+            
             if (this.value === 'hotel-owner') {
                 hotelIdGroup.style.display = 'block';
             } else {
                 hotelIdGroup.style.display = 'none';
-                document.getElementById('memberHotelId').value = '';
+                if (searchInput) searchInput.value = '';
+                if (hiddenInput) hiddenInput.value = '';
+                if (resultsDiv) resultsDiv.style.display = 'none';
             }
         });
     }

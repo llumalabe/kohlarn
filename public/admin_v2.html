@@ -1232,9 +1232,23 @@
                         โรงแรมที่รับผิดชอบ
                         <span id="currentHotelInfo" style="color: #f39c12; font-size: 0.9em; margin-left: 10px;"></span>
                     </label>
-                    <select id="memberHotelId">
-                        <option value="">-- ไม่ระบุ --</option>
-                    </select>
+                    <div style="position: relative;">
+                        <input 
+                            type="text" 
+                            id="memberHotelSearch" 
+                            placeholder="ค้นหาด้วย รหัส, ชื่อไทย หรือชื่ออังกฤษ..." 
+                            autocomplete="off"
+                            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;"
+                        >
+                        <input type="hidden" id="memberHotelId" name="hotelId">
+                        <div 
+                            id="hotelSearchResults" 
+                            style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;"
+                        ></div>
+                    </div>
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        <i class="fas fa-info-circle"></i> พิมพ์เพื่อค้นหา หรือเลือกจากรายการ
+                    </small>
                 </div>
                 
                 <div class="form-actions">
