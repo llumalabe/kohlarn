@@ -229,7 +229,7 @@ async function addHotel(hotel, editorNickname = '') {
       hotel.filters || '',                          // P - ตัวกรอง
       hotel.bankName || '',                         // Q - ชื่อธนาคาร
       hotel.accountName || '',                      // R - ชื่อบัญชี
-      hotel.accountNumber || '',                    // S - เลขบัญชี
+      hotel.accountNumber ? `'${hotel.accountNumber}` : '', // S - เลขบัญชี (เพิ่ม ' เพื่อเก็บเลข 0 ด้านหน้า)
       hotel.imageUrl2 || '',                        // T - รูปที่ 2
       hotel.imageUrl3 || '',                        // U - รูปที่ 3
       hotel.imageUrl4 || '',                        // V - รูปที่ 4
@@ -305,7 +305,7 @@ async function updateHotel(hotelId, hotel, editorNickname = '') {
       hotel.filters || '',                          // P - ตัวกรอง
       hotel.bankName || '',                         // Q - ชื่อธนาคาร
       hotel.accountName || '',                      // R - ชื่อบัญชี
-      hotel.accountNumber || '',                    // S - เลขบัญชี
+      hotel.accountNumber ? `'${hotel.accountNumber}` : '', // S - เลขบัญชี (เพิ่ม ' เพื่อเก็บเลข 0 ด้านหน้า)
       hotel.imageUrl2 || '',                        // T - รูปที่ 2
       hotel.imageUrl3 || '',                        // U - รูปที่ 3
       hotel.imageUrl4 || '',                        // V - รูปที่ 4
