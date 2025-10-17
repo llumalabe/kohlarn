@@ -699,6 +699,11 @@ function createHotelCard(hotel) {
         ? hotel.images 
         : [hotel.imageUrl || 'https://via.placeholder.com/300x200'];
     
+    // Debug log
+    if (images.length > 1) {
+        console.log(`Hotel ${hotel.id} has ${images.length} images - carousel will be shown`);
+    }
+    
     // Parse amenities/filters from comma-separated string และสุ่มแสดงสูงสุด 4 รายการ
     const amenitiesList = hotel.filters ? hotel.filters.split(',').map(f => f.trim()).filter(f => f) : [];
     
@@ -721,6 +726,13 @@ function createHotelCard(hotel) {
     // Parse accommodation types from comma-separated string
     const accommodationTypesList = hotel.accommodationTypes ? hotel.accommodationTypes.split(',').map(at => at.trim()).filter(at => at) : [];
     const firstAccommodationType = accommodationTypesList.length > 0 ? getAccommodationTypeData(accommodationTypesList[0]) : null;
+    
+    // Debug log
+    if (firstAccommodationType) {
+        console.log(`Hotel ${hotel.id} accommodation:`, firstAccommodationType);
+    } else if (accommodationTypesList.length > 0) {
+        console.log(`Hotel ${hotel.id} has accommodation type ${accommodationTypesList[0]} but data not found`);
+    }
     
     // Create carousel HTML if multiple images
     const carouselHTML = images.length > 1 ? `
