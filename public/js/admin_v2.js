@@ -1383,9 +1383,18 @@ async function displayLikesStats(topHotels, clicksData) {
     console.log('clicksData:', clicksData);
     
     // Load all hotels to get names
-    const hotelsResponse = await fetch('/api/hotels');
-    const hotelsData = await hotelsResponse.json();
-    let hotels = hotelsData.data;
+    let hotels = [];
+    try {
+        const hotelsResponse = await fetch('/api/hotels');
+        if (!hotelsResponse.ok) {
+            throw new Error(`HTTP ${hotelsResponse.status}`);
+        }
+        const hotelsData = await hotelsResponse.json();
+        hotels = hotelsData.data || [];
+    } catch (error) {
+        console.error('Error loading hotels for stats:', error);
+        hotels = [];
+    }
     
     // กรองข้อมูลโรงแรมตาม role
     const userRole = currentUser.role || 'user';
@@ -1442,6 +1451,12 @@ async function displayLikesStats(topHotels, clicksData) {
     }
     
     console.log('clicksArray after conversion:', clicksArray);
+    
+    // Ensure hotels is an array
+    if (!Array.isArray(hotels)) {
+        console.error('hotels is not an array:', hotels);
+        hotels = [];
+    }
     
     // Combine likes and clicks data
     const statsData = hotels.map(hotel => {
