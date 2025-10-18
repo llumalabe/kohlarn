@@ -157,11 +157,7 @@ app.get('/api/hotels', async (req, res) => {
 app.post('/api/admin/login', loginLimiter, async (req, res) => {
   try {
     const { username, password } = req.body;
-    console.log('🔐 Admin login attempt:', { username, hasPassword: !!password });
-    
     const validation = await usersService.validateUser(username, password);
-    console.log('✅ Validation result:', { valid: validation.valid, isTemporary: validation.isTemporary });
-    
     if (validation.valid) {
       // สร้าง JWT Token
       const token = jwt.sign(
@@ -194,9 +190,6 @@ app.post('/api/admin/login', loginLimiter, async (req, res) => {
         'login',
         loginDetails
       );
-      
-      console.log(`✅ Admin login successful: ${username}`);
-      
       res.json({ 
         success: true, 
         message: validation.message,
@@ -205,7 +198,6 @@ app.post('/api/admin/login', loginLimiter, async (req, res) => {
         user: validation.user
       });
     } else {
-      console.log('❌ Login failed:', validation.message);
       res.status(401).json({ success: false, error: validation.message });
     }
   } catch (error) {
@@ -788,7 +780,6 @@ app.post('/api/upload', (req, res) => {
       
       // Return the URL of uploaded image
       const imageUrl = `/uploads/${req.file.filename}`;
-      console.log('Upload successful:', imageUrl);
       res.json({ success: true, imageUrl: imageUrl });
     } catch (error) {
       console.error('Error processing upload:', error);
@@ -852,11 +843,6 @@ app.get('/api/members', async (req, res) => {
 app.post('/api/admin/members', verifyToken, async (req, res) => {
   try {
     const memberData = req.body;
-    
-    console.log('📝 Adding new member');
-    console.log('👤 Admin:', req.user.username);
-    console.log('📋 New member:', { ...memberData, password: '***' });
-    
     // ไม่ต้อง validate ซ้ำ - verifyToken ทำแล้ว
     
     // Add new user with member data
@@ -871,8 +857,6 @@ app.post('/api/admin/members', verifyToken, async (req, res) => {
       'user',
       `เพิ่มสมาชิก ${memberData.nickname || memberData.username} (${memberData.username})`
     );
-    
-    console.log('✅ Member added successfully:', memberData.username);
     res.json({ success: true, data: newUser });
   } catch (error) {
     console.error('❌ Error adding user:', error);
@@ -885,11 +869,6 @@ app.put('/api/admin/members/:id', verifyToken, async (req, res) => {
   try {
     const memberData = req.body;
     const userId = req.params.id;
-    
-    console.log('📝 Updating member:', userId);
-    console.log('👤 Admin:', req.user.username);
-    console.log('📦 Update data:', { ...memberData, password: memberData?.password ? '***' : 'not changed' });
-    
     // Update user
     const updatedUser = await usersService.updateUser(userId, memberData);
     
@@ -902,8 +881,6 @@ app.put('/api/admin/members/:id', verifyToken, async (req, res) => {
       'user',
       `แก้ไขข้อมูลสมาชิก ${memberData.nickname || userId}`
     );
-    
-    console.log('✅ Member updated successfully:', userId);
     res.json({ success: true, data: updatedUser });
   } catch (error) {
     console.error('❌ Error updating user:', error);
@@ -915,10 +892,6 @@ app.put('/api/admin/members/:id', verifyToken, async (req, res) => {
 app.delete('/api/admin/members/:id', verifyToken, async (req, res) => {
   try {
     const userId = req.params.id;
-    
-    console.log('🗑️ Deleting member:', userId);
-    console.log('👤 Admin:', req.user.username);
-    
     // Delete user
     const deletedUser = await usersService.deleteUser(userId);
     
@@ -959,9 +932,6 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     if (!username || !password) {
       return res.json({ success: false, message: 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน' });
     }
-    
-    console.log(`🔐 Login attempt: ${username}`);
-    
     // Validate user - returns object with valid, user, message
     const result = await usersService.validateUser(username, password);
     
@@ -986,9 +956,6 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
         role: result.user.role || 'user',
         hotelId: result.user.hotelId || ''
       };
-      
-      console.log(`✅ Login successful: ${username}`);
-      
       // Return user data และ token
       res.json({
         success: true,
@@ -1031,9 +998,6 @@ app.post('/api/auth/register', async (req, res) => {
     if (password.length < 6) {
       return res.json({ success: false, message: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' });
     }
-    
-    console.log(`📝 Registration attempt: ${username}`);
-    
     // Check if username already exists
     const users = await usersService.getUsers();
     const existingUser = users.find(u => u.username === username);
@@ -1052,9 +1016,6 @@ app.post('/api/auth/register', async (req, res) => {
     };
     
     await usersService.addUser(newUser);
-    
-    console.log(`✅ User registered successfully: ${username}`);
-    
     // สร้าง JWT Token สำหรับ auto-login
     const token = jwt.sign(
       {
@@ -1170,10 +1131,4 @@ app.listen(PORT, '0.0.0.0', () => {
       }
     });
   });
-  
-  console.log('\n🚀 Server is running!');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`📱 Local:   http://localhost:${PORT}`);
-  console.log(`🌐 Network: http://${localIP}:${PORT}`);
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 });

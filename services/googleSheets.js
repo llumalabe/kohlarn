@@ -20,30 +20,19 @@ try {
   let serviceAccount;
   
   // Debug: Log environment variable availability
-  console.log('🔍 Debug - Environment variables check:');
-  console.log('  - SERVICE_ACCOUNT_BASE64:', process.env.SERVICE_ACCOUNT_BASE64 ? '✅ Present' : '❌ Missing');
-  console.log('  - SERVICE_ACCOUNT_JSON:', process.env.SERVICE_ACCOUNT_JSON ? '✅ Present' : '❌ Missing');
-  console.log('  - GOOGLE_SHEET_ID:', process.env.GOOGLE_SHEET_ID || '❌ Missing');
-  
   // Try to get service account from environment variable (for cloud deployment)
   if (process.env.SERVICE_ACCOUNT_BASE64) {
-    console.log('📦 Using SERVICE_ACCOUNT_BASE64 from environment variable');
     const base64 = process.env.SERVICE_ACCOUNT_BASE64;
     const json = Buffer.from(base64, 'base64').toString('utf8');
     serviceAccount = JSON.parse(json);
-    console.log('✅ Service account loaded from BASE64');
   } else if (process.env.SERVICE_ACCOUNT_JSON) {
-    console.log('📦 Using SERVICE_ACCOUNT_JSON from environment variable');
     const jsonString = process.env.SERVICE_ACCOUNT_JSON;
-    console.log('  - JSON string length:', jsonString.length);
     console.log('  - First 50 chars:', jsonString.substring(0, 50));
     serviceAccount = JSON.parse(jsonString);
-    console.log('✅ Service account loaded from JSON');
   } else {
     // Fallback to file (for local development)
     const serviceAccountPath = path.join(__dirname, '../service-account.json');
     if (fs.existsSync(serviceAccountPath)) {
-      console.log('📦 Using service-account.json file');
       serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
     }
   }
@@ -60,13 +49,11 @@ try {
   } else {
     // Use API Key (read-only)
     sheets = google.sheets({ version: 'v4', auth: API_KEY });
-    console.log('⚠️  Using API Key - Read-only access. For write access, add service account credentials');
   }
 } catch (error) {
   // Fallback to API Key
   console.error('❌ Service Account error:', error.message);
   sheets = google.sheets({ version: 'v4', auth: API_KEY });
-  console.warn('⚠️  Using API Key - Read-only access');
 }
 
 // Sheet names
@@ -87,8 +74,6 @@ async function getHotels() {
       console.log('✅ Returning cached hotels data (age:', Math.round((now - hotelsCache.timestamp) / 1000), 'seconds)');
       return hotelsCache.data;
     }
-
-    console.log('🔄 Fetching fresh hotels data from Google Sheets...');
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${HOTELS_SHEET}!A2:Z`, // Extended to Z for accommodationTypes
@@ -151,15 +136,12 @@ async function getHotels() {
     // Update cache
     hotelsCache.data = hotels;
     hotelsCache.timestamp = Date.now();
-    console.log('💾 Hotels data cached successfully');
-
     return hotels;
   } catch (error) {
     console.error('Error fetching hotels from Google Sheets:', error);
     
     // Return cached data if available (even if expired) when API fails
     if (hotelsCache.data) {
-      console.warn('⚠️  API failed, returning stale cache data');
       return hotelsCache.data;
     }
     
@@ -173,7 +155,6 @@ async function getHotels() {
 function clearHotelsCache() {
   hotelsCache.data = null;
   hotelsCache.timestamp = 0;
-  console.log('🗑️  Hotels cache cleared');
 }
 
 /**

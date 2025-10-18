@@ -15,18 +15,15 @@ try {
   
   // Try to get service account from environment variable (for cloud deployment)
   if (process.env.SERVICE_ACCOUNT_BASE64) {
-    console.log('📦 Using SERVICE_ACCOUNT_BASE64 from environment variable');
     const base64 = process.env.SERVICE_ACCOUNT_BASE64;
     const json = Buffer.from(base64, 'base64').toString('utf8');
     serviceAccount = JSON.parse(json);
   } else if (process.env.SERVICE_ACCOUNT_JSON) {
-    console.log('📦 Using SERVICE_ACCOUNT_JSON from environment variable');
     serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT_JSON);
   } else {
     // Fallback to file (for local development)
     const serviceAccountPath = path.join(__dirname, '../service-account.json');
     if (fs.existsSync(serviceAccountPath)) {
-      console.log('📦 Using service-account.json file');
       serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
     }
   }
@@ -39,7 +36,6 @@ try {
     
     sheets = google.sheets({ version: 'v4', auth });
     canWrite = true;
-    console.log('✅ Service Account initialized with write access');
   } else {
     console.log('⚠️ No service account found, using API key (read-only)');
     sheets = google.sheets({ version: 'v4', auth: API_KEY });
@@ -90,13 +86,9 @@ async function getUsers() {
  * Validate user credentials
  */
 async function validateUser(username, password) {
-  console.log('🔍 Validating user:', { username, passwordLength: password?.length });
-  
   // Check Google Sheets users FIRST
   try {
     const users = await getUsers();
-    console.log(`📋 Found ${users.length} users in Google Sheets`);
-    
     // Find user by username first
     const user = users.find(u => u.username === username);
 
@@ -105,7 +97,6 @@ async function validateUser(username, password) {
       const isPasswordValid = await bcrypt.compare(password, user.password);
       
       if (isPasswordValid) {
-        console.log('✅ Google Sheets user matched:', user.username);
         return {
           valid: true,
           isTemporary: false,
@@ -121,7 +112,6 @@ async function validateUser(username, password) {
     }
 
     // ไม่พบผู้ใช้ในระบบ
-    console.log('❌ Login failed - credentials not found');
     return {
       valid: false,
       isTemporary: false,
@@ -150,8 +140,6 @@ async function addUser(user) {
   try {
     // Hash password before saving
     const hashedPassword = await bcrypt.hash(user.password || '', 10);
-    console.log('🔐 Password hashed for new user:', user.username);
-    
     // Use apostrophe prefix to force text format in Google Sheets for hotelId
     const hotelIdValue = user.hotelId ? `'${user.hotelId}` : '';
     
@@ -207,7 +195,6 @@ async function updateUser(userId, userData) {
     let passwordToSave = existingUser[1]; // Default: keep existing password
     if (userData.password && userData.password.trim() !== '') {
       passwordToSave = await bcrypt.hash(userData.password, 10);
-      console.log(`🔐 Password updated for user: ${userId}`);
     }
     
     // Use apostrophe prefix to force text format in Google Sheets for hotelId

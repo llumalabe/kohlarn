@@ -53,7 +53,6 @@ async function authenticatedFetch(url, options = {}) {
     
     // ถ้า 401 Unauthorized = token หมดอายุหรือไม่ถูกต้อง
     if (response.status === 401) {
-        console.warn('⚠️ 401 Unauthorized - Token may be expired');
         // อาจจะ redirect ไปหน้า login หรือแจ้งเตือน
     }
     
@@ -77,8 +76,6 @@ function saveSession(username, password, nickname, isTemporary, token, role, hot
     
     // ลบ adminSession เก่าถ้ามี
     localStorage.removeItem('adminSession');
-    
-    console.log('💾 Session saved with JWT, role:', user.role, 'hotelId:', user.hotelId);
 }
 
 function loadSession() {
@@ -89,7 +86,6 @@ function loadSession() {
     if (token && userData) {
         try {
             const user = JSON.parse(userData);
-            console.log('✅ JWT Session loaded:', user.username, 'role:', user.role, 'hotelId:', user.hotelId);
             return {
                 username: user.username,
                 nickname: user.nickname,
@@ -119,7 +115,6 @@ function loadSession() {
             };
             localStorage.setItem('currentUser', JSON.stringify(user));
             localStorage.removeItem('adminSession'); // ลบเก่า
-            console.log('🔄 Migrated from adminSession to JWT format');
             return session;
         } catch (error) {
             console.error('Error loading session:', error);
@@ -135,7 +130,6 @@ function clearSession() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentUser');
     localStorage.removeItem('adminSession'); // ลบเก่าด้วย
-    console.log('🗑️ Session cleared');
 }
 
 // Helper function: Fetch with JWT authentication
@@ -178,7 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Try to auto-login from saved session
     const session = loadSession();
     if (session) {
-        console.log('🔄 Auto-login from saved session');
         currentUser = {
             username: session.username,
             password: session.password,
@@ -194,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
         initDashboard();
     } else {
         // ไม่มี session → Redirect ไปหน้าหลัก
-        console.log('⚠️ No session found, redirecting to home page');
         window.location.href = '/';
     }
 });
@@ -224,9 +216,6 @@ function setupLogin() {
         
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
-        
-        console.log('🔐 Attempting login:', { username, password: '***' });
-        
         try {
             const response = await fetch('/api/admin/login', {
                 method: 'POST',
@@ -235,9 +224,6 @@ function setupLogin() {
                 },
                 body: JSON.stringify({ username, password })
             });
-            
-            console.log('📡 Response status:', response.status);
-            
             // Check if response is JSON
             const contentType = response.headers.get('content-type');
             let data;
@@ -257,9 +243,6 @@ function setupLogin() {
                     return;
                 }
             }
-            
-            console.log('📦 Response data:', data);
-            
             if (data.success) {
                 currentUser = {
                     username: username,
@@ -273,9 +256,6 @@ function setupLogin() {
                 // Save session to localStorage with JWT token
                 const token = data.token || null; // รับ token จาก response ถ้ามี
                 saveSession(username, password, data.user.nickname, isTemporaryPassword, token, data.user.role, data.user.hotelId);
-                
-                console.log('✅ Login successful - Role:', data.user.role, 'HotelId:', data.user.hotelId);
-                
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('adminDashboard').style.display = 'flex';
                 
@@ -328,25 +308,16 @@ function initDashboard() {
 function applyRolePermissions() {
     const userRole = currentUser.role || 'user';
     const userHotelId = currentUser.hotelId || '';
-    console.log('🔒 Applying permissions for role:', userRole, 'hotelId:', userHotelId);
-    
     // เพิ่ม class ให้ body เพื่อใช้กับ CSS
     document.body.className = ''; // Clear existing classes
     if (userRole === 'hotel_owner' || userRole === 'hotel-owner') {
         document.body.classList.add('role-hotel_owner');
         document.body.classList.add('role-hotel-owner');
-        console.log('✅ Added hotel-owner role class to body:', document.body.className);
-        console.log('✅ Body classes:', document.body.classList);
     } else if (userRole === 'admin') {
         document.body.classList.add('role-admin');
     } else if (userRole === 'user') {
         document.body.classList.add('role-user');
-        console.log('✅ Added user role class to body:', document.body.className);
-        console.log('✅ Body classes:', document.body.classList);
     }
-    
-    console.log('📋 Final body className:', document.body.className);
-    
     // ซ่อนเมนูทั้งหมดก่อน
     const navDashboard = document.getElementById('navDashboard');
     const navHotels = document.getElementById('navHotels');
@@ -356,15 +327,6 @@ function applyRolePermissions() {
     const navMembers = document.getElementById('navMembers');
     
     // Debug: ตรวจสอบว่าเจอ element หรือไม่
-    console.log('📋 Menu elements check:', {
-        navDashboard: navDashboard ? 'found' : 'NOT FOUND',
-        navHotels: navHotels ? 'found' : 'NOT FOUND',
-        navManagement: navManagement ? 'found' : 'NOT FOUND',
-        navActivity: navActivity ? 'found' : 'NOT FOUND',
-        navLikes: navLikes ? 'found' : 'NOT FOUND',
-        navMembers: navMembers ? 'found' : 'NOT FOUND'
-    });
-    
     if (userRole === 'user') {
         // =========== USER ROLE ===========
         // เห็นแค่เมนู "ระบบสมาชิก" เท่านั้น
@@ -399,9 +361,6 @@ function applyRolePermissions() {
         
         // บังคับให้แสดงหน้าระบบสมาชิก
         navigateTo('members');
-        
-        console.log('✅ User permissions applied - Members only, view own profile');
-        
     } else if (userRole === 'hotel_owner' || userRole === 'hotel-owner') {
         // =========== HOTEL OWNER ROLE ===========
         // เห็นเมนู: Dashboard, โรงแรม, ประวัติการแก้ไข, สถิติทั้งหมด, ระบบสมาชิก
@@ -469,60 +428,38 @@ function applyRolePermissions() {
         setTimeout(hideAddHotelButton, 100);
         setTimeout(hideAddHotelButton, 200);
         setTimeout(hideAddHotelButton, 500);
-        
-        console.log('✅ Hotel owner permissions applied - Limited to hotelId:', userHotelId);
-        console.log('⛔ Management menu hidden for hotel_owner');
-        console.log('🔒 Members section: view own profile only, no add/delete/search/filter');
-        console.log('🔒 Hotels section: no add hotel button');
-        
     } else if (userRole === 'admin') {
         // =========== ADMIN ROLE ===========
         // แสดงทุกเมนู
-        console.log('🔓 Admin detected - Setting all menus to visible...');
-        
         if (navDashboard) {
             navDashboard.style.display = 'block';
-            console.log('  ✓ Dashboard shown');
         } else {
-            console.log('  ✗ Dashboard element not found!');
         }
         
         if (navHotels) {
             navHotels.style.display = 'block';
-            console.log('  ✓ Hotels shown');
         } else {
-            console.log('  ✗ Hotels element not found!');
         }
         
         if (navManagement) {
             navManagement.style.display = 'block';
-            console.log('  ✓ Management shown');
         } else {
-            console.log('  ✗ Management element not found!');
         }
         
         if (navActivity) {
             navActivity.style.display = 'block';
-            console.log('  ✓ Activity shown');
         } else {
-            console.log('  ✗ Activity element not found!');
         }
         
         if (navLikes) {
             navLikes.style.display = 'block';
-            console.log('  ✓ Likes shown');
         } else {
-            console.log('  ✗ Likes element not found!');
         }
         
         if (navMembers) {
             navMembers.style.display = 'block';
-            console.log('  ✓ Members shown');
         } else {
-            console.log('  ✗ Members element not found!');
         }
-        
-        console.log('✅ Admin permissions - Full access granted');
     }
 }
 
@@ -535,9 +472,6 @@ function logout() {
     
     currentUser = { username: '', password: '', nickname: '' };
     isTemporaryPassword = false;
-    
-    console.log('👋 Logged out successfully');
-    
     // Redirect ไปหน้าหลัก
     window.location.href = '/';
 }
@@ -557,7 +491,6 @@ function navigateTo(page, event) {
     const restrictedPages = ['filters', 'accommodation-types', 'roomtypes'];
     
     if ((userRole === 'hotel_owner' || userRole === 'hotel-owner') && restrictedPages.includes(page)) {
-        console.warn('⛔ Access denied: hotel_owner cannot access Management pages');
         alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
         return; // ป้องกันไม่ให้เข้าถึง
     }
@@ -586,7 +519,6 @@ function navigateTo(page, event) {
     if (pageElement) {
         pageElement.classList.add('active');
     } else {
-        console.warn('⚠️ Page element not found:', pageId + 'Page');
     }
     
     // Update page title
@@ -753,7 +685,6 @@ async function loadRecentActivities() {
             if ((userRole === 'hotel_owner' || userRole === 'hotel-owner') && username) {
                 // hotel_owner เห็นเฉพาะการแก้ไขของตัวเอง
                 activities = activities.filter(activity => activity.username === username);
-                console.log('📊 Dashboard filtered for hotel_owner:', username, 'count:', activities.length);
             }
             
             displayRecentActivities(activities);
@@ -895,7 +826,6 @@ function formatTimeAgo(timestamp) {
     
     // Check if date is valid
     if (isNaN(past.getTime())) {
-        console.warn('Invalid timestamp:', timestamp);
         return 'เวลาไม่ถูกต้อง';
     }
     
@@ -1021,7 +951,6 @@ function updateActivityTimestamps() {
     
     // แสดง log เฉพาะเมื่ออัพเดทสำเร็จ และมีการเปลี่ยนแปลง
     if (updatedCount > 0) {
-        console.log(`✅ Updated ${updatedCount} timestamps`);
     }
 }
 
@@ -1041,8 +970,6 @@ async function loadHotels() {
             if ((userRole === 'hotel_owner' || userRole === 'hotel-owner') && userHotelId) {
                 // hotel_owner เห็นเฉพาะโรงแรมของตัวเอง (เปรียบเทียบแบบ string)
                 hotels = hotels.filter(hotel => String(hotel.id) === String(userHotelId));
-                console.log('🏨 Filtered hotels for hotel_owner:', userHotelId, 'count:', hotels.length);
-                
                 // ซ่อนปุ่มเพิ่มโรงแรม
                 const addHotelBtn = document.getElementById('addHotelBtn');
                 if (addHotelBtn) {
@@ -1250,7 +1177,6 @@ async function displayHotelsTable(hotels) {
                 const mobileToggleBtn = row.querySelector('.mobile-btn[onclick*="toggleHotelStatus"]');
                 if (mobileToggleBtn) mobileToggleBtn.style.display = 'none';
             });
-            console.log('✅ Hotel owner - Hidden delete and toggle status buttons');
         }, 100);
     }
     
@@ -1336,9 +1262,6 @@ async function loadLikesStats() {
         
         if (data.success) {
             console.log('Stats Data:', data.data); // Debug log
-            console.log('topHotels:', data.data.topHotels);
-            console.log('topClickedHotels:', data.data.topClickedHotels);
-            
             // กรองข้อมูลตาม role
             const userRole = currentUser.role || 'user';
             const userHotelId = currentUser.hotelId || '';
@@ -1367,7 +1290,6 @@ async function loadLikesStats() {
                     }
                     topClickedHotels = filtered;
                 }
-                console.log('📊 Filtered stats for hotel_owner:', userHotelId);
             }
             
             displayLikesStats(topHotels, topClickedHotels);
@@ -1381,12 +1303,8 @@ async function loadLikesStats() {
 
 // Display likes statistics
 async function displayLikesStats(topHotels, clicksData) {
-    console.log('=== displayLikesStats Debug ===');
     console.log('topHotels type:', Array.isArray(topHotels) ? 'Array' : typeof topHotels);
-    console.log('topHotels:', topHotels);
     console.log('clicksData type:', Array.isArray(clicksData) ? 'Array' : typeof clicksData);
-    console.log('clicksData:', clicksData);
-    
     // Load all hotels to get names
     let hotels = [];
     try {
@@ -1408,16 +1326,11 @@ async function displayLikesStats(topHotels, clicksData) {
     if ((userRole === 'hotel_owner' || userRole === 'hotel-owner') && userHotelId) {
         // hotel_owner เห็นเฉพาะโรงแรมตัวเอง (เปรียบเทียบแบบ string)
         hotels = hotels.filter(h => String(h.id) === String(userHotelId));
-        console.log('🏨 Filtered hotels for stats display:', userHotelId, 'count:', hotels.length);
     }
-    
-    console.log('Total hotels:', hotels.length);
-    
     const container = document.getElementById('likesList');
     
     // Check if container exists
     if (!container) {
-        console.warn('likesList element not found');
         return;
     }
     
@@ -1434,9 +1347,6 @@ async function displayLikesStats(topHotels, clicksData) {
             }));
         }
     }
-    
-    console.log('topHotelsArray after conversion:', topHotelsArray);
-    
     // Convert clicksData to Array if it's an Object
     let clicksArray = [];
     if (clicksData) {
@@ -1454,9 +1364,6 @@ async function displayLikesStats(topHotels, clicksData) {
             }));
         }
     }
-    
-    console.log('clicksArray after conversion:', clicksArray);
-    
     // Ensure hotels is an array
     if (!Array.isArray(hotels)) {
         console.error('hotels is not an array:', hotels);
@@ -1476,13 +1383,6 @@ async function displayLikesStats(topHotels, clicksData) {
         
         // Debug log for each hotel
         if (item.likes > 0 || item.clicks > 0) {
-            console.log(`Hotel ${hotel.id}:`, {
-                name: hotel.nameTh,
-                likes: item.likes,
-                clicks: item.clicks,
-                likesInfo: likesInfo,
-                clicksInfo: clicksInfo
-            });
         }
         
         return item;
@@ -1508,12 +1408,6 @@ async function displayLikesStats(topHotels, clicksData) {
     // Calculate totals (from filtered data)
     const totalLikes = filteredStatsData.reduce((sum, item) => sum + item.likes, 0);
     const totalClicks = filteredStatsData.reduce((sum, item) => sum + item.clicks, 0);
-    
-    console.log('=== Totals Calculation ===');
-    console.log('Total Likes:', totalLikes, 'Total Clicks:', totalClicks);
-    console.log('Filtered items:', filteredStatsData.length, '/ Total items:', statsData.length);
-    console.log('===========================');
-    
     // Update summary with safety checks
     const totalLikesElement = document.getElementById('totalLikesSum');
     const totalClicksElement = document.getElementById('totalClicksSum');
@@ -1633,21 +1527,13 @@ function showHotelForm(hotelId = null) {
 
 // Upload image function
 async function uploadImage(imageNumber = 1) {
-    console.log('🔍 uploadImage called with imageNumber:', imageNumber);
-    
     const fileInput = document.getElementById(`imageFile${imageNumber}`);
-    console.log('📁 fileInput:', fileInput);
-    
     // Check if file input exists and has files
     if (!fileInput) {
         console.error('❌ ไม่พบช่องเลือกไฟล์');
         showError('ไม่พบช่องเลือกไฟล์');
         return;
     }
-    
-    console.log('📦 files:', fileInput.files);
-    console.log('📊 files.length:', fileInput.files?.length);
-    
     if (!fileInput.files || fileInput.files.length === 0) {
         console.error('❌ ไม่มีไฟล์');
         showError('กรุณาเลือกไฟล์รูปภาพก่อน');
@@ -1671,15 +1557,10 @@ async function uploadImage(imageNumber = 1) {
         showError('รองรับเฉพาะไฟล์ JPG, PNG, GIF, WebP เท่านั้น');
         return;
     }
-    
-    console.log('✅ Validation passed, creating FormData...');
     const formData = new FormData();
     formData.append('image', file);
-    console.log('✅ FormData created');
-    
     try {
         // Show uploading message
-        console.log('🚀 เริ่มอัพโหลด...');
         showSuccess(`กำลังอัพโหลดรูปที่ ${imageNumber}...`);
         
         const response = await fetch('/api/upload', {
@@ -1687,22 +1568,13 @@ async function uploadImage(imageNumber = 1) {
             body: formData
             // ไม่ต้องใส่ Content-Type header เพราะ browser จะใส่ให้อัตโนมัติพร้อม boundary
         });
-        
-        console.log('📡 Response status:', response.status);
         const data = await response.json();
-        console.log('📦 Response data:', data);
-        
         if (data.success && data.imageUrl) {
-            console.log('✅ อัพโหลดสำเร็จ:', data.imageUrl);
             // Set the URL in the appropriate input field
             const urlField = imageNumber === 1 ? 'imageUrl' : `imageUrl${imageNumber}`;
             const urlInput = document.getElementById(urlField);
-            console.log('📝 Setting URL to field:', urlField, urlInput);
-            
             if (urlInput) {
                 urlInput.value = data.imageUrl;
-                console.log('✅ URL set:', data.imageUrl);
-                
                 // Show preview
                 previewImageUrl(data.imageUrl, imageNumber);
                 
@@ -2233,7 +2105,6 @@ async function loadActivityLog() {
             if ((userRole === 'hotel_owner' || userRole === 'hotel-owner') && username) {
                 // hotel_owner เห็นเฉพาะการแก้ไขของตัวเอง
                 logs = logs.filter(log => log.username === username);
-                console.log('📝 Filtered activity logs for hotel_owner:', username, 'count:', logs.length);
             }
             
             displayActivityLog(logs);
@@ -3419,17 +3290,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Load accommodation types
 async function loadAccommodationTypes() {
-    console.log('🏢 Loading accommodation types...');
     try {
         const response = await fetch('/api/accommodation-types');
         const data = await response.json();
-        
-        console.log('📦 Accommodation types data:', data);
-        
         if (data.success) {
             displayAccommodationTypes(data.data || []);
         } else {
-            console.log('⚠️ No success in response, showing empty');
             displayAccommodationTypes([]);
         }
     } catch (error) {
@@ -3440,7 +3306,6 @@ async function loadAccommodationTypes() {
 
 // Display accommodation types
 function displayAccommodationTypes(accommodationTypes) {
-    console.log('🎨 Displaying accommodation types:', accommodationTypes);
     const container = document.getElementById('accommodationTypesList');
     if (!container) return;
     
@@ -3800,7 +3665,6 @@ function toggleFaviconInput() {
 
 // Load web settings
 async function loadWebSettings() {
-    console.log('🎨 Loading web settings...');
     try {
         const response = await authenticatedFetch('/api/websettings');
         const settings = await response.json();
@@ -3848,8 +3712,6 @@ async function loadWebSettings() {
         
         // Update preview
         previewChanges();
-        
-        console.log('✅ Web settings loaded');
     } catch (error) {
         console.error('❌ Error loading web settings:', error);
         showNotification('ไม่สามารถโหลดการตั้งค่าได้', 'error');
@@ -4036,7 +3898,6 @@ let hotelsCache = {}; // Cache hotel data for searching
 
 // Load members
 async function loadMembers() {
-    console.log('👥 Loading members...');
     try {
         // Load hotels first for search/filter
         await loadHotelsCache();
@@ -4054,11 +3915,9 @@ async function loadMembers() {
             if (userRole === 'user') {
                 // user ธรรมดา แสดงเฉพาะข้อมูลตัวเอง
                 allMembers = allMembers.filter(member => member.username === currentUser.username);
-                console.log('🔒 Filtered to show only current user:', currentUser.username);
             } else if (userRole === 'hotel_owner' || userRole === 'hotel-owner') {
                 // hotel_owner แสดงเฉพาะข้อมูลตัวเอง
                 allMembers = allMembers.filter(member => member.username === currentUser.username);
-                console.log('🔒 Hotel owner - Filtered to show only self:', currentUser.username);
             }
             
             filteredMembers = [...allMembers];
@@ -4394,7 +4253,6 @@ async function editMember(memberUsername) {
                 // hotel_owner สามารถแก้ไขได้เฉพาะ password และ nickname เท่านั้น
                 if (roleGroup) roleGroup.style.display = 'none';
                 if (hotelIdGroup) hotelIdGroup.style.display = 'none';
-                console.log('🔒 Hotel owner - Hidden role and hotelId fields');
             } else {
                 // admin เท่านั้นที่แก้ไข role และ hotelId ได้
                 if (roleGroup) roleGroup.style.display = 'block';
@@ -4499,18 +4357,9 @@ async function saveMember(event) {
     if (passwordInput.value) {
         memberData.password = passwordInput.value;
     }
-    
-    console.log('💾 Saving member data:', { ...memberData, password: memberData.password ? '***' : 'not set' });
-    
     try {
         const url = isEdit ? `/api/admin/members/${memberUsername}` : '/api/admin/members';
         const method = isEdit ? 'PUT' : 'POST';
-        
-        console.log('📤 Sending to server:', { 
-            ...memberData, 
-            password: memberData.password ? '***' : 'not set'
-        });
-        
         const response = await fetchWithAuth(url, {
             method: method,
             body: JSON.stringify(memberData)

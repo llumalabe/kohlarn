@@ -16,7 +16,6 @@ try {
   }
 } catch (error) {
   // Ignore errors in serverless/read-only environments (like Vercel)
-  console.log('⚠️  Running in serverless environment - file system is read-only');
 }
 
 /**
@@ -39,7 +38,6 @@ function saveStats(stats) {
     fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2));
   } catch (error) {
     // Ignore errors in serverless/read-only environments
-    console.log('⚠️  Cannot save stats in serverless environment');
   }
 }
 

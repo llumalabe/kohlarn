@@ -155,7 +155,6 @@ async function loadAccommodationTypes() {
         
         if (data.success && data.data) {
             allAccommodationTypes = data.data; // ไม่กรอง enabled เพราะไม่มีคอลัมน์นี้
-            console.log('✅ Loaded accommodation types:', allAccommodationTypes);
             displayAccommodationTypeButtons();
         }
     } catch (error) {
@@ -701,7 +700,6 @@ function createHotelCard(hotel) {
     
     // Debug log
     if (images.length > 1) {
-        console.log(`Hotel ${hotel.id} has ${images.length} images - carousel will be shown`);
     }
     
     // Parse amenities/filters from comma-separated string และสุ่มแสดงสูงสุด 4 รายการ
@@ -730,9 +728,7 @@ function createHotelCard(hotel) {
     
     // Debug log
     if (firstAccommodationType) {
-        console.log(`Hotel ${hotel.id} accommodation:`, firstAccommodationType);
     } else if (accommodationTypesList.length > 0) {
-        console.log(`Hotel ${hotel.id} has accommodation type ${accommodationTypesList[0]} but data not found`);
     }
     
     // Create carousel HTML if multiple images
