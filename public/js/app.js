@@ -765,9 +765,6 @@ function createHotelCard(hotel) {
         </div>
     `;
     
-    // Debug: Log carousel HTML generation
-    console.log(`Hotel ${hotel.id} carouselHTML preview:`, carouselHTML.substring(0, 200));
-    
     return `
         <div class="hotel-card" data-hotel-id="${hotel.id}">
             ${carouselHTML}
