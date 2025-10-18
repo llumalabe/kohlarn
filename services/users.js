@@ -1,6 +1,7 @@
 const { google } = require('googleapis');
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcrypt');
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 const API_KEY = process.env.GOOGLE_API_KEY;
@@ -192,15 +193,22 @@ async function updateUser(userId, userData) {
     
     const existingUser = rows[rowIndex];
     
+    // Hash new password if provided
+    let passwordToSave = existingUser[1]; // Default: keep existing password
+    if (userData.password && userData.password.trim() !== '') {
+      passwordToSave = await bcrypt.hash(userData.password, 10);
+      console.log(`🔐 Password updated for user: ${userId}`);
+    }
+    
     // Use apostrophe prefix to force text format in Google Sheets for hotelId
     const hotelIdValue = userData.hotelId !== undefined 
       ? (userData.hotelId ? `'${userData.hotelId}` : '')
       : (existingUser[4] || '');
     
-    // Update row (preserve username and password if not provided)
+    // Update row (preserve username, update password if provided)
     const updatedRow = [
       existingUser[0], // username (preserve)
-      existingUser[1], // password (preserve)
+      passwordToSave, // password (update if provided, otherwise preserve)
       userData.nickname || existingUser[2],
       userData.role || existingUser[3] || 'user',
       hotelIdValue
