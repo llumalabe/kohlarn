@@ -5,6 +5,13 @@ const fs = require('fs');
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 const LIKES_SHEET = 'Likes';
 
+// Cache configuration
+const CACHE_DURATION = 30 * 1000; // 30 seconds
+let likesCache = {
+  data: null,
+  timestamp: 0
+};
+
 // Initialize Google Sheets API
 let sheets;
 let serviceAccount;
@@ -106,6 +113,12 @@ async function createLikesSheet() {
  * Get all likes from Google Sheets
  */
 async function getAllLikes() {
+    // Check cache first
+    const now = Date.now();
+    if (likesCache.data && (now - likesCache.timestamp) < CACHE_DURATION) {
+        return likesCache.data;
+    }
+
     try {
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -124,9 +137,19 @@ async function getAllLikes() {
             }
         });
 
+        // Update cache
+        likesCache = {
+            data: likes,
+            timestamp: Date.now()
+        };
+
         return likes;
     } catch (error) {
         console.error('Error getting likes:', error.message);
+        // Return stale cache if available
+        if (likesCache.data) {
+            return likesCache.data;
+        }
         return { hotels: {} };
     }
 }
@@ -195,6 +218,9 @@ async function updateHotelLikes(hotelId, increment = true) {
             });
         }
 
+        // Clear cache after mutation
+        clearLikesCache();
+
         return {
             success: true,
             hotelId: hotelId,
@@ -231,9 +257,17 @@ async function getTopLikedHotels(limit = 10) {
     }
 }
 
+/**
+ * Clear the likes cache
+ */
+function clearLikesCache() {
+    likesCache = { data: null, timestamp: 0 };
+}
+
 module.exports = {
     getAllLikes,
     getHotelLikes,
     updateHotelLikes,
-    getTopLikedHotels
+    getTopLikedHotels,
+    clearLikesCache
 };

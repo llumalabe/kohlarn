@@ -4,6 +4,13 @@ const path = require('path');
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 
+// Cache configuration
+const CACHE_DURATION = 30 * 1000; // 30 seconds
+let activityCache = {
+  data: null,
+  timestamp: 0
+};
+
 // Sheet configuration
 let sheets;
 let canWrite = false;
@@ -95,9 +102,15 @@ async function logActivity(username, nickname, action, hotelName = '', type = ''
 }
 
 /**
- * Get activity logs (latest 100 records)
+ * Get activity logs (latest 100 records) with caching
  */
 async function getActivityLogs(limit = 100) {
+  // Check cache first
+  const now = Date.now();
+  if (activityCache.data && (now - activityCache.timestamp) < CACHE_DURATION) {
+    return activityCache.data.slice(0, limit);
+  }
+
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
@@ -117,10 +130,22 @@ async function getActivityLogs(limit = 100) {
       details: row[6] || '' // New: Detailed description
     })).reverse();
 
+    // Update cache
+    activityCache = {
+      data: activities,
+      timestamp: Date.now()
+    };
+
     // Return limited results
     return activities.slice(0, limit);
   } catch (error) {
     console.error('Error fetching activity logs:', error);
+    
+    // Return stale cache if available
+    if (activityCache.data) {
+      return activityCache.data.slice(0, limit);
+    }
+    
     return [];
   }
 }
@@ -156,8 +181,19 @@ async function getActivityLogsPaginated(page = 1, perPage = 10) {
   }
 }
 
+/**
+ * Clear activity cache (call after logging new activity)
+ */
+function clearActivityCache() {
+  activityCache = {
+    data: null,
+    timestamp: 0
+  };
+}
+
 module.exports = {
   logActivity,
   getActivityLogs,
-  getActivityLogsPaginated
+  getActivityLogsPaginated,
+  clearActivityCache
 };

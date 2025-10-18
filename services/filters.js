@@ -2,6 +2,13 @@ const { google } = require('googleapis');
 const fs = require('fs');
 const path = require('path');
 
+// Cache configuration
+const CACHE_DURATION = 30 * 1000; // 30 seconds
+let filtersCache = {
+    data: null,
+    timestamp: 0
+};
+
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 
 // Sheet configuration
@@ -65,6 +72,12 @@ const DEFAULT_FILTERS = [
  * Get all filters
  */
 async function getFilters() {
+  // Check cache first
+  const now = Date.now();
+  if (filtersCache.data && (now - filtersCache.timestamp) < CACHE_DURATION) {
+    return filtersCache.data;
+  }
+
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
@@ -86,9 +99,21 @@ async function getFilters() {
       color: row[5] || '#667eea' // Default color
     }));
 
-    return filters.filter(f => f.enabled !== false);
+    const enabledFilters = filters.filter(f => f.enabled !== false);
+
+    // Update cache
+    filtersCache = {
+      data: enabledFilters,
+      timestamp: Date.now()
+    };
+
+    return enabledFilters;
   } catch (error) {
     console.error('Error fetching filters:', error);
+    // Return stale cache if available
+    if (filtersCache.data) {
+      return filtersCache.data;
+    }
     return []; // เกิด error - return array ว่าง
   }
 }
@@ -119,6 +144,9 @@ async function addFilter(filter) {
         values: [newRow]
       }
     });
+
+    // Clear cache after mutation
+    clearFiltersCache();
 
     return { success: true };
   } catch (error) {
@@ -167,6 +195,9 @@ async function updateFilter(filterId, filter) {
       }
     });
 
+    // Clear cache after mutation
+    clearFiltersCache();
+
     return { success: true };
   } catch (error) {
     console.error('Error updating filter:', error);
@@ -213,6 +244,9 @@ async function deleteFilter(filterId) {
       }
     });
 
+    // Clear cache after mutation
+    clearFiltersCache();
+
     return { success: true };
   } catch (error) {
     console.error('Error deleting filter:', error);
@@ -220,10 +254,18 @@ async function deleteFilter(filterId) {
   }
 }
 
+/**
+ * Clear the filters cache
+ */
+function clearFiltersCache() {
+  filtersCache = { data: null, timestamp: 0 };
+}
+
 module.exports = {
   getFilters,
   addFilter,
   updateFilter,
   deleteFilter,
-  DEFAULT_FILTERS
+  DEFAULT_FILTERS,
+  clearFiltersCache
 };
