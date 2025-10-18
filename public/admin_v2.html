@@ -830,16 +830,16 @@
                 <!-- ชื่อโรงแรม -->
                 <div class="form-row">
                     <div class="form-group">
-                        <label>ชื่อโรงแรม (ไทย)</label>
+                        <label>ชื่อโรงแรมบรรทัดแรก</label>
                         <input type="text" id="hotelNameTh" placeholder="โรงแรมทดสอบ">
                     </div>
                     <div class="form-group">
-                        <label>ชื่อโรงแรม (อังกฤษ)</label>
+                        <label>ชื่อโรงแรมบรรทัดที่ 2</label>
                         <input type="text" id="hotelNameEn" placeholder="Test Hotel">
                     </div>
                 </div>
                 <small style="color: #3498db; display: block; margin-top: -10px; margin-bottom: 15px;">
-                    <i class="fas fa-info-circle"></i> ใส่ชื่อได้แค่ภาษาเดียว - ระบบจะแสดงชื่อที่มีอัตโนมัติ
+                    <i class="fas fa-info-circle"></i> สามารถใส่ชื่อแค่ 1 ช่องได้ - ระบบจะแสดงชื่อที่มีอัตโนมัติ
                 </small>
 
                 <!-- ชื่อเจ้าของ -->
@@ -970,6 +970,9 @@
                     <div class="form-group">
                         <label>เบอร์โทรศัพท์ *</label>
                         <input type="text" id="phoneNumber" required placeholder="0812345678 หรือ 081-234-5678" autocomplete="off" inputmode="tel">
+                        <small style="color: #3498db; display: block; margin-top: 5px;">
+                            <i class="fas fa-info-circle"></i> สามารถใส่เบอร์ติดต่อได้มากกว่า 1 โดยจะขั้นด้วย ,
+                        </small>
                     </div>
                 </div>
 
@@ -1018,12 +1021,35 @@
                 <!-- ข้อมูลบัญชีธนาคาร -->
                 <div class="form-group" style="border-top: 2px solid #e0e0e0; padding-top: 20px; margin-top: 20px;">
                     <label style="font-weight: 600; color: #2c3e50; font-size: 1.1rem; margin-bottom: 15px; display: block;">
-                        <i class="fas fa-university"></i> ข้อมูลบัญชีธนาคาร
+                        <i class="fas fa-university"></i> ช่องทางการโอนเงิน
                     </label>
                     
                     <div class="form-group">
                         <label>ชื่อธนาคาร</label>
-                        <input type="text" id="bankName" placeholder="ธนาคารกรุงเทพ">
+                        <select id="bankName" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+                            <option value="">-- เลือกธนาคาร --</option>
+                            <option value="กรุงเทพ">ธนาคารกรุงเทพ</option>
+                            <option value="กสิกรไทย">ธนาคารกสิกรไทย</option>
+                            <option value="กรุงไทย">ธนาคารกรุงไทย</option>
+                            <option value="ทหารไทย">ธนาคารทหารไทย</option>
+                            <option value="ไทยพาณิชย์">ธนาคารไทยพาณิชย์</option>
+                            <option value="กรุงศรีอยุธยา">ธนาคารกรุงศรีอยุธยา</option>
+                            <option value="เกียรตินาคิน">ธนาคารเกียรตินาคิน</option>
+                            <option value="ซีไอเอ็มบีไทย">ธนาคารซีไอเอ็มบีไทย</option>
+                            <option value="ทิสโก้">ธนาคารทิสโก้</option>
+                            <option value="ธนชาต">ธนาคารธนชาต</option>
+                            <option value="ยูโอบี">ธนาคารยูโอบี</option>
+                            <option value="สแตนดาร์ดชาร์เตอร์ด (ไทย)">ธนาคารสแตนดาร์ดชาร์เตอร์ด (ไทย)</option>
+                            <option value="ไทยเครดิตเพื่อรายย่อย">ธนาคารไทยเครดิตเพื่อรายย่อย</option>
+                            <option value="แลนด์ แอนด์ เฮาส์">ธนาคารแลนด์ แอนด์ เฮาส์</option>
+                            <option value="ไอซีบีซี (ไทย)">ธนาคารไอซีบีซี (ไทย)</option>
+                            <option value="ออมสิน">ธนาคารออมสิน</option>
+                            <option value="อาคารสงเคราะห์">ธนาคารอาคารสงเคราะห์</option>
+                            <option value="อิสลามแห่งประเทศไทย">ธนาคารอิสลามแห่งประเทศไทย</option>
+                            <option value="แห่งประเทศจีน">ธนาคารแห่งประเทศจีน</option>
+                            <option value="ซูมิโตโม มิตซุย ทรัสต์ (ไทย)">ธนาคารซูมิโตโม มิตซุย ทรัสต์ (ไทย)</option>
+                            <option value="ฮ่องกงและเซี้ยงไฮ้แบงกิ้งคอร์ปอเรชั่น จำกัด">ธนาคารฮ่องกงและเซี้ยงไฮ้แบงกิ้งคอร์ปอเรชั่น จำกัด</option>
+                        </select>
                     </div>
                     
                     <div class="form-group">
