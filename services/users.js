@@ -148,12 +148,16 @@ async function addUser(user) {
   }
 
   try {
+    // Hash password before saving
+    const hashedPassword = await bcrypt.hash(user.password || '', 10);
+    console.log('🔐 Password hashed for new user:', user.username);
+    
     // Use apostrophe prefix to force text format in Google Sheets for hotelId
     const hotelIdValue = user.hotelId ? `'${user.hotelId}` : '';
     
     const newRow = [
       user.username || '',
-      user.password || '',
+      hashedPassword,
       user.nickname || '',
       user.role || 'admin',
       hotelIdValue
