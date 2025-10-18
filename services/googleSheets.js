@@ -5,6 +5,13 @@ const path = require('path');
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 const API_KEY = process.env.GOOGLE_API_KEY;
 
+// Cache configuration
+const CACHE_DURATION = 30 * 1000; // 30 seconds
+let hotelsCache = {
+  data: null,
+  timestamp: 0
+};
+
 // Try to use Service Account for read/write, fallback to API Key for read-only
 let sheets;
 let canWrite = false;
@@ -70,10 +77,18 @@ const ACTIVITY_LOG_SHEET = 'ActivityLog';
 const WEBSETTINGS_SHEET = 'WebSettings';
 
 /**
- * Get all hotels from Google Sheets
+ * Get all hotels from Google Sheets (with caching)
  */
 async function getHotels() {
   try {
+    // Check if cache is still valid
+    const now = Date.now();
+    if (hotelsCache.data && (now - hotelsCache.timestamp) < CACHE_DURATION) {
+      console.log('✅ Returning cached hotels data (age:', Math.round((now - hotelsCache.timestamp) / 1000), 'seconds)');
+      return hotelsCache.data;
+    }
+
+    console.log('🔄 Fetching fresh hotels data from Google Sheets...');
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${HOTELS_SHEET}!A2:Z`, // Extended to Z for accommodationTypes
@@ -133,11 +148,32 @@ async function getHotels() {
       };
     });
 
+    // Update cache
+    hotelsCache.data = hotels;
+    hotelsCache.timestamp = Date.now();
+    console.log('💾 Hotels data cached successfully');
+
     return hotels;
   } catch (error) {
     console.error('Error fetching hotels from Google Sheets:', error);
+    
+    // Return cached data if available (even if expired) when API fails
+    if (hotelsCache.data) {
+      console.warn('⚠️  API failed, returning stale cache data');
+      return hotelsCache.data;
+    }
+    
     throw error;
   }
+}
+
+/**
+ * Clear hotels cache (call after adding/updating/deleting hotels)
+ */
+function clearHotelsCache() {
+  hotelsCache.data = null;
+  hotelsCache.timestamp = 0;
+  console.log('🗑️  Hotels cache cleared');
 }
 
 /**
@@ -248,6 +284,9 @@ async function addHotel(hotel, editorNickname = '') {
       }
     });
 
+    // Clear cache after adding hotel
+    clearHotelsCache();
+
     return { success: true };
   } catch (error) {
     console.error('Error adding hotel:', error);
@@ -325,6 +364,9 @@ async function updateHotel(hotelId, hotel, editorNickname = '') {
       }
     });
 
+    // Clear cache after updating hotel
+    clearHotelsCache();
+
     return { success: true };
   } catch (error) {
     console.error('Error updating hotel:', error);
@@ -372,6 +414,9 @@ async function deleteHotel(hotelId) {
         }]
       }
     });
+
+    // Clear cache after deleting hotel
+    clearHotelsCache();
 
     return { success: true };
   } catch (error) {
@@ -538,5 +583,6 @@ module.exports = {
   deleteHotel,
   toggleHotelStatus,
   getWebSettings,
-  updateWebSettings
+  updateWebSettings,
+  clearHotelsCache
 };
