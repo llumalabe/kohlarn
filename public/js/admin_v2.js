@@ -407,14 +407,12 @@ function applyRolePermissions() {
                 btn.style.display = 'none';
                 btn.style.visibility = 'hidden';
                 btn.disabled = true;
-                console.log('🔒 Hidden add hotel button (hotels page)');
             }
             
             if (headerBtn) {
                 headerBtn.style.display = 'none';
                 headerBtn.style.visibility = 'hidden';
                 headerBtn.disabled = true;
-                console.log('🔒 Hidden add hotel button (header)');
             }
             
             return (btn || headerBtn) ? true : false;
@@ -570,7 +568,6 @@ function navigateTo(page, event) {
                 const addHotelBtn = document.getElementById('addHotelBtn');
                 if (addHotelBtn) {
                     addHotelBtn.style.display = 'none';
-                    console.log('🔒 Hidden add hotel button in navigateTo()');
                 }
             }, 50);
         }
@@ -974,7 +971,6 @@ async function loadHotels() {
                 const addHotelBtn = document.getElementById('addHotelBtn');
                 if (addHotelBtn) {
                     addHotelBtn.style.display = 'none';
-                    console.log('🔒 Hidden add hotel button in loadHotels()');
                 }
             }
             
@@ -1261,7 +1257,6 @@ async function loadLikesStats() {
         const data = await response.json();
         
         if (data.success) {
-            console.log('Stats Data:', data.data); // Debug log
             // กรองข้อมูลตาม role
             const userRole = currentUser.role || 'user';
             const userHotelId = currentUser.hotelId || '';
@@ -1303,8 +1298,6 @@ async function loadLikesStats() {
 
 // Display likes statistics
 async function displayLikesStats(topHotels, clicksData) {
-    console.log('topHotels type:', Array.isArray(topHotels) ? 'Array' : typeof topHotels);
-    console.log('clicksData type:', Array.isArray(clicksData) ? 'Array' : typeof clicksData);
     // Load all hotels to get names
     let hotels = [];
     try {
@@ -1414,13 +1407,11 @@ async function displayLikesStats(topHotels, clicksData) {
     
     if (totalLikesElement) {
         totalLikesElement.textContent = totalLikes.toLocaleString('th-TH');
-        console.log('Updated totalLikesSum to:', totalLikes); // Debug log
     } else {
         console.error('totalLikesSum element not found');
     }
     if (totalClicksElement) {
         totalClicksElement.textContent = totalClicks.toLocaleString('th-TH');
-        console.log('Updated totalClicksSum to:', totalClicks); // Debug log
     } else {
         console.error('totalClicksSum element not found');
     }
@@ -1541,7 +1532,6 @@ async function uploadImage(imageNumber = 1) {
     }
     
     const file = fileInput.files[0];
-    console.log('📄 File:', file.name, 'Size:', (file.size / 1024 / 1024).toFixed(2), 'MB', 'Type:', file.type);
     
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
@@ -2091,12 +2081,9 @@ async function loadActivityLog() {
         const response = await fetchWithAuth(`/api/admin/activity-logs?page=1&perPage=1000`);
         const data = await response.json();
         
-        console.log('Activity Log Response:', data); // DEBUG
-        
         if (data.success) {
             // API returns { success: true, data: { logs: [...], currentPage, totalPages } }
             let logs = data.data.logs || [];
-            console.log('Activity Logs Count:', logs.length); // DEBUG
             
             // กรองข้อมูลตาม role
             const userRole = currentUser.role || 'user';
@@ -4335,16 +4322,6 @@ async function saveMember(event) {
     const nicknameInput = document.getElementById('memberNickname');
     const roleSelect = document.getElementById('memberRole');
     const hotelIdSelect = document.getElementById('memberHotelId');
-    
-    console.log('🔍 Debug form values:', {
-        isEdit,
-        memberUsername: memberUsername,
-        usernameInputValue: usernameInput.value,
-        passwordInputValue: passwordInput.value ? '***' : '(empty)',
-        nicknameInputValue: nicknameInput.value,
-        roleValue: roleSelect.value,
-        hotelIdValue: hotelIdSelect.value
-    });
     
     const memberData = {
         username: isEdit ? memberUsername : usernameInput.value.trim(),
