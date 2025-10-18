@@ -2134,6 +2134,10 @@ function displayActivityLog(logs) {
                 return action.includes('ตัวกรอง') || action.includes('filter') || action.includes('สิ่งอำนวยความสะดวก') || action.includes('amenity');
             } else if (currentActivityType === 'roomtype') {
                 return action.includes('ประเภทห้องพัก') || action.includes('room type') || action.includes('roomtype') || action.includes('ห้องพัก');
+            } else if (currentActivityType === 'accommodationtype') {
+                return action.includes('ประเภทที่พัก') || action.includes('accommodation type') || action.includes('accommodationtype') || action.includes('ที่พัก');
+            } else if (currentActivityType === 'member') {
+                return action.includes('สมาชิก') || action.includes('member') || action.includes('user') || action.includes('ผู้ใช้');
             }
             return true;
         });
@@ -2194,6 +2198,21 @@ function displayActivityLog(logs) {
                 case 'filter':
                     typeBadge = 'สิ่งอำนวยความสะดวก';
                     typeColor = '#00d2a0';
+                    break;
+                case 'roomtype':
+                case 'room-type':
+                    typeBadge = 'ประเภทห้องพัก';
+                    typeColor = '#f59e0b';
+                    break;
+                case 'accommodationtype':
+                case 'accommodation-type':
+                    typeBadge = 'ประเภทที่พัก';
+                    typeColor = '#ec4899';
+                    break;
+                case 'member':
+                case 'user':
+                    typeBadge = 'ระบบสมาชิก';
+                    typeColor = '#10b981';
                     break;
                 case 'login':
                     typeBadge = 'การเข้าสู่ระบบ';
