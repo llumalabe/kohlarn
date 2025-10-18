@@ -97,21 +97,27 @@ async function validateUser(username, password) {
     const users = await getUsers();
     console.log(`📋 Found ${users.length} users in Google Sheets`);
     
-    const user = users.find(u => u.username === username && u.password === password);
+    // Find user by username first
+    const user = users.find(u => u.username === username);
 
     if (user) {
-      console.log('✅ Google Sheets user matched:', user.username);
-      return {
-        valid: true,
-        isTemporary: false,
-        user: {
-          username: user.username,
-          nickname: user.nickname,
-          role: user.role,
-          hotelId: user.hotelId || ''
-        },
-        message: `✅ ยินดีต้อนรับ ${user.nickname}`
-      };
+      // Compare password using bcrypt
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      
+      if (isPasswordValid) {
+        console.log('✅ Google Sheets user matched:', user.username);
+        return {
+          valid: true,
+          isTemporary: false,
+          user: {
+            username: user.username,
+            nickname: user.nickname,
+            role: user.role,
+            hotelId: user.hotelId || ''
+          },
+          message: `✅ ยินดีต้อนรับ ${user.nickname}`
+        };
+      }
     }
 
     // ไม่พบผู้ใช้ในระบบ
