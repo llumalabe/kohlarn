@@ -718,10 +718,11 @@ function createHotelCard(hotel) {
     }
     const remainingCount = amenitiesList.length - displayAmenities.length;
     
-    // Parse room types from comma-separated string และแสดง 3 รายการแรก (ไม่สุ่ม)
+    // Parse room types from comma-separated string
     const roomTypesList = hotel.roomTypes ? hotel.roomTypes.split(',').map(rt => rt.trim()).filter(rt => rt) : [];
-    const displayRoomTypes = roomTypesList.slice(0, 3); // แสดง 3 รายการแรก
-    const remainingRoomTypesCount = roomTypesList.length - 3;
+    // ถ้ามีมากกว่า 3 รายการ -> แสดง 2 + +เหลือ, ถ้า ≤ 3 -> แสดงทั้งหมด
+    const displayRoomTypes = roomTypesList.length > 3 ? roomTypesList.slice(0, 2) : roomTypesList;
+    const remainingRoomTypesCount = roomTypesList.length > 3 ? roomTypesList.length - 2 : 0;
     
     // Parse accommodation types from comma-separated string
     const accommodationTypesList = hotel.accommodationTypes ? hotel.accommodationTypes.split(',').map(at => at.trim()).filter(at => at) : [];
