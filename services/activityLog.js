@@ -71,15 +71,8 @@ async function logActivity(username, nickname, action, hotelName = '', type = ''
   }
 
   try {
-    const timestamp = new Date().toLocaleString('th-TH', { 
-      timeZone: 'Asia/Bangkok',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
+    // Use ISO format for timestamp to ensure compatibility with Date parsing
+    const timestamp = new Date().toISOString();
 
     const newRow = [
       timestamp,
