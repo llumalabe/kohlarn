@@ -944,10 +944,6 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
 // Profile page (admin_v2.html without .html extension)
 app.get('/profile', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin_v2.html'));
@@ -1179,7 +1175,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(`📱 Local:   http://localhost:${PORT}`);
   console.log(`🌐 Network: http://${localIP}:${PORT}`);
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`🔐 Admin Panel: http://${localIP}:${PORT}/admin`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 });
