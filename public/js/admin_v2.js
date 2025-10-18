@@ -19,6 +19,11 @@ let currentStatusFilter = 'all'; // 'all', 'active', 'inactive'
 let statsInterval;
 let isTemporaryPassword = false;
 
+// Check if this is the profile page and update title
+if (window.location.pathname === '/profile') {
+    document.title = 'Profile - Koh Larn Hotels';
+}
+
 // Helper function: Authenticated Fetch
 // ส่ง JWT Token กับทุก request ที่ต้องการ authentication
 function getAuthHeaders() {
