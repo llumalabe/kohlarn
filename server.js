@@ -756,36 +756,19 @@ app.delete('/api/admin/accommodation-types/:id', verifyToken, async (req, res) =
   }
 });
 
-// Upload image endpoint
-app.post('/api/upload', (req, res) => {
-  upload.single('image')(req, res, function (err) {
-    if (err instanceof multer.MulterError) {
-      console.error('Multer error:', err);
-      return res.status(400).json({ 
-        success: false, 
-        error: `ข้อผิดพลาดในการอัพโหลด: ${err.message}` 
-      });
-    } else if (err) {
-      console.error('Upload error:', err);
-      return res.status(400).json({ 
-        success: false, 
-        error: err.message || 'เกิดข้อผิดพลาดในการอัพโหลด' 
-      });
-    }
-    
-    try {
-      if (!req.file) {
-        return res.status(400).json({ success: false, error: 'ไม่พบไฟล์รูปภาพ กรุณาเลือกไฟล์' });
-      }
-      
-      // Return the URL of uploaded image
-      const imageUrl = `/uploads/${req.file.filename}`;
-      res.json({ success: true, imageUrl: imageUrl });
-    } catch (error) {
-      console.error('Error processing upload:', error);
-      res.status(500).json({ success: false, error: 'เกิดข้อผิดพลาดในการประมวลผลรูปภาพ' });
-    }
-  });
+// Get Cloudinary configuration for client-side upload
+app.get('/api/cloudinary-config', (req, res) => {
+  try {
+    // Return Cloudinary public configuration
+    res.json({
+      success: true,
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME || 'your-cloud-name',
+      uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET || 'kohlarn_hotels'
+    });
+  } catch (error) {
+    console.error('Error getting Cloudinary config:', error);
+    res.status(500).json({ success: false, error: 'Failed to get upload configuration' });
+  }
 });
 
 // Toggle hotel status endpoint

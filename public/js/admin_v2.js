@@ -1564,26 +1564,41 @@ async function uploadImage(imageNumber = 1) {
         showError('รองรับเฉพาะไฟล์ JPG, PNG, GIF, WebP เท่านั้น');
         return;
     }
-    const formData = new FormData();
-    formData.append('image', file);
+
     try {
         // Show uploading message
         showSuccess(`กำลังอัพโหลดรูปที่ ${imageNumber}...`);
         
-        const response = await fetch('/api/upload', {
+        // Get Cloudinary configuration
+        const configResponse = await fetch('/api/cloudinary-config');
+        const config = await configResponse.json();
+        
+        if (!config.success) {
+            throw new Error('ไม่สามารถโหลดการตั้งค่าการอัพโหลดได้');
+        }
+        
+        // Upload directly to Cloudinary
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', config.uploadPreset);
+        formData.append('folder', 'kohlarn-hotels'); // เก็บในโฟลเดอร์เดียวกัน
+        
+        const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`;
+        const uploadResponse = await fetch(cloudinaryUrl, {
             method: 'POST',
             body: formData
-            // ไม่ต้องใส่ Content-Type header เพราะ browser จะใส่ให้อัตโนมัติพร้อม boundary
         });
-        const data = await response.json();
-        if (data.success && data.imageUrl) {
+        
+        const uploadData = await uploadResponse.json();
+        
+        if (uploadData.secure_url) {
             // Set the URL in the appropriate input field
             const urlField = imageNumber === 1 ? 'imageUrl' : `imageUrl${imageNumber}`;
             const urlInput = document.getElementById(urlField);
             if (urlInput) {
-                urlInput.value = data.imageUrl;
+                urlInput.value = uploadData.secure_url;
                 // Show preview
-                previewImageUrl(data.imageUrl, imageNumber);
+                previewImageUrl(uploadData.secure_url, imageNumber);
                 
                 showSuccess(`✓ อัพโหลดรูปที่ ${imageNumber} สำเร็จ!`);
             } else {
@@ -1591,8 +1606,8 @@ async function uploadImage(imageNumber = 1) {
                 showError(`ไม่พบช่อง URL สำหรับรูปที่ ${imageNumber}`);
             }
         } else {
-            console.error('❌ Upload failed:', data.error);
-            showError(data.error || 'เกิดข้อผิดพลาดในการอัพโหลด');
+            console.error('❌ Cloudinary upload failed:', uploadData);
+            showError(uploadData.error?.message || 'เกิดข้อผิดพลาดในการอัพโหลด');
         }
     } catch (error) {
         console.error('❌ Exception:', error);
