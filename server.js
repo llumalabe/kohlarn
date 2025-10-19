@@ -85,6 +85,117 @@ app.use(session({
   }
 }));
 
+// === IMPORTANT: Upload route BEFORE body parsers ===
+// This must be defined before express.json() and express.urlencoded()
+// to prevent them from trying to parse multipart/form-data
+
+// Middleware: Verify JWT Token (needed for upload route)
+function verifyToken(req, res, next) {
+  const token = req.headers['authorization']?.split(' ')[1] || req.session.token;
+  
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'ไม่พบ Token กรุณาเข้าสู่ระบบ' });
+  }
+  
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ success: false, message: 'Token หมดอายุ กรุณาเข้าสู่ระบบใหม่' });
+    }
+    return res.status(403).json({ success: false, message: 'Token ไม่ถูกต้อง' });
+  }
+}
+
+// Upload image to Google Drive (BEFORE body parsers!)
+app.post('/api/upload', verifyToken, async (req, res) => {
+  // Use multer memory storage for temporary buffer
+  const memoryUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 10 * 1024 * 1024 // 10MB limit
+    },
+    fileFilter: function (req, file, cb) {
+      const allowedTypes = /jpeg|jpg|png|gif|webp/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const mimetype = allowedTypes.test(file.mimetype);
+      
+      if (mimetype && extname) {
+        return cb(null, true);
+      } else {
+        cb(new Error('รองรับเฉพาะไฟล์รูปภาพ (JPG, PNG, GIF, WebP)'));
+      }
+    }
+  }).single('image');
+
+  memoryUpload(req, res, async function (err) {
+    if (err instanceof multer.MulterError) {
+      console.error('Multer error:', err);
+      return res.status(400).json({ 
+        success: false, 
+        error: `ข้อผิดพลาดในการอัพโหลด: ${err.message}` 
+      });
+    } else if (err) {
+      console.error('Upload error:', err);
+      return res.status(400).json({ 
+        success: false, 
+        error: err.message || 'เกิดข้อผิดพลาดในการอัพโหลด' 
+      });
+    }
+    
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: 'ไม่พบไฟล์รูปภาพ กรุณาเลือกไฟล์' });
+      }
+
+      // Get hotel info from request body
+      const { hotelId, hotelName } = req.body;
+      
+      if (!hotelId || !hotelName) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'กรุณาระบุ hotelId และ hotelName' 
+        });
+      }
+
+      // Check if Google Drive is available
+      if (!googleDriveService.canWrite) {
+        return res.status(503).json({
+          success: false,
+          error: 'Google Drive ไม่พร้อมใช้งาน กรุณาตรวจสอบการตั้งค่า'
+        });
+      }
+
+      // Upload to Google Drive
+      const result = await googleDriveService.uploadImage(
+        req.file.buffer,
+        req.file.originalname,
+        req.file.mimetype,
+        hotelId,
+        hotelName
+      );
+
+      // Return the image URL
+      res.json({
+        success: true,
+        imageUrl: result.webViewLink,
+        fileId: result.id,
+        message: 'อัพโหลดรูปภาพสำเร็จ'
+      });
+
+    } catch (error) {
+      console.error('Error uploading to Google Drive:', error);
+      res.status(500).json({
+        success: false,
+        error: 'เกิดข้อผิดพลาดในการอัพโหลดไปยัง Google Drive: ' + error.message
+      });
+    }
+  });
+});
+
+// === Body parsers - comes AFTER upload route ===
 // JSON body parser with type checking to avoid parsing multipart/form-data
 app.use(express.json({ 
   limit: '10mb',
@@ -116,26 +227,6 @@ const loginLimiter = rateLimit({
   max: 50, // 50 login attempts per 15 minutes
   message: { success: false, error: 'คำขอเข้าสู่ระบบมากเกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง' }
 });
-
-// Middleware: Verify JWT Token
-function verifyToken(req, res, next) {
-  const token = req.headers['authorization']?.split(' ')[1] || req.session.token;
-  
-  if (!token) {
-    return res.status(401).json({ success: false, message: 'ไม่พบ Token กรุณาเข้าสู่ระบบ' });
-  }
-  
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ success: false, message: 'Token หมดอายุ กรุณาเข้าสู่ระบบใหม่' });
-    }
-    return res.status(403).json({ success: false, message: 'Token ไม่ถูกต้อง' });
-  }
-}
 
 app.use('/api/', limiter);
 
@@ -811,90 +902,6 @@ app.get('/api/cloudinary-config', (req, res) => {
     console.error('Error getting Cloudinary config:', error);
     res.status(500).json({ success: false, error: 'Failed to get upload configuration' });
   }
-});
-
-// Upload image to Google Drive
-app.post('/api/upload', verifyToken, async (req, res) => {
-  // Use multer memory storage for temporary buffer
-  const memoryUpload = multer({
-    storage: multer.memoryStorage(),
-    limits: {
-      fileSize: 10 * 1024 * 1024 // 10MB limit
-    },
-    fileFilter: function (req, file, cb) {
-      const allowedTypes = /jpeg|jpg|png|gif|webp/;
-      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-      const mimetype = allowedTypes.test(file.mimetype);
-      
-      if (mimetype && extname) {
-        return cb(null, true);
-      } else {
-        cb(new Error('รองรับเฉพาะไฟล์รูปภาพ (JPG, PNG, GIF, WebP)'));
-      }
-    }
-  }).single('image');
-
-  memoryUpload(req, res, async function (err) {
-    if (err instanceof multer.MulterError) {
-      console.error('Multer error:', err);
-      return res.status(400).json({ 
-        success: false, 
-        error: `ข้อผิดพลาดในการอัพโหลด: ${err.message}` 
-      });
-    } else if (err) {
-      console.error('Upload error:', err);
-      return res.status(400).json({ 
-        success: false, 
-        error: err.message || 'เกิดข้อผิดพลาดในการอัพโหลด' 
-      });
-    }
-    
-    try {
-      if (!req.file) {
-        return res.status(400).json({ success: false, error: 'ไม่พบไฟล์รูปภาพ กรุณาเลือกไฟล์' });
-      }
-
-      // Get hotel info from request body
-      const { hotelId, hotelName } = req.body;
-      
-      if (!hotelId || !hotelName) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'กรุณาระบุ hotelId และ hotelName' 
-        });
-      }
-
-      // Check if Google Drive is available
-      if (!googleDriveService.canWrite) {
-        return res.status(503).json({
-          success: false,
-          error: 'Google Drive service is not available. Please check Service Account configuration.'
-        });
-      }
-
-      // Upload to Google Drive
-      const result = await googleDriveService.uploadImage(
-        req.file.buffer,
-        req.file.originalname,
-        req.file.mimetype,
-        hotelId,
-        hotelName
-      );
-
-      res.json({ 
-        success: true, 
-        imageUrl: result.directLink,
-        fileId: result.fileId,
-        webViewLink: result.webViewLink
-      });
-    } catch (error) {
-      console.error('Error uploading to Google Drive:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: error.message || 'เกิดข้อผิดพลาดในการอัพโหลดไปยัง Google Drive' 
-      });
-    }
-  });
 });
 
 // Toggle hotel status endpoint
