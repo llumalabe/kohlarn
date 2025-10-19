@@ -74,9 +74,6 @@ function getVisitStats(period = 'day') {
     case 'year':
       startTime = now - (365 * 24 * 60 * 60 * 1000);
       break;
-    case 'all':
-      startTime = 0; // Show all data from beginning
-      break;
     default:
       startTime = now - (24 * 60 * 60 * 1000);
   }
