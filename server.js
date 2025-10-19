@@ -85,7 +85,16 @@ app.use(session({
   }
 }));
 
-app.use(express.json());
+// JSON body parser (skip multipart/form-data)
+app.use((req, res, next) => {
+  const contentType = req.headers['content-type'] || '';
+  if (contentType.includes('multipart/form-data')) {
+    // Let multer handle multipart requests
+    return next();
+  }
+  express.json({ limit: '10mb' })(req, res, next);
+});
+
 app.use(express.static('public'));
 
 // Trust proxy - Required for Vercel and other reverse proxies
