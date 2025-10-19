@@ -1585,6 +1585,23 @@ async function uploadImage(imageNumber = 1) {
             body: formData
         });
         
+        // Check if response is OK
+        if (!response.ok) {
+            const contentType = response.headers.get('content-type');
+            let errorMessage = 'เกิดข้อผิดพลาดในการอัพโหลด';
+            
+            if (contentType && contentType.includes('application/json')) {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorMessage;
+            } else {
+                const errorText = await response.text();
+                console.error('❌ Server response (not JSON):', errorText.substring(0, 200));
+                errorMessage = `Server error: ${response.status} ${response.statusText}`;
+            }
+            
+            throw new Error(errorMessage);
+        }
+        
         const data = await response.json();
         
         if (data.success && data.imageUrl) {

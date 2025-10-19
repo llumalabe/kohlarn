@@ -823,6 +823,14 @@ app.post('/api/upload', verifyToken, async (req, res) => {
         });
       }
 
+      // Check if Google Drive is available
+      if (!googleDriveService.canWrite) {
+        return res.status(503).json({
+          success: false,
+          error: 'Google Drive service is not available. Please check Service Account configuration.'
+        });
+      }
+
       // Upload to Google Drive
       const result = await googleDriveService.uploadImage(
         req.file.buffer,
@@ -842,7 +850,7 @@ app.post('/api/upload', verifyToken, async (req, res) => {
       console.error('Error uploading to Google Drive:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'เกิดข้อผิดพลาดในการอัพโหลดไปยัง Google Drive' 
+        error: error.message || 'เกิดข้อผิดพลาดในการอัพโหลดไปยัง Google Drive' 
       });
     }
   });
