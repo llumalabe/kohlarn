@@ -453,10 +453,26 @@ app.get('/api/hotels/:id/likes', async (req, res) => {
   }
 });
 
+// Cache for stats endpoint (30 seconds)
+const STATS_CACHE_DURATION = 30 * 1000;
+let statsCache = {
+  data: null,
+  timestamp: 0,
+  period: null
+};
+
 // Get stats
 app.get('/api/admin/stats', verifyToken, async (req, res) => {
   try {
     const { period } = req.query;
+    
+    // Check cache first (with period-specific caching)
+    const now = Date.now();
+    if (statsCache.data && 
+        statsCache.period === period &&
+        (now - statsCache.timestamp) < STATS_CACHE_DURATION) {
+      return res.json({ success: true, data: statsCache.data });
+    }
     
     // Get total hotels count
     const hotels = await googleSheetsService.getHotels();
@@ -466,8 +482,8 @@ app.get('/api/admin/stats', verifyToken, async (req, res) => {
     const topLikedHotels = await likesService.getTopLikedHotels(10);
     
     // Get click stats
-    const clickStats = await hotelClicksService.getClickStats();
-    const topClickedHotels = await hotelClicksService.getTopClickedHotels(10);
+    const clickStats = await hotelClicksService.getClickStats(period);
+    const topClickedHotels = await hotelClicksService.getTopClickedHotels(period, 'most', 10);
     
     const stats = {
       visits: statsService.getVisitStats(period),
@@ -479,9 +495,22 @@ app.get('/api/admin/stats', verifyToken, async (req, res) => {
       realtimeVisits: statsService.getRealtimeVisits()
     };
     
+    // Update cache
+    statsCache = {
+      data: stats,
+      timestamp: Date.now(),
+      period: period
+    };
+    
     res.json({ success: true, data: stats });
   } catch (error) {
     console.error('Error getting stats:', error);
+    
+    // Return stale cache if available
+    if (statsCache.data) {
+      return res.json({ success: true, data: statsCache.data });
+    }
+    
     res.status(500).json({ success: false, error: 'Failed to get stats' });
   }
 });
