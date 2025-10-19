@@ -1550,10 +1550,10 @@ async function uploadImage(imageNumber = 1) {
     
     const file = fileInput.files[0];
     
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-        console.error('❌ ไฟล์ใหญ่เกิน 5MB');
-        showError('ไฟล์รูปภาพมีขนาดใหญ่เกิน 5MB');
+    // Validate file size (10MB for Google Drive)
+    if (file.size > 10 * 1024 * 1024) {
+        console.error('❌ ไฟล์ใหญ่เกิน 10MB');
+        showError('ไฟล์รูปภาพมีขนาดใหญ่เกิน 10MB');
         return;
     }
     
@@ -1567,47 +1567,43 @@ async function uploadImage(imageNumber = 1) {
 
     try {
         // Show uploading message
-        showSuccess(`กำลังอัพโหลดรูปที่ ${imageNumber}...`);
+        showSuccess(`กำลังอัพโหลดรูปที่ ${imageNumber} ไปยัง Google Drive...`);
         
-        // Get Cloudinary configuration
-        const configResponse = await fetch('/api/cloudinary-config');
-        const config = await configResponse.json();
+        // Get hotel info from form
+        const hotelId = document.getElementById('hotelId')?.value || `hotel-${Date.now()}`;
+        const hotelNameTh = document.getElementById('nameTh')?.value || 'Unknown Hotel';
         
-        if (!config.success) {
-            throw new Error('ไม่สามารถโหลดการตั้งค่าการอัพโหลดได้');
-        }
-        
-        // Upload directly to Cloudinary
+        // Create FormData
         const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', config.uploadPreset);
-        formData.append('folder', 'kohlarn-hotels'); // เก็บในโฟลเดอร์เดียวกัน
+        formData.append('image', file);
+        formData.append('hotelId', hotelId);
+        formData.append('hotelName', hotelNameTh);
         
-        const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`;
-        const uploadResponse = await fetch(cloudinaryUrl, {
+        // Upload to server (which will upload to Google Drive)
+        const response = await fetchWithAuth('/api/upload', {
             method: 'POST',
             body: formData
         });
         
-        const uploadData = await uploadResponse.json();
+        const data = await response.json();
         
-        if (uploadData.secure_url) {
+        if (data.success && data.imageUrl) {
             // Set the URL in the appropriate input field
             const urlField = imageNumber === 1 ? 'imageUrl' : `imageUrl${imageNumber}`;
             const urlInput = document.getElementById(urlField);
             if (urlInput) {
-                urlInput.value = uploadData.secure_url;
+                urlInput.value = data.imageUrl;
                 // Show preview
-                previewImageUrl(uploadData.secure_url, imageNumber);
+                previewImageUrl(data.imageUrl, imageNumber);
                 
-                showSuccess(`✓ อัพโหลดรูปที่ ${imageNumber} สำเร็จ!`);
+                showSuccess(`✓ อัพโหลดรูปที่ ${imageNumber} สำเร็จ! (Google Drive)`);
             } else {
                 console.error('❌ ไม่พบ URL input field:', urlField);
                 showError(`ไม่พบช่อง URL สำหรับรูปที่ ${imageNumber}`);
             }
         } else {
-            console.error('❌ Cloudinary upload failed:', uploadData);
-            showError(uploadData.error?.message || 'เกิดข้อผิดพลาดในการอัพโหลด');
+            console.error('❌ Upload failed:', data.error);
+            showError(data.error || 'เกิดข้อผิดพลาดในการอัพโหลด');
         }
     } catch (error) {
         console.error('❌ Exception:', error);
