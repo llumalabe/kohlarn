@@ -964,9 +964,15 @@ async function loadHotels() {
             const userRole = currentUser.role || 'user';
             const userHotelId = currentUser.hotelId || '';
             
-            if ((userRole === 'hotel_owner' || userRole === 'hotel-owner') && userHotelId) {
-                // hotel_owner เห็นเฉพาะโรงแรมของตัวเอง (เปรียบเทียบแบบ string)
-                hotels = hotels.filter(hotel => String(hotel.id) === String(userHotelId));
+            if (userRole === 'hotel_owner' || userRole === 'hotel-owner') {
+                // hotel_owner ต้องมี hotelId ถึงจะเห็นโรงแรมของตัวเอง
+                if (userHotelId) {
+                    // เห็นเฉพาะโรงแรมของตัวเอง (เปรียบเทียบแบบ string)
+                    hotels = hotels.filter(hotel => String(hotel.id) === String(userHotelId));
+                } else {
+                    // ถ้าไม่มี hotelId ให้แสดงว่าง (ไม่ให้เห็นโรงแรมใดๆ)
+                    hotels = [];
+                }
                 // ซ่อนปุ่มเพิ่มโรงแรม
                 const addHotelBtn = document.getElementById('addHotelBtn');
                 if (addHotelBtn) {
@@ -1264,26 +1270,32 @@ async function loadLikesStats() {
             let topHotels = data.data.topHotels;
             let topClickedHotels = data.data.topClickedHotels;
             
-            if ((userRole === 'hotel_owner' || userRole === 'hotel-owner') && userHotelId) {
-                // hotel_owner เห็นเฉพาะสถิติของโรงแรมตัวเอง (เปรียบเทียบแบบ string)
-                if (Array.isArray(topHotels)) {
-                    topHotels = topHotels.filter(h => String(h.hotelId) === String(userHotelId));
-                } else if (typeof topHotels === 'object') {
-                    const filtered = {};
-                    if (topHotels[String(userHotelId)]) {
-                        filtered[String(userHotelId)] = topHotels[String(userHotelId)];
+            if (userRole === 'hotel_owner' || userRole === 'hotel-owner') {
+                if (userHotelId) {
+                    // hotel_owner เห็นเฉพาะสถิติของโรงแรมตัวเอง (เปรียบเทียบแบบ string)
+                    if (Array.isArray(topHotels)) {
+                        topHotels = topHotels.filter(h => String(h.hotelId) === String(userHotelId));
+                    } else if (typeof topHotels === 'object') {
+                        const filtered = {};
+                        if (topHotels[String(userHotelId)]) {
+                            filtered[String(userHotelId)] = topHotels[String(userHotelId)];
+                        }
+                        topHotels = filtered;
                     }
-                    topHotels = filtered;
-                }
-                
-                if (Array.isArray(topClickedHotels)) {
-                    topClickedHotels = topClickedHotels.filter(h => String(h.hotelId) === String(userHotelId));
-                } else if (typeof topClickedHotels === 'object') {
-                    const filtered = {};
-                    if (topClickedHotels[String(userHotelId)]) {
-                        filtered[String(userHotelId)] = topClickedHotels[String(userHotelId)];
+                    
+                    if (Array.isArray(topClickedHotels)) {
+                        topClickedHotels = topClickedHotels.filter(h => String(h.hotelId) === String(userHotelId));
+                    } else if (typeof topClickedHotels === 'object') {
+                        const filtered = {};
+                        if (topClickedHotels[String(userHotelId)]) {
+                            filtered[String(userHotelId)] = topClickedHotels[String(userHotelId)];
+                        }
+                        topClickedHotels = filtered;
                     }
-                    topClickedHotels = filtered;
+                } else {
+                    // ถ้าไม่มี hotelId ให้แสดงว่าง
+                    topHotels = Array.isArray(topHotels) ? [] : {};
+                    topClickedHotels = Array.isArray(topClickedHotels) ? [] : {};
                 }
             }
             
@@ -1316,9 +1328,14 @@ async function displayLikesStats(topHotels, clicksData) {
     const userRole = currentUser.role || 'user';
     const userHotelId = currentUser.hotelId || '';
     
-    if ((userRole === 'hotel_owner' || userRole === 'hotel-owner') && userHotelId) {
-        // hotel_owner เห็นเฉพาะโรงแรมตัวเอง (เปรียบเทียบแบบ string)
-        hotels = hotels.filter(h => String(h.id) === String(userHotelId));
+    if (userRole === 'hotel_owner' || userRole === 'hotel-owner') {
+        if (userHotelId) {
+            // hotel_owner เห็นเฉพาะโรงแรมตัวเอง (เปรียบเทียบแบบ string)
+            hotels = hotels.filter(h => String(h.id) === String(userHotelId));
+        } else {
+            // ถ้าไม่มี hotelId ให้แสดงว่าง
+            hotels = [];
+        }
     }
     const container = document.getElementById('likesList');
     
