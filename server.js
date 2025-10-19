@@ -91,8 +91,12 @@ app.use(express.json({
   type: ['application/json', 'application/*+json', 'text/*']
 }));
 
-// URL encoded form parser
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// URL encoded form parser - only for application/x-www-form-urlencoded
+app.use(express.urlencoded({ 
+  extended: true, 
+  limit: '10mb',
+  type: 'application/x-www-form-urlencoded'
+}));
 
 app.use(express.static('public'));
 
