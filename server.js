@@ -85,15 +85,14 @@ app.use(session({
   }
 }));
 
-// JSON body parser (skip multipart/form-data)
-app.use((req, res, next) => {
-  const contentType = req.headers['content-type'] || '';
-  if (contentType.includes('multipart/form-data')) {
-    // Let multer handle multipart requests
-    return next();
-  }
-  express.json({ limit: '10mb' })(req, res, next);
-});
+// JSON body parser with type checking to avoid parsing multipart/form-data
+app.use(express.json({ 
+  limit: '10mb',
+  type: ['application/json', 'application/*+json', 'text/*']
+}));
+
+// URL encoded form parser
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.use(express.static('public'));
 
