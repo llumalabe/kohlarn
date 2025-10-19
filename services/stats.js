@@ -58,24 +58,38 @@ function recordVisit(ip) {
  */
 function getVisitStats(period = 'day') {
   const stats = loadStats();
-  const now = Date.now();
+  const now = new Date();
   let startTime;
 
   switch (period) {
     case 'day':
-      startTime = now - (24 * 60 * 60 * 1000);
+      // วันนี้ตั้งแต่ 00:00:00
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      startTime = startOfDay.getTime();
       break;
     case 'week':
-      startTime = now - (7 * 24 * 60 * 60 * 1000);
+      // สัปดาห์นี้ตั้งแต่วันจันทร์ 00:00:00
+      const startOfWeek = new Date(now);
+      const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ...
+      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // ถ้าวันอาทิตย์ให้ย้อนกลับ 6 วัน
+      startOfWeek.setDate(now.getDate() - daysToMonday);
+      startOfWeek.setHours(0, 0, 0, 0);
+      startTime = startOfWeek.getTime();
       break;
     case 'month':
-      startTime = now - (30 * 24 * 60 * 60 * 1000);
+      // เดือนนี้ตั้งแต่วันที่ 1 00:00:00
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+      startTime = startOfMonth.getTime();
       break;
     case 'year':
-      startTime = now - (365 * 24 * 60 * 60 * 1000);
+      // ปีนี้ตั้งแต่ 1 มกราคม 00:00:00
+      const startOfYear = new Date(now.getFullYear(), 0, 1, 0, 0, 0);
+      startTime = startOfYear.getTime();
       break;
     default:
-      startTime = now - (24 * 60 * 60 * 1000);
+      // Default: วันนี้ตั้งแต่ 00:00:00
+      const defaultStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      startTime = defaultStart.getTime();
   }
 
   const filteredVisits = stats.visits.filter(visit => visit.timestamp >= startTime);
