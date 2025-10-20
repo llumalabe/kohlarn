@@ -72,7 +72,9 @@ async function getOrCreateMainFolder() {
     const response = await drive.files.list({
       q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
       fields: 'files(id, name)',
-      spaces: 'drive'
+      spaces: 'drive',
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true
     });
 
     if (response.data.files.length > 0) {
@@ -87,7 +89,8 @@ async function getOrCreateMainFolder() {
       
       const folder = await drive.files.create({
         requestBody: folderMetadata,
-        fields: 'id'
+        fields: 'id',
+        supportsAllDrives: true
       });
       
       HOTEL_IMAGES_FOLDER_ID = folder.data.id;
@@ -117,7 +120,9 @@ async function getOrCreateHotelFolder(hotelId, hotelName) {
     const response = await drive.files.list({
       q: `name='${folderName}' and '${mainFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
       fields: 'files(id, name)',
-      spaces: 'drive'
+      spaces: 'drive',
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true
     });
 
     if (response.data.files.length > 0) {
@@ -133,7 +138,8 @@ async function getOrCreateHotelFolder(hotelId, hotelName) {
 
     const folder = await drive.files.create({
       requestBody: folderMetadata,
-      fields: 'id'
+      fields: 'id',
+      supportsAllDrives: true
     });
 
     console.log(`✅ Created folder for hotel: ${folderName}`);
@@ -185,7 +191,8 @@ async function uploadImage(fileBuffer, filename, mimeType, hotelId, hotelName) {
     const file = await drive.files.create({
       requestBody: fileMetadata,
       media: media,
-      fields: 'id, webViewLink, webContentLink'
+      fields: 'id, webViewLink, webContentLink',
+      supportsAllDrives: true
     });
 
     // Make file publicly accessible
@@ -194,7 +201,8 @@ async function uploadImage(fileBuffer, filename, mimeType, hotelId, hotelName) {
       requestBody: {
         role: 'reader',
         type: 'anyone'
-      }
+      },
+      supportsAllDrives: true
     });
 
     // Get direct download link
@@ -232,7 +240,9 @@ async function deleteOldImages(hotelId, hotelName, keepFileIds = []) {
     const response = await drive.files.list({
       q: `'${hotelFolderId}' in parents and trashed=false`,
       fields: 'files(id, name)',
-      spaces: 'drive'
+      spaces: 'drive',
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true
     });
 
     const filesToDelete = response.data.files.filter(file => !keepFileIds.includes(file.id));
@@ -240,7 +250,8 @@ async function deleteOldImages(hotelId, hotelName, keepFileIds = []) {
     // Delete old files
     for (const file of filesToDelete) {
       await drive.files.delete({
-        fileId: file.id
+        fileId: file.id,
+        supportsAllDrives: true
       });
       console.log(`🗑️ Deleted old image: ${file.name}`);
     }
@@ -265,7 +276,8 @@ async function deleteFile(fileId) {
 
   try {
     await drive.files.delete({
-      fileId: fileId
+      fileId: fileId,
+      supportsAllDrives: true
     });
     console.log(`✅ Deleted file: ${fileId}`);
     return true;
