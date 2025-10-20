@@ -40,6 +40,13 @@ try {
     drive = google.drive({ version: 'v3', auth });
     canWrite = true;
     console.log('✅ Google Drive initialized with Service Account');
+    console.log('📧 Service Account Email:', serviceAccount.client_email);
+    console.log('⚠️  To use Google Drive, you must:');
+    console.log('   1. Create a folder in YOUR Google Drive');
+    console.log('   2. Right-click → Share');
+    console.log('   3. Add this email:', serviceAccount.client_email);
+    console.log('   4. Give "Editor" permission');
+    console.log('   5. Copy the folder ID from URL and set GOOGLE_DRIVE_FOLDER_ID in .env');
   } else {
     console.error('❌ No Service Account found for Google Drive');
   }
