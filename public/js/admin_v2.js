@@ -142,12 +142,17 @@ async function fetchWithAuth(url, options = {}) {
         throw new Error('No authentication token');
     }
     
-    // Merge headers with Authorization
+    // Prepare headers
     const headers = {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
         ...options.headers
     };
+    
+    // Only set Content-Type for non-FormData requests
+    // FormData needs browser to set Content-Type with boundary automatically
+    if (!(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+    }
     
     const response = await fetch(url, {
         ...options,
