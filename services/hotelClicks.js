@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const googleSheetsService = require('./googleSheets');
 
 const DATA_DIR = path.join(__dirname, '../data');
 const CLICKS_FILE = path.join(DATA_DIR, 'clicks.json');
@@ -15,7 +16,7 @@ if (!fs.existsSync(CLICKS_FILE)) {
 }
 
 /**
- * Load clicks from file
+ * Load clicks from file (fallback for local storage)
  */
 function loadClicks() {
   try {
@@ -27,16 +28,33 @@ function loadClicks() {
 }
 
 /**
- * Save clicks to file
+ * Save clicks to file (fallback for local storage)
  */
 function saveClicks(clicks) {
-  fs.writeFileSync(CLICKS_FILE, JSON.stringify(clicks, null, 2));
+  try {
+    fs.writeFileSync(CLICKS_FILE, JSON.stringify(clicks, null, 2));
+  } catch (error) {
+    // Ignore errors in read-only environments
+  }
 }
 
 /**
  * Record a click on hotel card
  */
-function recordClick(hotelId, ip, userAgent = '') {
+async function recordClick(hotelId, ip, userAgent = '') {
+  try {
+    // Try to use Google Sheets first
+    const success = await googleSheetsService.updateHotelClick(hotelId);
+    
+    if (success) {
+      console.log(`✅ Recorded click for hotel ${hotelId} in Google Sheets`);
+      return { success: true };
+    }
+  } catch (error) {
+    console.error('Error recording click in Google Sheets:', error);
+  }
+  
+  // Fallback to local file storage
   const clicks = loadClicks();
   
   if (!clicks.hotels[hotelId]) {

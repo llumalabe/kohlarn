@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const googleSheetsService = require('./googleSheets');
 
 const DATA_DIR = path.join(__dirname, '../data');
 const LIKES_FILE = path.join(DATA_DIR, 'likes.json');
@@ -19,7 +20,7 @@ try {
 }
 
 /**
- * Load likes from file
+ * Load likes from file (fallback for local storage)
  */
 function loadLikes() {
   try {
@@ -31,7 +32,7 @@ function loadLikes() {
 }
 
 /**
- * Save likes to file
+ * Save likes to file (fallback for local storage)
  */
 function saveLikes(likes) {
   try {
@@ -61,7 +62,7 @@ function cleanupOldHistory(likes) {
 /**
  * Like a hotel (one like per IP per day)
  */
-function likeHotel(hotelId, ip) {
+async function likeHotel(hotelId, ip) {
   let likes = loadLikes();
   
   // Clean up old history periodically (1% chance on each like)
@@ -114,6 +115,14 @@ function likeHotel(hotelId, ip) {
   });
   
   saveLikes(likes);
+  
+  // Try to update Google Sheets as well
+  try {
+    await googleSheetsService.updateHotelLike(hotelId, true);
+    console.log(`✅ Updated like for hotel ${hotelId} in Google Sheets`);
+  } catch (error) {
+    console.error('Error updating like in Google Sheets:', error);
+  }
   
   return {
     success: true,

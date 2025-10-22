@@ -554,6 +554,202 @@ async function updateWebSettings(settings, modifiedBy = 'Admin') {
   }
 }
 
+/**
+ * Get hotel clicks from Google Sheets
+ */
+async function getHotelClicks() {
+  if (!SPREADSHEET_ID) {
+    throw new Error('Google Sheet ID not configured');
+  }
+
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'HotelClicks!A2:C',
+      key: API_KEY
+    });
+
+    const rows = response.data.values || [];
+    const clicks = {};
+    
+    rows.forEach(row => {
+      const hotelId = row[0];
+      const clickCount = parseInt(row[1]) || 0;
+      const lastClicked = row[2] || '';
+      
+      if (hotelId) {
+        clicks[hotelId] = {
+          count: clickCount,
+          lastClicked: lastClicked
+        };
+      }
+    });
+
+    return clicks;
+  } catch (error) {
+    console.error('Error getting hotel clicks:', error);
+    return {};
+  }
+}
+
+/**
+ * Update hotel click count in Google Sheets
+ */
+async function updateHotelClick(hotelId) {
+  if (!canWrite) {
+    console.warn('⚠️ Cannot write to Google Sheets (read-only mode)');
+    return false;
+  }
+
+  try {
+    // Get current data
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'HotelClicks!A2:C'
+    });
+
+    const rows = response.data.values || [];
+    let rowIndex = -1;
+    let currentCount = 0;
+
+    // Find existing row
+    rows.forEach((row, index) => {
+      if (row[0] === String(hotelId)) {
+        rowIndex = index + 2; // +2 because sheet is 1-indexed and we start from row 2
+        currentCount = parseInt(row[1]) || 0;
+      }
+    });
+
+    const newCount = currentCount + 1;
+    const timestamp = new Date().toISOString();
+
+    if (rowIndex > 0) {
+      // Update existing row
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `HotelClicks!B${rowIndex}:C${rowIndex}`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [[newCount, timestamp]]
+        }
+      });
+    } else {
+      // Add new row
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'HotelClicks!A2:C',
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [[hotelId, newCount, timestamp]]
+        }
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error updating hotel click:', error);
+    return false;
+  }
+}
+
+/**
+ * Get hotel likes from Google Sheets
+ */
+async function getHotelLikes() {
+  if (!SPREADSHEET_ID) {
+    throw new Error('Google Sheet ID not configured');
+  }
+
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'Likes!A2:C',
+      key: API_KEY
+    });
+
+    const rows = response.data.values || [];
+    const likes = {};
+    
+    rows.forEach(row => {
+      const hotelId = row[0];
+      const likeCount = parseInt(row[1]) || 0;
+      const lastUpdated = row[2] || '';
+      
+      if (hotelId) {
+        likes[hotelId] = {
+          count: likeCount,
+          lastUpdated: lastUpdated
+        };
+      }
+    });
+
+    return likes;
+  } catch (error) {
+    console.error('Error getting hotel likes:', error);
+    return {};
+  }
+}
+
+/**
+ * Update hotel like count in Google Sheets
+ */
+async function updateHotelLike(hotelId, increment = true) {
+  if (!canWrite) {
+    console.warn('⚠️ Cannot write to Google Sheets (read-only mode)');
+    return false;
+  }
+
+  try {
+    // Get current data
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'Likes!A2:C'
+    });
+
+    const rows = response.data.values || [];
+    let rowIndex = -1;
+    let currentCount = 0;
+
+    // Find existing row
+    rows.forEach((row, index) => {
+      if (row[0] === String(hotelId)) {
+        rowIndex = index + 2;
+        currentCount = parseInt(row[1]) || 0;
+      }
+    });
+
+    const newCount = increment ? currentCount + 1 : Math.max(0, currentCount - 1);
+    const timestamp = new Date().toISOString();
+
+    if (rowIndex > 0) {
+      // Update existing row
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `Likes!B${rowIndex}:C${rowIndex}`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [[newCount, timestamp]]
+        }
+      });
+    } else {
+      // Add new row
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'Likes!A2:C',
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [[hotelId, newCount, timestamp]]
+        }
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error updating hotel like:', error);
+    return false;
+  }
+}
+
 module.exports = {
   getHotels,
   getHotelById,
@@ -565,5 +761,9 @@ module.exports = {
   toggleHotelStatus,
   getWebSettings,
   updateWebSettings,
-  clearHotelsCache
+  clearHotelsCache,
+  getHotelClicks,
+  updateHotelClick,
+  getHotelLikes,
+  updateHotelLike
 };
