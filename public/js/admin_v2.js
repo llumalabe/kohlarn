@@ -1984,9 +1984,26 @@ function previewImageUrl(url, imageNumber = 1) {
     }
     
     if (url && url.trim() !== '') {
-        // Set image source first
-        img.src = url;
+        // Clear previous event handlers to prevent double-loading
+        img.onload = null;
+        img.onerror = null;
         
+        // If image is already loaded with same URL, just show it
+        if (img.src === url && img.complete && img.naturalWidth > 0) {
+            console.log('Image already loaded, showing immediately:', url);
+            img.style.display = 'block';
+            img.style.zIndex = '2';
+            const emptySlot = preview.querySelector('.empty-slot');
+            if (emptySlot) {
+                emptySlot.style.display = 'none';
+                emptySlot.style.zIndex = '0';
+            }
+            const removeBtn = slot.querySelector('.remove-slot-btn');
+            if (removeBtn) removeBtn.style.display = 'block';
+            return;
+        }
+        
+        // Set up error handler first
         img.onerror = function() {
             console.error('Failed to load image:', url);
             // Hide image, show empty state
@@ -2006,6 +2023,7 @@ function previewImageUrl(url, imageNumber = 1) {
             }
         };
         
+        // Set up load handler
         img.onload = function() {
             console.log('Image loaded successfully:', url);
             // Show image on top, hide empty state
@@ -2020,8 +2038,14 @@ function previewImageUrl(url, imageNumber = 1) {
             const removeBtn = slot.querySelector('.remove-slot-btn');
             if (removeBtn) removeBtn.style.display = 'block';
         };
+        
+        // Set image source last (triggers loading)
+        img.src = url;
+        
     } else {
         // Clear slot - show empty state, hide image
+        img.onload = null;
+        img.onerror = null;
         img.style.display = 'none';
         img.style.zIndex = '0';
         img.src = '';
