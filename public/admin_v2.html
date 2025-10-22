@@ -824,6 +824,10 @@
                     <label>ID โรงแรม (รหัสเฉพาะ) * <small style="color: #666;">เช่น hotel-001 หรือ 001</small></label>
                     <input type="text" id="hotelId" required placeholder="hotel-001 หรือ 001" pattern="[a-zA-Z0-9\-]+" autocomplete="off" inputmode="text">
                     <small style="color: #999;">สามารถใส่เลข 0 ด้านหน้าได้ เช่น 001, 0123</small>
+                    <!-- Duplicate ID Warning -->
+                    <div id="duplicateIdWarning" style="display: none; background: #e74c3c; color: white; padding: 10px; border-radius: 6px; margin-top: 8px; font-weight: 600;">
+                        <i class="fas fa-times-circle"></i> มีรหัสโรงแรมนี้ในระบบแล้ว ไม่สามารถเพิ่มอีกได้
+                    </div>
                 </div>
 
                 <!-- ชื่อโรงแรม -->

@@ -1614,10 +1614,11 @@ function showHotelForm(hotelId = null) {
 // ========================================
 
 // Validate Hotel ID and update upload button state
-function validateHotelIdForUpload() {
+async function validateHotelIdForUpload() {
     const hotelId = document.getElementById('hotelId')?.value?.trim();
     const uploadBtn = document.getElementById('uploadBtn');
     const warning = document.getElementById('hotelIdWarning');
+    const duplicateWarning = document.getElementById('duplicateIdWarning');
     
     if (!hotelId) {
         // Disable upload button and show warning
@@ -1627,14 +1628,58 @@ function validateHotelIdForUpload() {
             uploadBtn.style.cursor = 'not-allowed';
         }
         if (warning) warning.style.display = 'block';
-    } else {
-        // Enable upload button and hide warning
-        if (uploadBtn) {
-            uploadBtn.disabled = false;
-            uploadBtn.style.opacity = '1';
-            uploadBtn.style.cursor = 'pointer';
+        if (duplicateWarning) duplicateWarning.style.display = 'none';
+        return;
+    }
+    
+    // Check if this is editing mode (hotel ID already exists in system)
+    const isEditMode = window.editingHotelId && window.editingHotelId === hotelId;
+    
+    if (!isEditMode) {
+        // Check if hotel ID already exists in the system
+        try {
+            const exists = await checkHotelIdExists(hotelId);
+            
+            if (exists) {
+                // Duplicate ID found - disable upload and show duplicate warning
+                if (uploadBtn) {
+                    uploadBtn.disabled = true;
+                    uploadBtn.style.opacity = '0.5';
+                    uploadBtn.style.cursor = 'not-allowed';
+                }
+                if (warning) warning.style.display = 'none';
+                if (duplicateWarning) duplicateWarning.style.display = 'block';
+                return;
+            }
+        } catch (error) {
+            console.error('Error checking hotel ID:', error);
         }
-        if (warning) warning.style.display = 'none';
+    }
+    
+    // ID is valid (either doesn't exist or is in edit mode)
+    if (uploadBtn) {
+        uploadBtn.disabled = false;
+        uploadBtn.style.opacity = '1';
+        uploadBtn.style.cursor = 'pointer';
+    }
+    if (warning) warning.style.display = 'none';
+    if (duplicateWarning) duplicateWarning.style.display = 'none';
+}
+
+// Check if hotel ID already exists in the system
+async function checkHotelIdExists(hotelId) {
+    try {
+        const response = await fetch('/api/hotels');
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+            // Check if any hotel has this ID
+            return data.data.some(hotel => hotel.id === hotelId);
+        }
+        return false;
+    } catch (error) {
+        console.error('Error checking hotel ID existence:', error);
+        return false;
     }
 }
 
@@ -2380,6 +2425,25 @@ async function loadHotelData(hotelId) {
 
 // Save hotel
 async function saveHotel(hotelId) {
+    const inputHotelId = document.getElementById('hotelId')?.value?.trim();
+    
+    // Check for duplicate hotel ID when adding new hotel
+    if (!hotelId) {
+        // This is a new hotel - check if ID already exists
+        const exists = await checkHotelIdExists(inputHotelId);
+        if (exists) {
+            showError('มีรหัสโรงแรมนี้ในระบบแล้ว ไม่สามารถเพิ่มอีกได้');
+            // Highlight the duplicate warning
+            const duplicateWarning = document.getElementById('duplicateIdWarning');
+            if (duplicateWarning) {
+                duplicateWarning.style.display = 'block';
+                // Scroll to the warning
+                duplicateWarning.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return;
+        }
+    }
+    
     const nameTh = document.getElementById('hotelNameTh')?.value?.trim() || '';
     const nameEn = document.getElementById('hotelNameEn')?.value?.trim() || '';
     const minPrice = document.getElementById('minPrice')?.value;
