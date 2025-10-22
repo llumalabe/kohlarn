@@ -1574,14 +1574,24 @@ function showHotelForm(hotelId = null) {
     
     modal.style.display = 'block';
     
-    // Setup Hotel ID validation listener
+    // Setup Hotel ID validation listener with debouncing
     const hotelIdInput = document.getElementById('hotelId');
     if (hotelIdInput) {
-        // Validate on input and load images
-        hotelIdInput.addEventListener('input', async function() {
-            await validateHotelIdForUpload();
-            // Reload gallery when hotel ID changes
-            await loadCloudinaryImages(this.value?.trim());
+        // Validate on input with debounce (wait 800ms after typing stops)
+        hotelIdInput.addEventListener('input', function() {
+            const hotelIdValue = this.value?.trim();
+            
+            // Clear previous timer
+            if (validationDebounceTimer) {
+                clearTimeout(validationDebounceTimer);
+            }
+            
+            // Set new timer
+            validationDebounceTimer = setTimeout(async () => {
+                await validateHotelIdForUpload();
+                // Reload gallery when hotel ID changes
+                await loadCloudinaryImages(hotelIdValue);
+            }, 800); // Wait 800ms after user stops typing
         });
         // Initial validation
         validateHotelIdForUpload();
@@ -1619,7 +1629,15 @@ function showHotelForm(hotelId = null) {
 // CLOUDINARY IMAGE MANAGEMENT
 // ========================================
 
-// Validate Hotel ID and update upload button state
+// Cache for duplicate ID checking to reduce API calls
+let hotelIdValidationCache = null;
+let hotelIdValidationCacheTime = 0;
+const VALIDATION_CACHE_DURATION = 30000; // 30 seconds
+
+// Debounce timer for validation
+let validationDebounceTimer = null;
+
+// Validate Hotel ID and update upload button state (with debouncing)
 async function validateHotelIdForUpload() {
     const hotelId = document.getElementById('hotelId')?.value?.trim();
     const uploadBtn = document.getElementById('uploadBtn');
@@ -1672,13 +1690,25 @@ async function validateHotelIdForUpload() {
     if (duplicateWarning) duplicateWarning.style.display = 'none';
 }
 
-// Check if hotel ID already exists in the system
+// Check if hotel ID already exists in the system (with caching)
 async function checkHotelIdExists(hotelId) {
     try {
+        const now = Date.now();
+        
+        // Use cached data if available and not expired
+        if (hotelIdValidationCache && (now - hotelIdValidationCacheTime) < VALIDATION_CACHE_DURATION) {
+            return hotelIdValidationCache.some(hotel => hotel.id === hotelId);
+        }
+        
+        // Fetch fresh data if cache is expired or doesn't exist
         const response = await fetch('/api/hotels');
         const data = await response.json();
         
         if (data.success && data.data) {
+            // Update cache
+            hotelIdValidationCache = data.data;
+            hotelIdValidationCacheTime = now;
+            
             // Check if any hotel has this ID
             return data.data.some(hotel => hotel.id === hotelId);
         }
@@ -2562,6 +2592,10 @@ async function saveHotel(hotelId) {
         const data = await response.json();
         
         if (data.success) {
+            // Clear validation cache after successful save
+            hotelIdValidationCache = null;
+            hotelIdValidationCacheTime = 0;
+            
             showSuccess(hotelId ? 'แก้ไขโรงแรมสำเร็จ' : 'เพิ่มโรงแรมสำเร็จ');
             closeHotelModal();
             loadHotels();
@@ -2594,6 +2628,10 @@ async function deleteHotel(hotelId, hotelName) {
         const data = await response.json();
         
         if (data.success) {
+            // Clear validation cache after successful delete
+            hotelIdValidationCache = null;
+            hotelIdValidationCacheTime = 0;
+            
             showSuccess('ลบโรงแรมสำเร็จ');
             loadHotels();
         } else {
