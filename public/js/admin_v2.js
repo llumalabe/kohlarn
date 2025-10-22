@@ -2414,6 +2414,9 @@ async function loadHotelData(hotelId) {
                 // Load Cloudinary images for this hotel
                 await loadCloudinaryImages(hotel.id);
                 
+                // Validate hotel ID for upload button (enable it since we're in edit mode)
+                await validateHotelIdForUpload();
+                
                 // Initialize drag & drop for image slots
                 setTimeout(() => initDragAndDrop(), 300);
             }
