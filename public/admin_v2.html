@@ -871,9 +871,13 @@
                         <h4 style="margin: 0 0 15px 0; color: white;">
                             <i class="fas fa-cloud-upload-alt"></i> อัพโหลดรูปภาพ
                         </h4>
+                        <!-- Hotel ID Validation Warning -->
+                        <div id="hotelIdWarning" style="display: none; background: #e74c3c; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-weight: 600;">
+                            <i class="fas fa-exclamation-triangle"></i> จำเป็นต้องใส่ รหัสโรงแรมก่อนอัพโหลด
+                        </div>
                         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
                             <input type="file" id="multiImageUpload" accept="image/*" multiple onchange="displaySelectedFiles()" style="flex: 1; background: white; padding: 10px; border-radius: 8px; border: none;">
-                            <button type="button" onclick="uploadMultipleImages()" class="btn" style="background: white; color: #667eea; font-weight: 600; width: auto; border: none;">
+                            <button type="button" id="uploadBtn" onclick="uploadMultipleImages()" class="btn" style="background: white; color: #667eea; font-weight: 600; width: auto; border: none;">
                                 <i class="fas fa-upload"></i> อัพโหลด
                             </button>
                         </div>
@@ -900,7 +904,7 @@
                     <!-- Cloudinary Gallery -->
                     <div style="margin-bottom: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 12px;">
                         <h4 style="margin: 0 0 15px 0; color: var(--text-primary);">
-                            <i class="fas fa-photo-video"></i> รูปภาพที่มี
+                            <i class="fas fa-photo-video"></i> <span id="galleryHeader">รูปภาพที่มี</span>
                         </h4>
                         <div id="cloudinaryGallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; min-height: 100px;">
                             <p style="text-align: center; color: #999; padding: 20px; grid-column: 1/-1;">
@@ -912,8 +916,12 @@
                     <!-- Image Slots (Selected Images Display) -->
                     <div style="background: var(--bg-secondary); padding: 20px; border-radius: 12px;">
                         <h4 style="margin: 0 0 15px 0; color: var(--text-primary);">
-                            <i class="fas fa-sort-numeric-down"></i> รูปภาพที่เลือก
+                            <i class="fas fa-sort-numeric-down"></i> <span id="selectedImagesHeader">รูปภาพที่เลือก</span>
                         </h4>
+                        <!-- Main Image Validation Warning -->
+                        <div id="mainImageWarning" style="display: none; background: #e74c3c; color: white; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-weight: 600;">
+                            <i class="fas fa-exclamation-circle"></i> กรุณาเลือกรูปหลัก เพราะจำเป็นต้องมี
+                        </div>
                         <small style="color: var(--gray); display: block; margin-bottom: 15px;">
                             คลิก "เลือกรูปนี้" จากแกลเลอรี่ด้านบน | ลากเพื่อเปลี่ยนลำดับการแสดงผล
                         </small>

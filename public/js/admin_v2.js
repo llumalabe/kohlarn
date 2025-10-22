@@ -1567,9 +1567,21 @@ function showHotelForm(hotelId = null) {
         document.getElementById('hotelId').style.background = '';
         // Initialize drag & drop for new hotel modal
         setTimeout(() => initDragAndDrop(), 100);
+        
+        // Initialize selected images display
+        updateSelectedImagesDisplay();
     }
     
     modal.style.display = 'block';
+    
+    // Setup Hotel ID validation listener
+    const hotelIdInput = document.getElementById('hotelId');
+    if (hotelIdInput) {
+        // Validate on input
+        hotelIdInput.addEventListener('input', validateHotelIdForUpload);
+        // Initial validation
+        validateHotelIdForUpload();
+    }
     
     // Load filters and room types for checkboxes
     loadFilterCheckboxes();
@@ -1600,6 +1612,88 @@ function showHotelForm(hotelId = null) {
 // ========================================
 // CLOUDINARY IMAGE MANAGEMENT
 // ========================================
+
+// Validate Hotel ID and update upload button state
+function validateHotelIdForUpload() {
+    const hotelId = document.getElementById('hotelId')?.value?.trim();
+    const uploadBtn = document.getElementById('uploadBtn');
+    const warning = document.getElementById('hotelIdWarning');
+    
+    if (!hotelId) {
+        // Disable upload button and show warning
+        if (uploadBtn) {
+            uploadBtn.disabled = true;
+            uploadBtn.style.opacity = '0.5';
+            uploadBtn.style.cursor = 'not-allowed';
+        }
+        if (warning) warning.style.display = 'block';
+    } else {
+        // Enable upload button and hide warning
+        if (uploadBtn) {
+            uploadBtn.disabled = false;
+            uploadBtn.style.opacity = '1';
+            uploadBtn.style.cursor = 'pointer';
+        }
+        if (warning) warning.style.display = 'none';
+    }
+}
+
+// Update selected images count and visibility
+function updateSelectedImagesDisplay() {
+    const selectedCount = countSelectedImages();
+    const header = document.getElementById('selectedImagesHeader');
+    const mainImageWarning = document.getElementById('mainImageWarning');
+    const slotsContainer = document.getElementById('selectedImagesContainer');
+    
+    // Update header with count
+    if (header) {
+        if (selectedCount > 0) {
+            header.textContent = `รูปภาพที่เลือก (${selectedCount} รูป)`;
+        } else {
+            header.textContent = 'รูปภาพที่เลือก';
+        }
+    }
+    
+    // Check if main image (slot 1) is empty
+    const mainImageUrl = document.getElementById('imageUrl')?.value;
+    if (mainImageWarning) {
+        if (!mainImageUrl || mainImageUrl.trim() === '') {
+            mainImageWarning.style.display = 'block';
+        } else {
+            mainImageWarning.style.display = 'none';
+        }
+    }
+    
+    // Hide slot numbers if no images selected
+    if (slotsContainer) {
+        const slots = slotsContainer.querySelectorAll('.selected-image-slot');
+        slots.forEach(slot => {
+            const slotNumber = slot.getAttribute('data-slot');
+            const badge = slot.querySelector('.slot-badge');
+            const slotNumberEl = slot.querySelector('.slot-number');
+            
+            // Keep main image badge always visible, hide other numbers when no selection
+            if (slotNumberEl && selectedCount === 0) {
+                slotNumberEl.style.opacity = '0.3';
+            } else if (slotNumberEl) {
+                slotNumberEl.style.opacity = '1';
+            }
+        });
+    }
+}
+
+// Count how many image slots are filled
+function countSelectedImages() {
+    let count = 0;
+    for (let i = 1; i <= 5; i++) {
+        const urlField = i === 1 ? 'imageUrl' : `imageUrl${i}`;
+        const urlInput = document.getElementById(urlField);
+        if (urlInput && urlInput.value && urlInput.value.trim() !== '') {
+            count++;
+        }
+    }
+    return count;
+}
 
 // Display selected files info
 function displaySelectedFiles() {
@@ -1756,8 +1850,18 @@ async function loadCloudinaryImages(hotelId) {
     try {
         const images = await getCloudinaryImages(hotelId);
         const gallery = document.getElementById('cloudinaryGallery');
+        const galleryHeader = document.getElementById('galleryHeader');
         
         if (!gallery) return;
+
+        // Update gallery header with count
+        if (galleryHeader) {
+            if (images.length > 0) {
+                galleryHeader.textContent = `รูปภาพที่มี (${images.length} รูป)`;
+            } else {
+                galleryHeader.textContent = 'รูปภาพที่มี';
+            }
+        }
 
         if (images.length === 0) {
             gallery.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">ยังไม่มีรูปภาพในระบบ</p>';
@@ -1857,6 +1961,9 @@ function assignImageToSlot(imageUrl, slotNumber) {
     
     console.log('Calling previewImageUrl...');
     previewImageUrl(imageUrl, slotNumber);
+    
+    // Update selected images display
+    updateSelectedImagesDisplay();
     
     // Show success message if not already shown (from moving)
     if (!document.querySelector('.success-message')) {
@@ -2138,6 +2245,10 @@ function removeImageFromSlot(slotNumber) {
     if (urlInput) {
         urlInput.value = '';
         previewImageUrl('', slotNumber);
+        
+        // Update selected images display
+        updateSelectedImagesDisplay();
+        
         showSuccess(`✓ ลบรูปออกจากตำแหน่งที่ ${slotNumber} แล้ว`);
     }
 }
@@ -2250,6 +2361,9 @@ async function loadHotelData(hotelId) {
                     previewImageUrl(hotel.imageUrl3 || '', 3);
                     previewImageUrl(hotel.imageUrl4 || '', 4);
                     previewImageUrl(hotel.imageUrl5 || '', 5);
+                    
+                    // Update selected images display after loading
+                    updateSelectedImagesDisplay();
                 }, 200);
                 
                 // Load Cloudinary images for this hotel
