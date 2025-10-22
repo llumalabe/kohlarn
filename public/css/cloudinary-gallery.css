@@ -116,3 +116,64 @@
         gap: 10px;
     }
 }
+
+/* ================================================
+   DRAG & DROP IMAGE SLOTS STYLES
+   ================================================ */
+
+.selected-image-slot {
+    transition: all 0.3s ease;
+}
+
+.selected-image-slot:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12) !important;
+}
+
+.selected-image-slot.dragging {
+    opacity: 0.4;
+    transform: scale(0.95);
+}
+
+.selected-image-slot.drag-over {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.slot-content {
+    position: relative;
+}
+
+.empty-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-slot-btn {
+    transition: all 0.3s;
+}
+
+.remove-slot-btn:hover {
+    background: #c0392b !important;
+    transform: scale(1.1);
+}
+
+/* Mobile responsive for image slots */
+@media (max-width: 768px) {
+    #selectedImagesContainer {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+        gap: 10px !important;
+    }
+    
+    .selected-image-slot .slot-content {
+        height: 140px !important;
+    }
+    
+    .slot-badge,
+    .slot-number {
+        font-size: 10px !important;
+        padding: 3px 8px !important;
+    }
+}

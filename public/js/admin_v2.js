@@ -1565,6 +1565,8 @@ function showHotelForm(hotelId = null) {
         // Enable ID field when adding
         document.getElementById('hotelId').readOnly = false;
         document.getElementById('hotelId').style.background = '';
+        // Initialize drag & drop for new hotel modal
+        setTimeout(() => initDragAndDrop(), 100);
     }
     
     modal.style.display = 'block';
@@ -1905,26 +1907,62 @@ async function uploadImage(imageNumber = 1) {
     }
 }
 
-// Preview image URL
+// Preview image URL in visual slots
 function previewImageUrl(url, imageNumber = 1) {
     const preview = document.getElementById(`imagePreview${imageNumber}`);
     const img = document.getElementById(`previewImg${imageNumber}`);
+    const slot = document.querySelector(`.selected-image-slot[data-slot="${imageNumber}"]`);
     
-    if (!preview || !img) return;
+    if (!preview || !img || !slot) return;
     
     if (url && url.trim() !== '') {
         img.src = url;
         img.onerror = function() {
-            preview.style.display = 'none';
+            // Hide image, show empty state
+            img.style.display = 'none';
+            const emptySlot = preview.querySelector('.empty-slot');
+            if (emptySlot) emptySlot.style.display = 'flex';
+            // Hide remove button
+            const removeBtn = slot.querySelector('.remove-slot-btn');
+            if (removeBtn) removeBtn.style.display = 'none';
             if (imageNumber === 1) {
                 showError('URL รูปภาพไม่ถูกต้อง');
             }
         };
         img.onload = function() {
-            preview.style.display = 'block';
+            // Show image, hide empty state
+            img.style.display = 'block';
+            const emptySlot = preview.querySelector('.empty-slot');
+            if (emptySlot) emptySlot.style.display = 'none';
+            // Show remove button
+            const removeBtn = slot.querySelector('.remove-slot-btn');
+            if (removeBtn) removeBtn.style.display = 'block';
         };
     } else {
-        preview.style.display = 'none';
+        // Clear slot - show empty state
+        img.style.display = 'none';
+        img.src = '';
+        const emptySlot = preview.querySelector('.empty-slot');
+        if (emptySlot) emptySlot.style.display = 'flex';
+        // Hide remove button
+        const removeBtn = slot.querySelector('.remove-slot-btn');
+        if (removeBtn) removeBtn.style.display = 'none';
+    }
+}
+
+// Remove image from slot
+function removeImageFromSlot(slotNumber) {
+    if (!confirm('ต้องการลบรูปภาพจากตำแหน่งนี้หรือไม่?')) {
+        return;
+    }
+    
+    const urlField = slotNumber === 1 ? 'imageUrl' : `imageUrl${slotNumber}`;
+    const urlInput = document.getElementById(urlField);
+    
+    if (urlInput) {
+        urlInput.value = '';
+        previewImageUrl('', slotNumber);
+        showSuccess(`✓ ลบรูปออกจากตำแหน่งที่ ${slotNumber} แล้ว`);
     }
 }
 
@@ -2031,6 +2069,9 @@ async function loadHotelData(hotelId) {
                 
                 // Load Cloudinary images for this hotel
                 await loadCloudinaryImages(hotel.id);
+                
+                // Initialize drag & drop for image slots
+                setTimeout(() => initDragAndDrop(), 100);
             }
         }
     } catch (error) {
@@ -4906,4 +4947,103 @@ function initSelectedHotels(hotelIdsString) {
         selectedHotelIds = hotelIdsString.split(',').map(id => id.trim()).filter(id => id);
     }
     updateSelectedHotelsDisplay();
+}
+
+// ===== Drag & Drop for Image Slots =====
+let draggedSlot = null;
+
+// Initialize drag & drop when document loads
+document.addEventListener('DOMContentLoaded', function() {
+    initDragAndDrop();
+});
+
+function initDragAndDrop() {
+    const slots = document.querySelectorAll('.selected-image-slot');
+    
+    slots.forEach(slot => {
+        slot.addEventListener('dragstart', handleDragStart);
+        slot.addEventListener('dragover', handleDragOver);
+        slot.addEventListener('drop', handleDrop);
+        slot.addEventListener('dragend', handleDragEnd);
+        slot.addEventListener('dragenter', handleDragEnter);
+        slot.addEventListener('dragleave', handleDragLeave);
+    });
+}
+
+function handleDragStart(e) {
+    draggedSlot = this;
+    this.style.opacity = '0.4';
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+}
+
+function handleDragOver(e) {
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleDragEnter(e) {
+    if (this !== draggedSlot) {
+        this.style.transform = 'scale(1.05)';
+        this.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+    }
+}
+
+function handleDragLeave(e) {
+    this.style.transform = '';
+    this.style.boxShadow = '';
+}
+
+function handleDrop(e) {
+    if (e.stopPropagation) {
+        e.stopPropagation();
+    }
+    
+    if (draggedSlot !== this) {
+        // Swap the image URLs and previews
+        const draggedSlotNum = draggedSlot.getAttribute('data-slot');
+        const targetSlotNum = this.getAttribute('data-slot');
+        
+        swapImageSlots(draggedSlotNum, targetSlotNum);
+        showSuccess(`✓ สลับรูปภาพตำแหน่งที่ ${draggedSlotNum} และ ${targetSlotNum} แล้ว`);
+    }
+    
+    this.style.transform = '';
+    this.style.boxShadow = '';
+    
+    return false;
+}
+
+function handleDragEnd(e) {
+    this.style.opacity = '1';
+    
+    // Remove all drag styles
+    const slots = document.querySelectorAll('.selected-image-slot');
+    slots.forEach(slot => {
+        slot.style.transform = '';
+        slot.style.boxShadow = '';
+    });
+}
+
+function swapImageSlots(slot1, slot2) {
+    // Get URL input fields
+    const urlField1 = slot1 === '1' ? 'imageUrl' : `imageUrl${slot1}`;
+    const urlField2 = slot2 === '1' ? 'imageUrl' : `imageUrl${slot2}`;
+    
+    const input1 = document.getElementById(urlField1);
+    const input2 = document.getElementById(urlField2);
+    
+    if (!input1 || !input2) return;
+    
+    // Swap values
+    const tempUrl = input1.value;
+    input1.value = input2.value;
+    input2.value = tempUrl;
+    
+    // Refresh previews
+    previewImageUrl(input1.value, parseInt(slot1));
+    previewImageUrl(input2.value, parseInt(slot2));
 }
