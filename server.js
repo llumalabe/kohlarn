@@ -197,6 +197,69 @@ app.post('/api/upload', verifyToken, async (req, res) => {
   });
 });
 
+// Get Cloudinary images for a hotel
+app.get('/api/cloudinary/images/:hotelId', verifyToken, async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+    
+    if (!cloudinaryService.isConfigured()) {
+      return res.status(503).json({
+        success: false,
+        error: 'Cloudinary ไม่พร้อมใช้งาน'
+      });
+    }
+
+    const images = await cloudinaryService.listHotelImages(hotelId);
+    
+    res.json({
+      success: true,
+      images: images.map(img => ({
+        publicId: img.public_id,
+        url: img.secure_url,
+        width: img.width,
+        height: img.height,
+        format: img.format,
+        bytes: img.bytes,
+        createdAt: img.created_at
+      }))
+    });
+  } catch (error) {
+    console.error('Error listing Cloudinary images:', error);
+    res.status(500).json({
+      success: false,
+      error: 'เกิดข้อผิดพลาดในการดึงรายการรูปภาพ: ' + error.message
+    });
+  }
+});
+
+// Delete Cloudinary image
+app.delete('/api/cloudinary/image/:publicId(*)', verifyToken, async (req, res) => {
+  try {
+    const publicId = req.params.publicId;
+    
+    if (!cloudinaryService.isConfigured()) {
+      return res.status(503).json({
+        success: false,
+        error: 'Cloudinary ไม่พร้อมใช้งาน'
+      });
+    }
+
+    const result = await cloudinaryService.deleteImage(publicId);
+    
+    res.json({
+      success: true,
+      result: result,
+      message: 'ลบรูปภาพสำเร็จ'
+    });
+  } catch (error) {
+    console.error('Error deleting Cloudinary image:', error);
+    res.status(500).json({
+      success: false,
+      error: 'เกิดข้อผิดพลาดในการลบรูปภาพ: ' + error.message
+    });
+  }
+});
+
 // === Body parsers - comes AFTER upload route ===
 // JSON body parser with type checking to avoid parsing multipart/form-data
 app.use(express.json({ 

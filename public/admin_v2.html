@@ -7,6 +7,7 @@
     <meta name="robots" content="noindex, nofollow">
     <title>Admin Panel - Koh Larn Hotels</title>
     <link rel="stylesheet" href="css/admin_v2.css">
+    <link rel="stylesheet" href="css/cloudinary-gallery.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -858,92 +859,110 @@
                     </div>
                 </div>
 
-                <!-- อัพโหลดรูปภาพ (สูงสุด 5 รูป) -->
+                <!-- 🆕 Cloudinary Image Management System -->
                 <div class="form-group">
                     <label><i class="fas fa-images"></i> รูปภาพโรงแรม (สูงสุด 5 รูป) *</label>
-                    <small style="color: var(--gray); display: block; margin-bottom: 10px;">รูปแรกจะเป็นรูปหลัก</small>
+                    <small style="color: var(--gray); display: block; margin-bottom: 10px;">
+                        รูปแรกจะเป็นรูปหลัก | อัพโหลดได้พร้อมกันสูงสุด 5 รูป | รูปถูกเก็บใน Cloudinary CDN
+                    </small>
                     
-                    <!-- Image 1 -->
-                    <div class="image-upload-row" style="margin-bottom: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                            <label style="margin: 0; font-weight: 600; color: var(--primary);">
-                                <i class="fas fa-star"></i> รูปที่ 1 (หลัก) *
-                            </label>
-                        </div>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="file" id="imageFile1" accept="image/*" style="flex: 1;">
-                            <button type="button" onclick="uploadImage(1)" class="btn btn-primary" style="width: auto;">
+                    <!-- Multi-Upload Section -->
+                    <div style="margin-bottom: 20px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white;">
+                        <h4 style="margin: 0 0 15px 0; color: white;">
+                            <i class="fas fa-cloud-upload-alt"></i> อัพโหลดรูปภาพ
+                        </h4>
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                            <input type="file" id="multiImageUpload" accept="image/*" multiple style="flex: 1; background: white; padding: 10px; border-radius: 8px; border: none;">
+                            <button type="button" onclick="uploadMultipleImages()" class="btn" style="background: white; color: #667eea; font-weight: 600; width: auto; border: none;">
                                 <i class="fas fa-upload"></i> อัพโหลด
                             </button>
                         </div>
-                        <input type="url" id="imageUrl" placeholder="หรือใส่ URL รูปภาพ" style="margin-top: 8px;">
-                        <div id="imagePreview1" style="margin-top: 10px; display: none;">
-                            <img id="previewImg1" style="max-width: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <small style="color: rgba(255,255,255,0.9);">
+                                <i class="fas fa-info-circle"></i> เลือกได้หลายรูปพร้อมกัน (Shift + Click หรือ Ctrl + Click)
+                            </small>
+                            <div style="background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; font-weight: 600;">
+                                รูปในระบบ: <span id="imageCount">0/5</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Image 2-5 -->
-                    <div class="image-upload-row" style="margin-bottom: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                            <label style="margin: 0; font-weight: 600;">รูปที่ 2</label>
-                        </div>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="file" id="imageFile2" accept="image/*" style="flex: 1;">
-                            <button type="button" onclick="uploadImage(2)" class="btn btn-primary" style="width: auto;">
-                                <i class="fas fa-upload"></i> อัพโหลด
-                            </button>
-                        </div>
-                        <input type="url" id="imageUrl2" placeholder="หรือใส่ URL รูปภาพ" style="margin-top: 8px;">
-                        <div id="imagePreview2" style="margin-top: 10px; display: none;">
-                            <img id="previewImg2" style="max-width: 150px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <!-- Cloudinary Gallery -->
+                    <div style="margin-bottom: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 12px;">
+                        <h4 style="margin: 0 0 15px 0; color: var(--text-primary);">
+                            <i class="fas fa-photo-video"></i> รูปภาพใน Cloudinary
+                        </h4>
+                        <div id="cloudinaryGallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; min-height: 100px;">
+                            <p style="text-align: center; color: #999; padding: 20px; grid-column: 1/-1;">
+                                กำลังโหลด...
+                            </p>
                         </div>
                     </div>
 
-                    <div class="image-upload-row" style="margin-bottom: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                            <label style="margin: 0; font-weight: 600;">รูปที่ 3</label>
+                    <!-- Image Slots (URL Fields) -->
+                    <div style="background: var(--bg-secondary); padding: 20px; border-radius: 12px;">
+                        <h4 style="margin: 0 0 15px 0; color: var(--text-primary);">
+                            <i class="fas fa-sort-numeric-down"></i> ตำแหน่งรูปภาพที่แสดง (1-5)
+                        </h4>
+                        <small style="color: var(--gray); display: block; margin-bottom: 15px;">
+                            คลิก "เลือกรูปนี้" จากแกลเลอรี่ด้านบน หรือใส่ URL โดยตรง
+                        </small>
+                        
+                        <!-- Slot 1 (Primary) -->
+                        <div class="image-slot" style="margin-bottom: 15px; padding: 15px; background: white; border: 2px solid #667eea; border-radius: 8px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                <label style="margin: 0; font-weight: 600; color: #667eea;">
+                                    <i class="fas fa-star"></i> รูปที่ 1 (หลัก) *
+                                </label>
+                                <div id="imagePreview1" style="display: none;">
+                                    <img id="previewImg1" style="max-width: 60px; height: 60px; object-fit: cover; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                </div>
+                            </div>
+                            <input type="url" id="imageUrl" placeholder="URL รูปภาพที่ 1 (จะแสดงเป็นรูปหลัก)" style="width: 100%;">
                         </div>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="file" id="imageFile3" accept="image/*" style="flex: 1;">
-                            <button type="button" onclick="uploadImage(3)" class="btn btn-primary" style="width: auto;">
-                                <i class="fas fa-upload"></i> อัพโหลด
-                            </button>
-                        </div>
-                        <input type="url" id="imageUrl3" placeholder="หรือใส่ URL รูปภาพ" style="margin-top: 8px;">
-                        <div id="imagePreview3" style="margin-top: 10px; display: none;">
-                            <img id="previewImg3" style="max-width: 150px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                        </div>
-                    </div>
 
-                    <div class="image-upload-row" style="margin-bottom: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                            <label style="margin: 0; font-weight: 600;">รูปที่ 4</label>
-                        </div>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="file" id="imageFile4" accept="image/*" style="flex: 1;">
-                            <button type="button" onclick="uploadImage(4)" class="btn btn-primary" style="width: auto;">
-                                <i class="fas fa-upload"></i> อัพโหลด
-                            </button>
-                        </div>
-                        <input type="url" id="imageUrl4" placeholder="หรือใส่ URL รูปภาพ" style="margin-top: 8px;">
-                        <div id="imagePreview4" style="margin-top: 10px; display: none;">
-                            <img id="previewImg4" style="max-width: 150px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                        </div>
-                    </div>
-
-                    <div class="image-upload-row" style="margin-bottom: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                            <label style="margin: 0; font-weight: 600;">รูปที่ 5</label>
-                        </div>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="file" id="imageFile5" accept="image/*" style="flex: 1;">
-                            <button type="button" onclick="uploadImage(5)" class="btn btn-primary" style="width: auto;">
-                                <i class="fas fa-upload"></i> อัพโหลด
-                            </button>
-                        </div>
-                        <input type="url" id="imageUrl5" placeholder="หรือใส่ URL รูปภาพ" style="margin-top: 8px;">
-                        <div id="imagePreview5" style="margin-top: 10px; display: none;">
-                            <img id="previewImg5" style="max-width: 150px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <!-- Slots 2-5 -->
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <!-- Slot 2 -->
+                            <div class="image-slot" style="padding: 15px; background: white; border: 1px solid #ddd; border-radius: 8px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                    <label style="margin: 0; font-weight: 600;">รูปที่ 2</label>
+                                    <div id="imagePreview2" style="display: none;">
+                                        <img id="previewImg2" style="max-width: 50px; height: 50px; object-fit: cover; border-radius: 6px;">
+                                    </div>
+                                </div>
+                                <input type="url" id="imageUrl2" placeholder="URL รูปภาพที่ 2" style="width: 100%; font-size: 13px;">
+                            </div>
+                            <!-- Slot 3 -->
+                            <div class="image-slot" style="padding: 15px; background: white; border: 1px solid #ddd; border-radius: 8px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                    <label style="margin: 0; font-weight: 600;">รูปที่ 3</label>
+                                    <div id="imagePreview3" style="display: none;">
+                                        <img id="previewImg3" style="max-width: 50px; height: 50px; object-fit: cover; border-radius: 6px;">
+                                    </div>
+                                </div>
+                                <input type="url" id="imageUrl3" placeholder="URL รูปภาพที่ 3" style="width: 100%; font-size: 13px;">
+                            </div>
+                            <!-- Slot 4 -->
+                            <div class="image-slot" style="padding: 15px; background: white; border: 1px solid #ddd; border-radius: 8px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                    <label style="margin: 0; font-weight: 600;">รูปที่ 4</label>
+                                    <div id="imagePreview4" style="display: none;">
+                                        <img id="previewImg4" style="max-width: 50px; height: 50px; object-fit: cover; border-radius: 6px;">
+                                    </div>
+                                </div>
+                                <input type="url" id="imageUrl4" placeholder="URL รูปภาพที่ 4" style="width: 100%; font-size: 13px;">
+                            </div>
+                            <!-- Slot 5 -->
+                            <div class="image-slot" style="padding: 15px; background: white; border: 1px solid #ddd; border-radius: 8px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                    <label style="margin: 0; font-weight: 600;">รูปที่ 5</label>
+                                    <div id="imagePreview5" style="display: none;">
+                                        <img id="previewImg5" style="max-width: 50px; height: 50px; object-fit: cover; border-radius: 6px;">
+                                    </div>
+                                </div>
+                                <input type="url" id="imageUrl5" placeholder="URL รูปภาพที่ 5" style="width: 100%; font-size: 13px;">
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -1595,25 +1595,255 @@ function showHotelForm(hotelId = null) {
 }
 
 // Upload image function
-async function uploadImage(imageNumber = 1) {
-    const fileInput = document.getElementById(`imageFile${imageNumber}`);
-    // Check if file input exists and has files
-    if (!fileInput) {
-        console.error('❌ ไม่พบช่องเลือกไฟล์');
-        showError('ไม่พบช่องเลือกไฟล์');
+// ========================================
+// CLOUDINARY IMAGE MANAGEMENT
+// ========================================
+
+// Upload multiple images at once (max 5)
+async function uploadMultipleImages() {
+    const fileInput = document.getElementById('multiImageUpload');
+    
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        showError('กรุณาเลือกไฟล์รูปภาพก่อน');
         return;
     }
-    if (!fileInput.files || fileInput.files.length === 0) {
-        console.error('❌ ไม่มีไฟล์');
+
+    const hotelId = document.getElementById('hotelId')?.value;
+    const hotelNameTh = document.getElementById('hotelNameTh')?.value || 'Unknown Hotel';
+    
+    if (!hotelId) {
+        showError('กรุณากรอกรหัสโรงแรมก่อน');
+        return;
+    }
+
+    try {
+        // Get current images from Cloudinary
+        const currentImages = await getCloudinaryImages(hotelId);
+        const totalAfterUpload = currentImages.length + fileInput.files.length;
+
+        // Check if total exceeds 5
+        if (totalAfterUpload > 5) {
+            showError(`โรงแรมนี้มีรูปภาพอยู่แล้ว ${currentImages.length} รูป สามารถอัพโหลดได้อีกสูงสุด ${5 - currentImages.length} รูปเท่านั้น\nกรุณาลบรูปเก่าก่อนอัพโหลดรูปใหม่`);
+            return;
+        }
+
+        const files = Array.from(fileInput.files);
+        let successCount = 0;
+        let failCount = 0;
+
+        showSuccess(`กำลังอัพโหลด ${files.length} รูป...`);
+
+        // Upload each file
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            
+            // Validate file
+            if (file.size > 10 * 1024 * 1024) {
+                console.error(`ไฟล์ ${file.name} ใหญ่เกิน 10MB`);
+                failCount++;
+                continue;
+            }
+
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                console.error(`ไฟล์ ${file.name} ไม่ใช่รูปภาพที่รองรับ`);
+                failCount++;
+                continue;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                formData.append('hotelId', hotelId);
+                formData.append('hotelName', hotelNameTh);
+
+                const response = await fetchWithAuth('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        successCount++;
+                    } else {
+                        failCount++;
+                    }
+                } else {
+                    failCount++;
+                }
+            } catch (error) {
+                console.error(`Error uploading ${file.name}:`, error);
+                failCount++;
+            }
+        }
+
+        // Clear file input
+        fileInput.value = '';
+
+        // Reload image gallery
+        await loadCloudinaryImages(hotelId);
+
+        if (successCount > 0) {
+            showSuccess(`✓ อัพโหลดสำเร็จ ${successCount} รูป${failCount > 0 ? `, ล้มเหลว ${failCount} รูป` : ''}`);
+        } else {
+            showError('อัพโหลดล้มเหลว กรุณาลองใหม่');
+        }
+
+    } catch (error) {
+        console.error('Error in uploadMultipleImages:', error);
+        showError('เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ');
+    }
+}
+
+// Get Cloudinary images for hotel
+async function getCloudinaryImages(hotelId) {
+    try {
+        const response = await fetchWithAuth(`/api/cloudinary/images/${hotelId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            return data.images || [];
+        }
+        return [];
+    } catch (error) {
+        console.error('Error getting Cloudinary images:', error);
+        return [];
+    }
+}
+
+// Load and display Cloudinary images
+async function loadCloudinaryImages(hotelId) {
+    if (!hotelId) return;
+
+    try {
+        const images = await getCloudinaryImages(hotelId);
+        const gallery = document.getElementById('cloudinaryGallery');
+        
+        if (!gallery) return;
+
+        if (images.length === 0) {
+            gallery.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">ยังไม่มีรูปภาพในระบบ</p>';
+            return;
+        }
+
+        gallery.innerHTML = images.map((img, index) => `
+            <div class="cloudinary-image-item">
+                <img src="${img.url}" alt="Hotel Image ${index + 1}" loading="lazy">
+                <div class="image-overlay">
+                    <button type="button" class="btn-select-image" onclick="selectImageForSlot('${img.url}', ${index})">
+                        เลือกรูปนี้
+                    </button>
+                    <button type="button" class="btn-delete-image" onclick="deleteCloudinaryImage('${img.publicId}', '${hotelId}')">
+                        🗑️ ลบ
+                    </button>
+                </div>
+                <div class="image-info">
+                    ${(img.bytes / 1024).toFixed(1)} KB • ${img.width}x${img.height}
+                </div>
+            </div>
+        `).join('');
+
+        // Update image count
+        const countEl = document.getElementById('imageCount');
+        if (countEl) {
+            countEl.textContent = `${images.length}/5`;
+            countEl.style.color = images.length >= 5 ? '#e74c3c' : '#27ae60';
+        }
+
+    } catch (error) {
+        console.error('Error loading Cloudinary images:', error);
+        showError('เกิดข้อผิดพลาดในการโหลดรูปภาพ');
+    }
+}
+
+// Select image for specific slot (1-5)
+function selectImageForSlot(imageUrl, imageIndex) {
+    // Show modal to select which slot
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            <h3>เลือกตำแหน่งรูปภาพ</h3>
+            <p style="color: #666; margin-bottom: 20px;">เลือกว่ารูปนี้จะแสดงในตำแหน่งที่เท่าไหร่ (1-5)</p>
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
+                ${[1, 2, 3, 4, 5].map(slot => `
+                    <button type="button" class="btn btn-secondary" onclick="assignImageToSlot('${imageUrl}', ${slot}); this.closest('.modal').remove();">
+                        รูปที่ ${slot}
+                    </button>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Assign image URL to specific slot
+function assignImageToSlot(imageUrl, slotNumber) {
+    const urlField = slotNumber === 1 ? 'imageUrl' : `imageUrl${slotNumber}`;
+    const urlInput = document.getElementById(urlField);
+    
+    if (urlInput) {
+        urlInput.value = imageUrl;
+        previewImageUrl(imageUrl, slotNumber);
+        showSuccess(`✓ เลือกรูปสำหรับตำแหน่งที่ ${slotNumber} แล้ว`);
+    }
+}
+
+// Delete image from Cloudinary
+async function deleteCloudinaryImage(publicId, hotelId) {
+    if (!confirm('คุณต้องการลบรูปภาพนี้ออกจากระบบหรือไม่?\nการลบจะไม่สามารถย้อนกลับได้')) {
+        return;
+    }
+
+    try {
+        showSuccess('กำลังลบรูปภาพ...');
+
+        const response = await fetchWithAuth(`/api/cloudinary/image/${encodeURIComponent(publicId)}`, {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showSuccess('✓ ลบรูปภาพสำเร็จ');
+            
+            // Reload gallery
+            await loadCloudinaryImages(hotelId);
+            
+            // Clear any URL fields that use this image
+            for (let i = 1; i <= 5; i++) {
+                const urlField = i === 1 ? 'imageUrl' : `imageUrl${i}`;
+                const urlInput = document.getElementById(urlField);
+                if (urlInput && urlInput.value.includes(publicId)) {
+                    urlInput.value = '';
+                    previewImageUrl('', i);
+                }
+            }
+        } else {
+            showError('เกิดข้อผิดพลาดในการลบรูปภาพ: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        showError('เกิดข้อผิดพลาดในการลบรูปภาพ');
+    }
+}
+
+// Old single upload function (keep for backward compatibility but update to Cloudinary)
+async function uploadImage(imageNumber = 1) {
+    const fileInput = document.getElementById(`imageFile${imageNumber}`);
+    
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
         showError('กรุณาเลือกไฟล์รูปภาพก่อน');
         return;
     }
     
     const file = fileInput.files[0];
     
-    // Validate file size (10MB for Google Drive)
+    // Validate file size (10MB)
     if (file.size > 10 * 1024 * 1024) {
-        console.error('❌ ไฟล์ใหญ่เกิน 10MB');
         showError('ไฟล์รูปภาพมีขนาดใหญ่เกิน 10MB');
         return;
     }
@@ -1621,71 +1851,57 @@ async function uploadImage(imageNumber = 1) {
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-        console.error('❌ ประเภทไฟล์ไม่รองรับ:', file.type);
         showError('รองรับเฉพาะไฟล์ JPG, PNG, GIF, WebP เท่านั้น');
         return;
     }
 
+    const hotelId = document.getElementById('hotelId')?.value || `hotel-${Date.now()}`;
+    const hotelNameTh = document.getElementById('hotelNameTh')?.value || 'Unknown Hotel';
+
     try {
-        // Show uploading message
-        showSuccess(`กำลังอัพโหลดรูปที่ ${imageNumber} ไปยัง Google Drive...`);
+        // Check current image count
+        const currentImages = await getCloudinaryImages(hotelId);
+        if (currentImages.length >= 5) {
+            showError('โรงแรมนี้มีรูปภาพครบ 5 รูปแล้ว กรุณาลบรูปเก่าก่อนอัพโหลดรูปใหม่');
+            return;
+        }
+
+        showSuccess(`กำลังอัพโหลดรูปที่ ${imageNumber} ไปยัง Cloudinary...`);
         
-        // Get hotel info from form
-        const hotelId = document.getElementById('hotelId')?.value || `hotel-${Date.now()}`;
-        const hotelNameTh = document.getElementById('nameTh')?.value || 'Unknown Hotel';
-        
-        // Create FormData
         const formData = new FormData();
         formData.append('image', file);
         formData.append('hotelId', hotelId);
         formData.append('hotelName', hotelNameTh);
         
-        // Upload to server (which will upload to Google Drive)
         const response = await fetchWithAuth('/api/upload', {
             method: 'POST',
             body: formData
         });
         
-        // Check if response is OK
         if (!response.ok) {
-            const contentType = response.headers.get('content-type');
-            let errorMessage = 'เกิดข้อผิดพลาดในการอัพโหลด';
-            
-            if (contentType && contentType.includes('application/json')) {
-                const errorData = await response.json();
-                errorMessage = errorData.error || errorMessage;
-            } else {
-                const errorText = await response.text();
-                console.error('❌ Server response (not JSON):', errorText.substring(0, 200));
-                errorMessage = `Server error: ${response.status} ${response.statusText}`;
-            }
-            
-            throw new Error(errorMessage);
+            const data = await response.json();
+            throw new Error(data.error || 'เกิดข้อผิดพลาดในการอัพโหลด');
         }
         
         const data = await response.json();
         
         if (data.success && data.imageUrl) {
-            // Set the URL in the appropriate input field
             const urlField = imageNumber === 1 ? 'imageUrl' : `imageUrl${imageNumber}`;
             const urlInput = document.getElementById(urlField);
             if (urlInput) {
                 urlInput.value = data.imageUrl;
-                // Show preview
                 previewImageUrl(data.imageUrl, imageNumber);
+                showSuccess(`✓ อัพโหลดรูปที่ ${imageNumber} สำเร็จ! (Cloudinary)`);
                 
-                showSuccess(`✓ อัพโหลดรูปที่ ${imageNumber} สำเร็จ! (Google Drive)`);
-            } else {
-                console.error('❌ ไม่พบ URL input field:', urlField);
-                showError(`ไม่พบช่อง URL สำหรับรูปที่ ${imageNumber}`);
+                // Reload gallery
+                await loadCloudinaryImages(hotelId);
             }
         } else {
-            console.error('❌ Upload failed:', data.error);
             showError(data.error || 'เกิดข้อผิดพลาดในการอัพโหลด');
         }
     } catch (error) {
-        console.error('❌ Exception:', error);
-        showError('เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ กรุณาลองใหม่');
+        console.error('Error uploading:', error);
+        showError('เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ');
     }
 }
 
@@ -1812,6 +2028,9 @@ async function loadHotelData(hotelId) {
                 previewImageUrl(hotel.imageUrl3 || '', 3);
                 previewImageUrl(hotel.imageUrl4 || '', 4);
                 previewImageUrl(hotel.imageUrl5 || '', 5);
+                
+                // Load Cloudinary images for this hotel
+                await loadCloudinaryImages(hotel.id);
             }
         }
     } catch (error) {
