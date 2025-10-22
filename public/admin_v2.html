@@ -1253,24 +1253,32 @@
                 <div class="form-group" id="hotelIdGroup" style="display: none;">
                     <label>
                         โรงแรมที่รับผิดชอบ
-                        <span id="currentHotelInfo" style="color: #f39c12; font-size: 0.9em; margin-left: 10px;"></span>
+                        <span style="color: #999; font-size: 0.85em; font-weight: normal;">(สามารถเลือกได้หลายโรงแรม)</span>
                     </label>
+                    <!-- แสดงโรงแรมที่เลือกแล้ว -->
+                    <div id="selectedHotelsContainer" style="margin-bottom: 10px; min-height: 40px; padding: 8px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e0e0e0;">
+                        <div id="selectedHotelsList" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <span style="color: #999; font-size: 0.9em;">ยังไม่ได้เลือกโรงแรม</span>
+                        </div>
+                    </div>
+                    <!-- ช่องค้นหาเพื่อเพิ่มโรงแรม -->
                     <div style="position: relative;">
                         <input 
                             type="text" 
                             id="memberHotelSearch" 
-                            placeholder="ค้นหาด้วย รหัส, ชื่อไทย หรือชื่ออังกฤษ..." 
+                            placeholder="🔍 ค้นหาเพื่อเพิ่มโรงแรม (รหัส, ชื่อไทย, ชื่ออังกฤษ)..." 
                             autocomplete="off"
                             style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;"
                         >
                         <input type="hidden" id="memberHotelId" name="hotelId">
+                        <input type="hidden" id="memberHotelIds" name="hotelIds">
                         <div 
                             id="hotelSearchResults" 
                             style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;"
                         ></div>
                     </div>
                     <small style="color: #666; display: block; margin-top: 5px;">
-                        <i class="fas fa-info-circle"></i> พิมพ์เพื่อค้นหา หรือเลือกจากรายการ
+                        <i class="fas fa-info-circle"></i> พิมพ์เพื่อค้นหาและคลิกเพื่อเพิ่มโรงแรม (สามารถเลือกได้หลายโรงแรม)
                     </small>
                 </div>
                 

@@ -968,11 +968,17 @@ async function loadHotels() {
             // กรองข้อมูลตาม role
             const userRole = currentUser.role || 'user';
             const userHotelId = currentUser.hotelId || '';
+            const userHotelIds = currentUser.hotelIds || [];
             
             if (userRole === 'hotel_owner' || userRole === 'hotel-owner') {
-                // hotel_owner ต้องมี hotelId ถึงจะเห็นโรงแรมของตัวเอง
-                if (userHotelId) {
-                    // เห็นเฉพาะโรงแรมของตัวเอง (เปรียบเทียบแบบ string)
+                // hotel_owner เห็นเฉพาะโรงแรมที่รับผิดชอบ (รองรับหลายโรงแรม)
+                if (userHotelIds.length > 0) {
+                    // มี hotelIds array: กรองโรงแรมที่อยู่ใน array
+                    hotels = hotels.filter(hotel => 
+                        userHotelIds.includes(String(hotel.id))
+                    );
+                } else if (userHotelId) {
+                    // Backward compatibility: ใช้ hotelId เดี่ยว
                     hotels = hotels.filter(hotel => String(hotel.id) === String(userHotelId));
                 } else {
                     // ถ้าไม่มี hotelId ให้แสดงว่าง (ไม่ให้เห็นโรงแรมใดๆ)
@@ -1271,30 +1277,43 @@ async function loadLikesStats() {
             // กรองข้อมูลตาม role
             const userRole = currentUser.role || 'user';
             const userHotelId = currentUser.hotelId || '';
+            const userHotelIds = currentUser.hotelIds || [];
             
             let topHotels = data.data.topHotels;
             let topClickedHotels = data.data.topClickedHotels;
             
             if (userRole === 'hotel_owner' || userRole === 'hotel-owner') {
-                if (userHotelId) {
-                    // hotel_owner เห็นเฉพาะสถิติของโรงแรมตัวเอง (เปรียบเทียบแบบ string)
+                // สร้าง array ของ hotel IDs ที่ user รับผิดชอบ
+                let allowedHotelIds = [];
+                if (userHotelIds.length > 0) {
+                    allowedHotelIds = userHotelIds.map(id => String(id));
+                } else if (userHotelId) {
+                    allowedHotelIds = [String(userHotelId)];
+                }
+                
+                if (allowedHotelIds.length > 0) {
+                    // hotel_owner เห็นเฉพาะสถิติของโรงแรมที่รับผิดชอบ (รองรับหลายโรงแรม)
                     if (Array.isArray(topHotels)) {
-                        topHotels = topHotels.filter(h => String(h.hotelId) === String(userHotelId));
+                        topHotels = topHotels.filter(h => allowedHotelIds.includes(String(h.hotelId)));
                     } else if (typeof topHotels === 'object') {
                         const filtered = {};
-                        if (topHotels[String(userHotelId)]) {
-                            filtered[String(userHotelId)] = topHotels[String(userHotelId)];
-                        }
+                        allowedHotelIds.forEach(id => {
+                            if (topHotels[id]) {
+                                filtered[id] = topHotels[id];
+                            }
+                        });
                         topHotels = filtered;
                     }
                     
                     if (Array.isArray(topClickedHotels)) {
-                        topClickedHotels = topClickedHotels.filter(h => String(h.hotelId) === String(userHotelId));
+                        topClickedHotels = topClickedHotels.filter(h => allowedHotelIds.includes(String(h.hotelId)));
                     } else if (typeof topClickedHotels === 'object') {
                         const filtered = {};
-                        if (topClickedHotels[String(userHotelId)]) {
-                            filtered[String(userHotelId)] = topClickedHotels[String(userHotelId)];
-                        }
+                        allowedHotelIds.forEach(id => {
+                            if (topClickedHotels[id]) {
+                                filtered[id] = topClickedHotels[id];
+                            }
+                        });
                         topClickedHotels = filtered;
                     }
                 } else {
@@ -1332,11 +1351,20 @@ async function displayLikesStats(topHotels, clicksData) {
     // กรองข้อมูลโรงแรมตาม role
     const userRole = currentUser.role || 'user';
     const userHotelId = currentUser.hotelId || '';
+    const userHotelIds = currentUser.hotelIds || [];
     
     if (userRole === 'hotel_owner' || userRole === 'hotel-owner') {
-        if (userHotelId) {
-            // hotel_owner เห็นเฉพาะโรงแรมตัวเอง (เปรียบเทียบแบบ string)
-            hotels = hotels.filter(h => String(h.id) === String(userHotelId));
+        // สร้าง array ของ hotel IDs ที่ user รับผิดชอบ
+        let allowedHotelIds = [];
+        if (userHotelIds.length > 0) {
+            allowedHotelIds = userHotelIds;
+        } else if (userHotelId) {
+            allowedHotelIds = [userHotelId];
+        }
+        
+        if (allowedHotelIds.length > 0) {
+            // hotel_owner เห็นเฉพาะโรงแรมที่รับผิดชอบ (รองรับหลายโรงแรม)
+            hotels = hotels.filter(h => allowedHotelIds.includes(String(h.id)));
         } else {
             // ถ้าไม่มี hotelId ให้แสดงว่าง
             hotels = [];
@@ -4249,14 +4277,15 @@ function openAddMemberModal() {
     document.getElementById('memberNickname').value = '';
     document.getElementById('memberRole').value = 'user';
     
-    // Clear hotel search inputs
+    // Clear hotel search inputs and selected hotels
     const searchInput = document.getElementById('memberHotelSearch');
-    const hiddenInput = document.getElementById('memberHotelId');
     const resultsDiv = document.getElementById('hotelSearchResults');
     
     if (searchInput) searchInput.value = '';
-    if (hiddenInput) hiddenInput.value = '';
     if (resultsDiv) resultsDiv.style.display = 'none';
+    
+    // Clear selected hotels
+    initSelectedHotels('');
     
     document.getElementById('hotelIdGroup').style.display = 'none';
     
@@ -4318,25 +4347,13 @@ async function editMember(memberUsername) {
             // Load hotels for dropdown first
             await loadHotelsForDropdown();
             
-            // Set hotel ID and search input after hotels are loaded
-            const searchInput = document.getElementById('memberHotelSearch');
-            const hiddenInput = document.getElementById('memberHotelId');
+            // Initialize selected hotels (supports multiple hotels)
+            const memberHotelIds = member.hotelId || '';
+            initSelectedHotels(memberHotelIds);
             
-            if (member.hotelId && searchInput && hiddenInput) {
-                hiddenInput.value = String(member.hotelId);
-                
-                // Find hotel and set display text
-                const hotel = allHotelsData.find(h => String(h.id) === String(member.hotelId));
-                if (hotel) {
-                    const displayName = hotel.nameTh || hotel.nameEn || 'ไม่มีชื่อ';
-                    searchInput.value = `${hotel.id} - ${displayName}`;
-                } else {
-                    searchInput.value = member.hotelId;
-                }
-            } else if (searchInput && hiddenInput) {
-                searchInput.value = '';
-                hiddenInput.value = '';
-            }
+            // Clear search input
+            const searchInput = document.getElementById('memberHotelSearch');
+            if (searchInput) searchInput.value = '';
             
             // Show/hide hotel field based on member's role AND current user's role
             const currentHotelInfo = document.getElementById('currentHotelInfo');
@@ -4390,13 +4407,14 @@ async function saveMember(event) {
     const passwordInput = document.getElementById('memberPassword');
     const nicknameInput = document.getElementById('memberNickname');
     const roleSelect = document.getElementById('memberRole');
-    const hotelIdSelect = document.getElementById('memberHotelId');
+    const hotelIdsInput = document.getElementById('memberHotelIds');
     
     const memberData = {
         username: isEdit ? memberUsername : usernameInput.value.trim(),
         nickname: nicknameInput.value.trim(),
         role: roleSelect.value,
-        hotelId: hotelIdSelect.value ? String(hotelIdSelect.value) : ''
+        hotelIds: selectedHotelIds, // Send array of hotel IDs
+        hotelId: selectedHotelIds.join(',') // Backward compatibility: comma-separated string
     };
     
     // Add password only if provided (for new user or password change)
@@ -4543,19 +4561,10 @@ function displaySearchResults(hotels) {
     resultsDiv.style.display = 'block';
 }
 
-// Select hotel from search results
+// Select hotel from search results (now adds to multi-select)
 function selectHotel(hotelId, displayName, nameEn, nameTh) {
-    const searchInput = document.getElementById('memberHotelSearch');
-    const hiddenInput = document.getElementById('memberHotelId');
-    const resultsDiv = document.getElementById('hotelSearchResults');
-    
-    // Set values
-    const finalName = nameTh || nameEn || displayName;
-    searchInput.value = `${hotelId} - ${finalName}`;
-    hiddenInput.value = String(hotelId);
-    
-    // Hide results
-    resultsDiv.style.display = 'none';
+    // Add hotel to selected list (supports multiple hotels)
+    addSelectedHotel(String(hotelId));
 }
 
 // Add event listener for role change to show/hide hotel field
@@ -4580,6 +4589,74 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// ==================== MULTI-SELECT HOTELS MANAGEMENT ====================
 
+// Array to store selected hotel IDs
+let selectedHotelIds = [];
 
+// Update selected hotels display
+function updateSelectedHotelsDisplay() {
+    const container = document.getElementById('selectedHotelsList');
+    const hiddenInput = document.getElementById('memberHotelIds');
+    const legacyInput = document.getElementById('memberHotelId');
+    
+    if (!container) return;
+    
+    if (selectedHotelIds.length === 0) {
+        container.innerHTML = '<span style="color: #999; font-size: 0.9em;">ยังไม่ได้เลือกโรงแรม</span>';
+        if (hiddenInput) hiddenInput.value = '';
+        if (legacyInput) legacyInput.value = '';
+        return;
+    }
+    
+    // Update hidden inputs
+    if (hiddenInput) hiddenInput.value = selectedHotelIds.join(',');
+    if (legacyInput) legacyInput.value = selectedHotelIds.join(','); // Backward compatibility
+    
+    // Display selected hotels as badges
+    container.innerHTML = selectedHotelIds.map(hotelId => {
+        const hotel = window.allHotels?.find(h => h.id === hotelId);
+        const hotelName = hotel ? (hotel.nameTh || hotel.nameEn || hotelId) : hotelId;
+        
+        return `
+            <span style="display: inline-flex; align-items: center; padding: 6px 10px; background: #3498db; color: white; border-radius: 20px; font-size: 0.85em; gap: 6px;">
+                <span>${hotelId} - ${hotelName}</span>
+                <button type="button" onclick="removeSelectedHotel('${hotelId}')" style="background: none; border: none; color: white; cursor: pointer; padding: 0; margin: 0; font-size: 1.2em; line-height: 1;">
+                    ×
+                </button>
+            </span>
+        `;
+    }).join('');
+}
 
+// Add hotel to selection
+function addSelectedHotel(hotelId) {
+    if (!selectedHotelIds.includes(hotelId)) {
+        selectedHotelIds.push(hotelId);
+        updateSelectedHotelsDisplay();
+    }
+    
+    // Clear search input
+    const searchInput = document.getElementById('memberHotelSearch');
+    if (searchInput) searchInput.value = '';
+    
+    // Hide search results
+    const resultsDiv = document.getElementById('hotelSearchResults');
+    if (resultsDiv) resultsDiv.style.display = 'none';
+}
+
+// Remove hotel from selection
+function removeSelectedHotel(hotelId) {
+    selectedHotelIds = selectedHotelIds.filter(id => id !== hotelId);
+    updateSelectedHotelsDisplay();
+}
+
+// Initialize selected hotels when opening modal
+function initSelectedHotels(hotelIdsString) {
+    if (!hotelIdsString || hotelIdsString.trim() === '') {
+        selectedHotelIds = [];
+    } else {
+        selectedHotelIds = hotelIdsString.split(',').map(id => id.trim()).filter(id => id);
+    }
+    updateSelectedHotelsDisplay();
+}

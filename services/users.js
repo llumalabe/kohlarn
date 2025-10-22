@@ -65,12 +65,20 @@ async function getUsers() {
         hotelId = hotelId.substring(1);
       }
       
+      // Parse hotelId: support both single hotel and multiple hotels (comma-separated)
+      // Examples: "hotel-1" or "hotel-1,hotel-2,hotel-3"
+      let hotelIds = [];
+      if (hotelId) {
+        hotelIds = hotelId.split(',').map(id => id.trim()).filter(id => id);
+      }
+      
       return {
         username: row[0] || '',
         password: row[1] || '',
         nickname: row[2] || '',
         role: row[3] || 'admin',
-        hotelId: hotelId
+        hotelId: hotelId, // Keep original string for backward compatibility
+        hotelIds: hotelIds // Array of hotel IDs
       };
     });
 
@@ -104,7 +112,8 @@ async function validateUser(username, password) {
             username: user.username,
             nickname: user.nickname,
             role: user.role,
-            hotelId: user.hotelId || ''
+            hotelId: user.hotelId || '', // Original string for backward compatibility
+            hotelIds: user.hotelIds || [] // Array of hotel IDs
           },
           message: `✅ ยินดีต้อนรับ ${user.nickname}`
         };
@@ -140,8 +149,18 @@ async function addUser(user) {
   try {
     // Hash password before saving
     const hashedPassword = await bcrypt.hash(user.password || '', 10);
-    // Use apostrophe prefix to force text format in Google Sheets for hotelId
-    const hotelIdValue = user.hotelId ? `'${user.hotelId}` : '';
+    
+    // Handle hotelIds: can be array or comma-separated string
+    let hotelIdValue = '';
+    if (user.hotelIds && Array.isArray(user.hotelIds)) {
+      // Array: join with commas
+      hotelIdValue = user.hotelIds.filter(id => id).join(',');
+    } else if (user.hotelId) {
+      // Single string (backward compatibility)
+      hotelIdValue = user.hotelId;
+    }
+    // Use apostrophe prefix to force text format in Google Sheets
+    hotelIdValue = hotelIdValue ? `'${hotelIdValue}` : '';
     
     const newRow = [
       user.username || '',
@@ -197,10 +216,23 @@ async function updateUser(userId, userData) {
       passwordToSave = await bcrypt.hash(userData.password, 10);
     }
     
-    // Use apostrophe prefix to force text format in Google Sheets for hotelId
-    const hotelIdValue = userData.hotelId !== undefined 
-      ? (userData.hotelId ? `'${userData.hotelId}` : '')
-      : (existingUser[4] || '');
+    // Handle hotelIds: can be array or comma-separated string
+    let hotelIdValue;
+    if (userData.hotelIds !== undefined) {
+      // Array provided: join with commas
+      if (Array.isArray(userData.hotelIds)) {
+        hotelIdValue = userData.hotelIds.filter(id => id).join(',');
+      } else {
+        hotelIdValue = userData.hotelIds;
+      }
+      hotelIdValue = hotelIdValue ? `'${hotelIdValue}` : '';
+    } else if (userData.hotelId !== undefined) {
+      // Single string (backward compatibility)
+      hotelIdValue = userData.hotelId ? `'${userData.hotelId}` : '';
+    } else {
+      // Not provided: keep existing
+      hotelIdValue = existingUser[4] || '';
+    }
     
     // Update row (preserve username, update password if provided)
     const updatedRow = [
