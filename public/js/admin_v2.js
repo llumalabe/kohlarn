@@ -2017,15 +2017,22 @@ function previewImageUrl(url, imageNumber = 1) {
         // If image is already loaded with same URL, just show it
         if (img.src === url && img.complete && img.naturalWidth > 0) {
             console.log('✓ Image already loaded, showing immediately');
-            img.style.display = 'block';
-            img.style.zIndex = '2';
+            img.style.setProperty('display', 'block', 'important');
+            img.style.setProperty('z-index', '2', 'important');
+            img.style.setProperty('position', 'absolute', 'important');
+            img.style.setProperty('top', '0', 'important');
+            img.style.setProperty('left', '0', 'important');
+            img.style.setProperty('width', '100%', 'important');
+            img.style.setProperty('height', '100%', 'important');
+            img.style.setProperty('object-fit', 'cover', 'important');
+            
             const emptySlot = preview.querySelector('.empty-slot');
             if (emptySlot) {
-                emptySlot.style.display = 'none';
-                emptySlot.style.zIndex = '0';
+                emptySlot.style.setProperty('display', 'none', 'important');
+                emptySlot.style.setProperty('z-index', '0', 'important');
             }
             const removeBtn = slot.querySelector('.remove-slot-btn');
-            if (removeBtn) removeBtn.style.display = 'block';
+            if (removeBtn) removeBtn.style.setProperty('display', 'block', 'important');
             console.log('=== Preview complete (cached) ===\n');
             return;
         }
@@ -2057,23 +2064,30 @@ function previewImageUrl(url, imageNumber = 1) {
             console.log('✓ Image loaded successfully!');
             console.log('Image dimensions:', img.naturalWidth, 'x', img.naturalHeight);
             
-            // Show image on top, hide empty state
-            img.style.display = 'block';
-            img.style.zIndex = '2';
+            // Show image on top, hide empty state - use !important to override any CSS
+            img.style.setProperty('display', 'block', 'important');
+            img.style.setProperty('z-index', '2', 'important');
+            img.style.setProperty('position', 'absolute', 'important');
+            img.style.setProperty('top', '0', 'important');
+            img.style.setProperty('left', '0', 'important');
+            img.style.setProperty('width', '100%', 'important');
+            img.style.setProperty('height', '100%', 'important');
+            img.style.setProperty('object-fit', 'cover', 'important');
+            
             console.log('Image display set to:', img.style.display);
             console.log('Image z-index set to:', img.style.zIndex);
             
             const emptySlot = preview.querySelector('.empty-slot');
             if (emptySlot) {
-                emptySlot.style.display = 'none';
-                emptySlot.style.zIndex = '0';
+                emptySlot.style.setProperty('display', 'none', 'important');
+                emptySlot.style.setProperty('z-index', '0', 'important');
                 console.log('Empty slot hidden');
             }
             
             // Show remove button
             const removeBtn = slot.querySelector('.remove-slot-btn');
             if (removeBtn) {
-                removeBtn.style.display = 'block';
+                removeBtn.style.setProperty('display', 'block', 'important');
                 console.log('Remove button shown');
             }
             
