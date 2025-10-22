@@ -1819,10 +1819,20 @@ function selectImageForSlot(imageUrl, imageIndex) {
 
 // Assign image URL to specific slot
 function assignImageToSlot(imageUrl, slotNumber) {
+    console.log('=== assignImageToSlot called ===');
+    console.log('URL:', imageUrl);
+    console.log('Slot:', slotNumber);
+    
     const urlField = slotNumber === 1 ? 'imageUrl' : `imageUrl${slotNumber}`;
     const urlInput = document.getElementById(urlField);
     
-    if (!urlInput) return;
+    console.log('URL Field:', urlField);
+    console.log('URL Input Element:', urlInput);
+    
+    if (!urlInput) {
+        console.error('URL input not found!');
+        return;
+    }
     
     // Check if this image is already used in another slot
     for (let i = 1; i <= 5; i++) {
@@ -1842,13 +1852,18 @@ function assignImageToSlot(imageUrl, slotNumber) {
     }
     
     // Assign to the new slot
+    console.log('Setting URL to input:', imageUrl);
     urlInput.value = imageUrl;
+    
+    console.log('Calling previewImageUrl...');
     previewImageUrl(imageUrl, slotNumber);
     
     // Show success message if not already shown (from moving)
     if (!document.querySelector('.success-message')) {
         showSuccess(`✓ เลือกรูปสำหรับตำแหน่งที่ ${slotNumber} แล้ว`);
     }
+    
+    console.log('=== assignImageToSlot completed ===');
 }
 
 // Delete image from Cloudinary
@@ -1974,23 +1989,34 @@ async function uploadImage(imageNumber = 1) {
 
 // Preview image URL in visual slots
 function previewImageUrl(url, imageNumber = 1) {
+    console.log(`\n=== previewImageUrl called for slot ${imageNumber} ===`);
+    console.log('URL:', url);
+    
     const preview = document.getElementById(`imagePreview${imageNumber}`);
     const img = document.getElementById(`previewImg${imageNumber}`);
     const slot = document.querySelector(`.selected-image-slot[data-slot="${imageNumber}"]`);
     
+    console.log('Elements found:', {
+        preview: !!preview,
+        img: !!img,
+        slot: !!slot
+    });
+    
     if (!preview || !img || !slot) {
-        console.log('Preview elements not found:', { preview, img, slot, imageNumber });
+        console.error('Preview elements not found:', { preview, img, slot, imageNumber });
         return;
     }
     
     if (url && url.trim() !== '') {
+        console.log('Processing image URL...');
+        
         // Clear previous event handlers to prevent double-loading
         img.onload = null;
         img.onerror = null;
         
         // If image is already loaded with same URL, just show it
         if (img.src === url && img.complete && img.naturalWidth > 0) {
-            console.log('Image already loaded, showing immediately:', url);
+            console.log('✓ Image already loaded, showing immediately');
             img.style.display = 'block';
             img.style.zIndex = '2';
             const emptySlot = preview.querySelector('.empty-slot');
@@ -2000,12 +2026,15 @@ function previewImageUrl(url, imageNumber = 1) {
             }
             const removeBtn = slot.querySelector('.remove-slot-btn');
             if (removeBtn) removeBtn.style.display = 'block';
+            console.log('=== Preview complete (cached) ===\n');
             return;
         }
         
+        console.log('Setting up image load handlers...');
+        
         // Set up error handler first
         img.onerror = function() {
-            console.error('Failed to load image:', url);
+            console.error('❌ Failed to load image:', url);
             // Hide image, show empty state
             img.style.display = 'none';
             img.style.zIndex = '0';
@@ -2025,24 +2054,38 @@ function previewImageUrl(url, imageNumber = 1) {
         
         // Set up load handler
         img.onload = function() {
-            console.log('Image loaded successfully:', url);
+            console.log('✓ Image loaded successfully!');
+            console.log('Image dimensions:', img.naturalWidth, 'x', img.naturalHeight);
+            
             // Show image on top, hide empty state
             img.style.display = 'block';
             img.style.zIndex = '2';
+            console.log('Image display set to:', img.style.display);
+            console.log('Image z-index set to:', img.style.zIndex);
+            
             const emptySlot = preview.querySelector('.empty-slot');
             if (emptySlot) {
                 emptySlot.style.display = 'none';
                 emptySlot.style.zIndex = '0';
+                console.log('Empty slot hidden');
             }
+            
             // Show remove button
             const removeBtn = slot.querySelector('.remove-slot-btn');
-            if (removeBtn) removeBtn.style.display = 'block';
+            if (removeBtn) {
+                removeBtn.style.display = 'block';
+                console.log('Remove button shown');
+            }
+            
+            console.log('=== Preview complete (loaded) ===\n');
         };
         
         // Set image source last (triggers loading)
+        console.log('Setting img.src to:', url);
         img.src = url;
         
     } else {
+        console.log('Clearing slot...');
         // Clear slot - show empty state, hide image
         img.onload = null;
         img.onerror = null;
@@ -2057,6 +2100,7 @@ function previewImageUrl(url, imageNumber = 1) {
         // Hide remove button
         const removeBtn = slot.querySelector('.remove-slot-btn');
         if (removeBtn) removeBtn.style.display = 'none';
+        console.log('=== Slot cleared ===\n');
     }
 }
 
