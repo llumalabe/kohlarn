@@ -1601,6 +1601,39 @@ function showHotelForm(hotelId = null) {
 // CLOUDINARY IMAGE MANAGEMENT
 // ========================================
 
+// Display selected files info
+function displaySelectedFiles() {
+    const fileInput = document.getElementById('multiImageUpload');
+    const filesInfo = document.getElementById('selectedFilesInfo');
+    const fileCount = document.getElementById('selectedFileCount');
+    const filesList = document.getElementById('selectedFilesList');
+    
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        if (filesInfo) filesInfo.style.display = 'none';
+        return;
+    }
+    
+    const files = Array.from(fileInput.files);
+    
+    // Show info section
+    if (filesInfo) filesInfo.style.display = 'block';
+    if (fileCount) fileCount.textContent = files.length;
+    
+    // Build file list
+    if (filesList) {
+        const fileItems = files.map((file, index) => {
+            const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+            const icon = file.size > 10 * 1024 * 1024 ? '⚠️' : '📄';
+            return `<div style="padding: 4px 0; display: flex; justify-content: space-between; align-items: center;">
+                <span>${icon} ${index + 1}. ${file.name}</span>
+                <span style="opacity: 0.8;">${sizeInMB} MB</span>
+            </div>`;
+        }).join('');
+        
+        filesList.innerHTML = fileItems;
+    }
+}
+
 // Upload multiple images at once (max 5)
 async function uploadMultipleImages() {
     const fileInput = document.getElementById('multiImageUpload');
@@ -1680,8 +1713,10 @@ async function uploadMultipleImages() {
             }
         }
 
-        // Clear file input
+        // Clear file input and selected files display
         fileInput.value = '';
+        const filesInfo = document.getElementById('selectedFilesInfo');
+        if (filesInfo) filesInfo.style.display = 'none';
 
         // Reload image gallery
         await loadCloudinaryImages(hotelId);
