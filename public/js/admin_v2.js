@@ -968,20 +968,51 @@ async function loadHotels() {
             // กรองข้อมูลตาม role
             const userRole = currentUser.role || 'user';
             const userHotelId = currentUser.hotelId || '';
-            const userHotelIds = currentUser.hotelIds || [];
+            let userHotelIds = currentUser.hotelIds || [];
+            
+            // Debug: แสดงข้อมูล user
+            console.log('🔍 User Info:', { 
+                role: userRole, 
+                hotelId: userHotelId, 
+                hotelIds: userHotelIds,
+                hotelIdsType: typeof userHotelIds,
+                hotelIdsIsArray: Array.isArray(userHotelIds)
+            });
             
             if (userRole === 'hotel_owner' || userRole === 'hotel-owner') {
                 // hotel_owner เห็นเฉพาะโรงแรมที่รับผิดชอบ (รองรับหลายโรงแรม)
+                
+                // ถ้า hotelIds ไม่ใช่ array หรือเป็น array ว่าง ให้ลอง parse จาก hotelId string
+                if (!Array.isArray(userHotelIds) || userHotelIds.length === 0) {
+                    if (userHotelId && userHotelId.includes(',')) {
+                        // hotelId เป็น comma-separated string
+                        userHotelIds = userHotelId.split(',').map(id => id.trim()).filter(id => id);
+                        console.log('✅ Parsed hotelIds from comma-separated string:', userHotelIds);
+                    } else if (userHotelId) {
+                        // hotelId เป็น string เดี่ยว
+                        userHotelIds = [userHotelId];
+                        console.log('✅ Using single hotelId:', userHotelIds);
+                    }
+                }
+                
                 if (userHotelIds.length > 0) {
                     // มี hotelIds array: กรองโรงแรมที่อยู่ใน array
-                    hotels = hotels.filter(hotel => 
-                        userHotelIds.includes(String(hotel.id))
-                    );
-                } else if (userHotelId) {
-                    // Backward compatibility: ใช้ hotelId เดี่ยว
-                    hotels = hotels.filter(hotel => String(hotel.id) === String(userHotelId));
+                    // แปลงทั้ง hotel.id และ userHotelIds เป็น string เพื่อเปรียบเทียบ
+                    const allowedIds = userHotelIds.map(id => String(id).trim());
+                    console.log('🎯 Allowed Hotel IDs:', allowedIds);
+                    console.log('📦 All Hotels:', hotels.map(h => ({ id: h.id, name: h.nameTh })));
+                    
+                    hotels = hotels.filter(hotel => {
+                        const hotelIdStr = String(hotel.id).trim();
+                        const isAllowed = allowedIds.includes(hotelIdStr);
+                        console.log(`  ${isAllowed ? '✅' : '❌'} Hotel ${hotelIdStr} - ${hotel.nameTh || hotel.nameEn}`);
+                        return isAllowed;
+                    });
+                    
+                    console.log(`✅ Filtered ${hotels.length} hotels for hotel-owner`);
                 } else {
                     // ถ้าไม่มี hotelId ให้แสดงว่าง (ไม่ให้เห็นโรงแรมใดๆ)
+                    console.warn('⚠️ No hotelIds found for hotel-owner');
                     hotels = [];
                 }
                 // ซ่อนปุ่มเพิ่มโรงแรม
