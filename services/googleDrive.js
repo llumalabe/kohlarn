@@ -61,46 +61,40 @@ let HOTEL_IMAGES_FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID || null;
  * Get or create the main folder for hotel images
  */
 async function getOrCreateMainFolder() {
-  if (HOTEL_IMAGES_FOLDER_ID) {
-    return HOTEL_IMAGES_FOLDER_ID;
+  if (!HOTEL_IMAGES_FOLDER_ID) {
+    throw new Error(
+      '❌ GOOGLE_DRIVE_FOLDER_ID not configured!\n\n' +
+      'To fix this:\n' +
+      '1. Create a folder in YOUR Google Drive (not Service Account)\n' +
+      '2. Right-click the folder → Share\n' +
+      '3. Add this email with Editor permission: ' + (drive.context._options.auth.credentials?.client_email || 'SERVICE_ACCOUNT_EMAIL') + '\n' +
+      '4. Copy the folder ID from URL (e.g., https://drive.google.com/drive/folders/FOLDER_ID_HERE)\n' +
+      '5. Add to .env: GOOGLE_DRIVE_FOLDER_ID=your_folder_id\n' +
+      '6. Restart the server\n\n' +
+      'Service Accounts cannot create folders in their own space due to no storage quota.'
+    );
   }
 
+  // Verify folder exists and is accessible
   try {
-    const folderName = 'Kohlarn Hotel Images';
-    
-    // Search for existing folder
-    const response = await drive.files.list({
-      q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-      fields: 'files(id, name)',
-      spaces: 'drive',
-      supportsAllDrives: true,
-      includeItemsFromAllDrives: true
+    const folder = await drive.files.get({
+      fileId: HOTEL_IMAGES_FOLDER_ID,
+      fields: 'id, name, capabilities',
+      supportsAllDrives: true
     });
-
-    if (response.data.files.length > 0) {
-      HOTEL_IMAGES_FOLDER_ID = response.data.files[0].id;
-      console.log(`✅ Found existing folder: ${folderName} (${HOTEL_IMAGES_FOLDER_ID})`);
-    } else {
-      // Create new folder
-      const folderMetadata = {
-        name: folderName,
-        mimeType: 'application/vnd.google-apps.folder'
-      };
-      
-      const folder = await drive.files.create({
-        requestBody: folderMetadata,
-        fields: 'id',
-        supportsAllDrives: true
-      });
-      
-      HOTEL_IMAGES_FOLDER_ID = folder.data.id;
-      console.log(`✅ Created new folder: ${folderName} (${HOTEL_IMAGES_FOLDER_ID})`);
-    }
-
+    
+    console.log(`✅ Using shared folder: ${folder.data.name} (${HOTEL_IMAGES_FOLDER_ID})`);
     return HOTEL_IMAGES_FOLDER_ID;
   } catch (error) {
-    console.error('Error getting/creating main folder:', error);
-    throw error;
+    throw new Error(
+      `❌ Cannot access folder ${HOTEL_IMAGES_FOLDER_ID}\n\n` +
+      'Please make sure:\n' +
+      '1. The folder exists in YOUR Google Drive\n' +
+      '2. You have shared it with: ' + (drive.context._options.auth.credentials?.client_email || 'SERVICE_ACCOUNT_EMAIL') + '\n' +
+      '3. The Service Account has Editor permission\n' +
+      '4. The folder ID in .env is correct\n\n' +
+      'Error: ' + error.message
+    );
   }
 }
 
