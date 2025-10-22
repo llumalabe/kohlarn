@@ -1913,37 +1913,58 @@ function previewImageUrl(url, imageNumber = 1) {
     const img = document.getElementById(`previewImg${imageNumber}`);
     const slot = document.querySelector(`.selected-image-slot[data-slot="${imageNumber}"]`);
     
-    if (!preview || !img || !slot) return;
+    if (!preview || !img || !slot) {
+        console.log('Preview elements not found:', { preview, img, slot, imageNumber });
+        return;
+    }
     
     if (url && url.trim() !== '') {
+        // Set image source first
         img.src = url;
+        
         img.onerror = function() {
+            console.error('Failed to load image:', url);
             // Hide image, show empty state
             img.style.display = 'none';
+            img.style.zIndex = '0';
             const emptySlot = preview.querySelector('.empty-slot');
-            if (emptySlot) emptySlot.style.display = 'flex';
+            if (emptySlot) {
+                emptySlot.style.display = 'flex';
+                emptySlot.style.zIndex = '1';
+            }
             // Hide remove button
             const removeBtn = slot.querySelector('.remove-slot-btn');
             if (removeBtn) removeBtn.style.display = 'none';
+            
             if (imageNumber === 1) {
                 showError('URL รูปภาพไม่ถูกต้อง');
             }
         };
+        
         img.onload = function() {
-            // Show image, hide empty state
+            console.log('Image loaded successfully:', url);
+            // Show image on top, hide empty state
             img.style.display = 'block';
+            img.style.zIndex = '2';
             const emptySlot = preview.querySelector('.empty-slot');
-            if (emptySlot) emptySlot.style.display = 'none';
+            if (emptySlot) {
+                emptySlot.style.display = 'none';
+                emptySlot.style.zIndex = '0';
+            }
             // Show remove button
             const removeBtn = slot.querySelector('.remove-slot-btn');
             if (removeBtn) removeBtn.style.display = 'block';
         };
     } else {
-        // Clear slot - show empty state
+        // Clear slot - show empty state, hide image
         img.style.display = 'none';
+        img.style.zIndex = '0';
         img.src = '';
         const emptySlot = preview.querySelector('.empty-slot');
-        if (emptySlot) emptySlot.style.display = 'flex';
+        if (emptySlot) {
+            emptySlot.style.display = 'flex';
+            emptySlot.style.zIndex = '1';
+        }
         // Hide remove button
         const removeBtn = slot.querySelector('.remove-slot-btn');
         if (removeBtn) removeBtn.style.display = 'none';
