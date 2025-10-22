@@ -2064,6 +2064,9 @@ function previewImageUrl(url, imageNumber = 1) {
             console.log('✓ Image loaded successfully!');
             console.log('Image dimensions:', img.naturalWidth, 'x', img.naturalHeight);
             
+            // IMPORTANT: Show parent container first!
+            preview.style.setProperty('display', 'block', 'important');
+            
             // Show image on top, hide empty state - use !important to override any CSS
             img.style.setProperty('display', 'block', 'important');
             img.style.setProperty('z-index', '2', 'important');
@@ -2077,15 +2080,10 @@ function previewImageUrl(url, imageNumber = 1) {
             img.style.setProperty('visibility', 'visible', 'important');
             
             console.log('✓ All styles applied!');
-            console.log('Image element:', img);
-            console.log('Image computed display:', window.getComputedStyle(img).display);
-            console.log('Image computed visibility:', window.getComputedStyle(img).visibility);
-            console.log('Image computed opacity:', window.getComputedStyle(img).opacity);
-            console.log('Image computed z-index:', window.getComputedStyle(img).zIndex);
+            console.log('Parent display:', preview.style.display);
+            console.log('Image display:', img.style.display);
             console.log('Image offsetWidth:', img.offsetWidth);
             console.log('Image offsetHeight:', img.offsetHeight);
-            console.log('Parent preview:', preview);
-            console.log('Parent computed overflow:', window.getComputedStyle(preview).overflow);
             
             const emptySlot = preview.querySelector('.empty-slot');
             if (emptySlot) {
