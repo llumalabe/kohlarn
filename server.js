@@ -18,7 +18,7 @@ const activityLogService = require('./services/activityLog');
 const filtersService = require('./services/filters');
 const roomTypesService = require('./services/roomTypes');
 const accommodationTypesService = require('./services/accommodationTypes');
-const googleDriveService = require('./services/googleDrive');
+const cloudinaryService = require('./services/cloudinary');
 const hotelClicksService = require('./services/hotelClicksSheet'); // Use Google Sheets for clicks
 
 const app = express();
@@ -109,7 +109,7 @@ function verifyToken(req, res, next) {
   }
 }
 
-// Upload image to Google Drive (BEFORE body parsers!)
+// Upload image to Cloudinary (BEFORE body parsers!)
 app.post('/api/upload', verifyToken, async (req, res) => {
   // Use multer memory storage for temporary buffer
   const memoryUpload = multer({
@@ -160,19 +160,18 @@ app.post('/api/upload', verifyToken, async (req, res) => {
         });
       }
 
-      // Check if Google Drive is available
-      if (!googleDriveService.canWrite) {
+      // Check if Cloudinary is configured
+      if (!cloudinaryService.isConfigured()) {
         return res.status(503).json({
           success: false,
-          error: 'Google Drive ไม่พร้อมใช้งาน กรุณาตรวจสอบการตั้งค่า'
+          error: 'Cloudinary ไม่พร้อมใช้งาน กรุณาตรวจสอบการตั้งค่า environment variables'
         });
       }
 
-      // Upload to Google Drive
-      const result = await googleDriveService.uploadImage(
+      // Upload to Cloudinary
+      const result = await cloudinaryService.uploadImage(
         req.file.buffer,
         req.file.originalname,
-        req.file.mimetype,
         hotelId,
         hotelName
       );
@@ -180,16 +179,19 @@ app.post('/api/upload', verifyToken, async (req, res) => {
       // Return the image URL
       res.json({
         success: true,
-        imageUrl: result.webViewLink,
-        fileId: result.id,
+        imageUrl: result.secure_url, // HTTPS URL
+        publicId: result.public_id,
+        width: result.width,
+        height: result.height,
+        format: result.format,
         message: 'อัพโหลดรูปภาพสำเร็จ'
       });
 
     } catch (error) {
-      console.error('Error uploading to Google Drive:', error);
+      console.error('Error uploading to Cloudinary:', error);
       res.status(500).json({
         success: false,
-        error: 'เกิดข้อผิดพลาดในการอัพโหลดไปยัง Google Drive: ' + error.message
+        error: 'เกิดข้อผิดพลาดในการอัพโหลดไปยัง Cloudinary: ' + error.message
       });
     }
   });

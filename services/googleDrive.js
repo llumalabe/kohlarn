@@ -130,14 +130,32 @@ async function getOrCreateHotelFolder(hotelId, hotelName) {
       parents: [mainFolderId]
     };
 
-    const folder = await drive.files.create({
-      requestBody: folderMetadata,
-      fields: 'id',
-      supportsAllDrives: true
-    });
+    try {
+      const folder = await drive.files.create({
+        requestBody: folderMetadata,
+        fields: 'id',
+        supportsAllDrives: true
+      });
 
-    console.log(`✅ Created folder for hotel: ${folderName}`);
-    return folder.data.id;
+      console.log(`✅ Created folder for hotel: ${folderName}`);
+      return folder.data.id;
+    } catch (createError) {
+      // If creation fails, it might be due to permissions
+      if (createError.message.includes('quota') || createError.message.includes('storage')) {
+        throw new Error(
+          `❌ Cannot create hotel folder "${folderName}"!\n\n` +
+          `The main folder (${mainFolderId}) is not properly shared with the Service Account.\n\n` +
+          `Please verify:\n` +
+          `1. Open Google Drive folder: https://drive.google.com/drive/folders/${mainFolderId}\n` +
+          `2. Right-click → Share\n` +
+          `3. Make sure "${drive.context._options.auth.credentials?.client_email}" is added\n` +
+          `4. Permission MUST be "Editor" (not Viewer)\n` +
+          `5. Try again\n\n` +
+          `Original error: ${createError.message}`
+        );
+      }
+      throw createError;
+    }
   } catch (error) {
     console.error('Error getting/creating hotel folder:', error);
     throw error;
@@ -186,7 +204,8 @@ async function uploadImage(fileBuffer, filename, mimeType, hotelId, hotelName) {
       requestBody: fileMetadata,
       media: media,
       fields: 'id, webViewLink, webContentLink',
-      supportsAllDrives: true
+      supportsAllDrives: true,
+      supportsTeamDrives: true
     });
 
     // Make file publicly accessible
