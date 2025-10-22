@@ -60,13 +60,14 @@ async function authenticatedFetch(url, options = {}) {
 }
 
 // Session Management - ใช้ JWT Token แทน adminSession
-function saveSession(username, password, nickname, isTemporary, token, role, hotelId) {
+function saveSession(username, password, nickname, isTemporary, token, role, hotelId, hotelIds) {
     // เก็บข้อมูลใน format เดียวกับหน้าหลัก
     const user = {
         username,
         nickname,
         role: role || (isTemporary ? 'temp' : 'admin'),
-        hotelId: hotelId || '' // เฉพาะ hotel_owner
+        hotelId: hotelId || '', // เฉพาะ hotel_owner (backward compatibility)
+        hotelIds: hotelIds || [] // array of hotel IDs for multi-hotel support
     };
     
     if (token) {
@@ -254,13 +255,14 @@ function setupLogin() {
                     password: password,
                     nickname: data.user.nickname,
                     role: data.user.role || 'user',
-                    hotelId: data.user.hotelId || ''
+                    hotelId: data.user.hotelId || '',
+                    hotelIds: data.user.hotelIds || []
                 };
                 isTemporaryPassword = data.isTemporary || false;
                 
                 // Save session to localStorage with JWT token
                 const token = data.token || null; // รับ token จาก response ถ้ามี
-                saveSession(username, password, data.user.nickname, isTemporaryPassword, token, data.user.role, data.user.hotelId);
+                saveSession(username, password, data.user.nickname, isTemporaryPassword, token, data.user.role, data.user.hotelId, data.user.hotelIds);
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('adminDashboard').style.display = 'flex';
                 
@@ -970,15 +972,6 @@ async function loadHotels() {
             const userHotelId = currentUser.hotelId || '';
             let userHotelIds = currentUser.hotelIds || [];
             
-            // Debug: แสดงข้อมูล user
-            console.log('🔍 User Info:', { 
-                role: userRole, 
-                hotelId: userHotelId, 
-                hotelIds: userHotelIds,
-                hotelIdsType: typeof userHotelIds,
-                hotelIdsIsArray: Array.isArray(userHotelIds)
-            });
-            
             if (userRole === 'hotel_owner' || userRole === 'hotel-owner') {
                 // hotel_owner เห็นเฉพาะโรงแรมที่รับผิดชอบ (รองรับหลายโรงแรม)
                 
@@ -987,11 +980,9 @@ async function loadHotels() {
                     if (userHotelId && userHotelId.includes(',')) {
                         // hotelId เป็น comma-separated string
                         userHotelIds = userHotelId.split(',').map(id => id.trim()).filter(id => id);
-                        console.log('✅ Parsed hotelIds from comma-separated string:', userHotelIds);
                     } else if (userHotelId) {
                         // hotelId เป็น string เดี่ยว
                         userHotelIds = [userHotelId];
-                        console.log('✅ Using single hotelId:', userHotelIds);
                     }
                 }
                 
@@ -999,20 +990,12 @@ async function loadHotels() {
                     // มี hotelIds array: กรองโรงแรมที่อยู่ใน array
                     // แปลงทั้ง hotel.id และ userHotelIds เป็น string เพื่อเปรียบเทียบ
                     const allowedIds = userHotelIds.map(id => String(id).trim());
-                    console.log('🎯 Allowed Hotel IDs:', allowedIds);
-                    console.log('📦 All Hotels:', hotels.map(h => ({ id: h.id, name: h.nameTh })));
-                    
                     hotels = hotels.filter(hotel => {
                         const hotelIdStr = String(hotel.id).trim();
-                        const isAllowed = allowedIds.includes(hotelIdStr);
-                        console.log(`  ${isAllowed ? '✅' : '❌'} Hotel ${hotelIdStr} - ${hotel.nameTh || hotel.nameEn}`);
-                        return isAllowed;
+                        return allowedIds.includes(hotelIdStr);
                     });
-                    
-                    console.log(`✅ Filtered ${hotels.length} hotels for hotel-owner`);
                 } else {
                     // ถ้าไม่มี hotelId ให้แสดงว่าง (ไม่ให้เห็นโรงแรมใดๆ)
-                    console.warn('⚠️ No hotelIds found for hotel-owner');
                     hotels = [];
                 }
                 // ซ่อนปุ่มเพิ่มโรงแรม
@@ -1308,7 +1291,16 @@ async function loadLikesStats() {
             // กรองข้อมูลตาม role
             const userRole = currentUser.role || 'user';
             const userHotelId = currentUser.hotelId || '';
-            const userHotelIds = currentUser.hotelIds || [];
+            let userHotelIds = currentUser.hotelIds || [];
+            
+            // Parse hotelId string if hotelIds array is empty
+            if (!Array.isArray(userHotelIds) || userHotelIds.length === 0) {
+                if (userHotelId && userHotelId.includes(',')) {
+                    userHotelIds = userHotelId.split(',').map(id => id.trim()).filter(id => id);
+                } else if (userHotelId) {
+                    userHotelIds = [userHotelId];
+                }
+            }
             
             let topHotels = data.data.topHotels;
             let topClickedHotels = data.data.topClickedHotels;
@@ -1317,9 +1309,7 @@ async function loadLikesStats() {
                 // สร้าง array ของ hotel IDs ที่ user รับผิดชอบ
                 let allowedHotelIds = [];
                 if (userHotelIds.length > 0) {
-                    allowedHotelIds = userHotelIds.map(id => String(id));
-                } else if (userHotelId) {
-                    allowedHotelIds = [String(userHotelId)];
+                    allowedHotelIds = userHotelIds.map(id => String(id).trim());
                 }
                 
                 if (allowedHotelIds.length > 0) {
@@ -1382,15 +1372,22 @@ async function displayLikesStats(topHotels, clicksData) {
     // กรองข้อมูลโรงแรมตาม role
     const userRole = currentUser.role || 'user';
     const userHotelId = currentUser.hotelId || '';
-    const userHotelIds = currentUser.hotelIds || [];
+    let userHotelIds = currentUser.hotelIds || [];
+    
+    // Parse hotelId string if hotelIds array is empty
+    if (!Array.isArray(userHotelIds) || userHotelIds.length === 0) {
+        if (userHotelId && userHotelId.includes(',')) {
+            userHotelIds = userHotelId.split(',').map(id => id.trim()).filter(id => id);
+        } else if (userHotelId) {
+            userHotelIds = [userHotelId];
+        }
+    }
     
     if (userRole === 'hotel_owner' || userRole === 'hotel-owner') {
         // สร้าง array ของ hotel IDs ที่ user รับผิดชอบ
         let allowedHotelIds = [];
         if (userHotelIds.length > 0) {
-            allowedHotelIds = userHotelIds;
-        } else if (userHotelId) {
-            allowedHotelIds = [userHotelId];
+            allowedHotelIds = userHotelIds.map(id => String(id).trim());
         }
         
         if (allowedHotelIds.length > 0) {
