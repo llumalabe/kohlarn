@@ -1577,10 +1577,16 @@ function showHotelForm(hotelId = null) {
     // Setup Hotel ID validation listener
     const hotelIdInput = document.getElementById('hotelId');
     if (hotelIdInput) {
-        // Validate on input
-        hotelIdInput.addEventListener('input', validateHotelIdForUpload);
+        // Validate on input and load images
+        hotelIdInput.addEventListener('input', async function() {
+            await validateHotelIdForUpload();
+            // Reload gallery when hotel ID changes
+            await loadCloudinaryImages(this.value?.trim());
+        });
         // Initial validation
         validateHotelIdForUpload();
+        // Initial gallery load (will show "please enter hotel ID" if empty)
+        loadCloudinaryImages(hotelIdInput.value?.trim());
     }
     
     // Load filters and room types for checkboxes
@@ -1890,14 +1896,27 @@ async function getCloudinaryImages(hotelId) {
 
 // Load and display Cloudinary images
 async function loadCloudinaryImages(hotelId) {
-    if (!hotelId) return;
+    const gallery = document.getElementById('cloudinaryGallery');
+    const galleryHeader = document.getElementById('galleryHeader');
+    const countEl = document.getElementById('imageCount');
+    
+    if (!gallery) return;
+    
+    // If no hotelId, show empty state
+    if (!hotelId || hotelId.trim() === '') {
+        gallery.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">กรุณาใส่รหัสโรงแรมก่อนเพื่อดูรูปภาพ</p>';
+        if (galleryHeader) {
+            galleryHeader.textContent = 'รูปภาพที่มี';
+        }
+        if (countEl) {
+            countEl.textContent = '0/5';
+            countEl.style.color = '#999';
+        }
+        return;
+    }
 
     try {
         const images = await getCloudinaryImages(hotelId);
-        const gallery = document.getElementById('cloudinaryGallery');
-        const galleryHeader = document.getElementById('galleryHeader');
-        
-        if (!gallery) return;
 
         // Update gallery header with count
         if (galleryHeader) {
