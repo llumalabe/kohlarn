@@ -144,31 +144,57 @@ function getAllLikes() {
 }
 
 /**
+ * Get Thailand time (UTC+7)
+ */
+function getThailandTime() {
+  const now = new Date();
+  // แปลงเป็นเวลาไทย (UTC+7)
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const thailandTime = new Date(utc + (3600000 * 7));
+  return thailandTime;
+}
+
+/**
  * Get like statistics for a period
  */
 function getLikeStats(period = 'day') {
   const likes = loadLikes();
-  const now = Date.now();
+  const now = getThailandTime(); // ใช้เวลาไทย
   let startTime;
 
   switch (period) {
     case 'day':
-      startTime = now - (24 * 60 * 60 * 1000);
+      // วันนี้ตั้งแต่ 00:00:00 (เวลาไทย)
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      startTime = startOfDay.getTime();
       break;
     case 'week':
-      startTime = now - (7 * 24 * 60 * 60 * 1000);
+      // สัปดาห์นี้ตั้งแต่วันจันทร์ 00:00:00 (เวลาไทย)
+      const startOfWeek = new Date(now);
+      const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ...
+      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      startOfWeek.setDate(now.getDate() - daysToMonday);
+      startOfWeek.setHours(0, 0, 0, 0);
+      startTime = startOfWeek.getTime();
       break;
     case 'month':
-      startTime = now - (30 * 24 * 60 * 60 * 1000);
+      // เดือนนี้ตั้งแต่วันที่ 1 00:00:00 (เวลาไทย)
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+      startTime = startOfMonth.getTime();
       break;
     case 'year':
-      startTime = now - (365 * 24 * 60 * 60 * 1000);
+      // ปีนี้ตั้งแต่ 1 มกราคม 00:00:00 (เวลาไทย)
+      const startOfYear = new Date(now.getFullYear(), 0, 1, 0, 0, 0);
+      startTime = startOfYear.getTime();
       break;
     case 'all':
-      startTime = 0; // Show all data from beginning
+      // ทั้งหมด (ไม่กรอง)
+      startTime = 0;
       break;
     default:
-      startTime = now - (24 * 60 * 60 * 1000);
+      // Default: วันนี้ตั้งแต่ 00:00:00 (เวลาไทย)
+      const defaultStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      startTime = defaultStart.getTime();
   }
 
   const stats = {

@@ -87,21 +87,32 @@ function getAllClicks() {
 }
 
 /**
+ * Get Thailand time (UTC+7)
+ */
+function getThailandTime() {
+  const now = new Date();
+  // แปลงเป็นเวลาไทย (UTC+7)
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const thailandTime = new Date(utc + (3600000 * 7));
+  return thailandTime;
+}
+
+/**
  * Get click statistics for a period
  */
 function getClickStats(period = 'day') {
   const clicks = loadClicks();
-  const now = new Date();
+  const now = getThailandTime(); // ใช้เวลาไทย
   let startTime;
 
   switch (period) {
     case 'day':
-      // วันนี้ตั้งแต่ 00:00:00
+      // วันนี้ตั้งแต่ 00:00:00 (เวลาไทย)
       const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
       startTime = startOfDay.getTime();
       break;
     case 'week':
-      // สัปดาห์นี้ตั้งแต่วันจันทร์ 00:00:00
+      // สัปดาห์นี้ตั้งแต่วันจันทร์ 00:00:00 (เวลาไทย)
       const startOfWeek = new Date(now);
       const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ...
       const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -110,17 +121,21 @@ function getClickStats(period = 'day') {
       startTime = startOfWeek.getTime();
       break;
     case 'month':
-      // เดือนนี้ตั้งแต่วันที่ 1 00:00:00
+      // เดือนนี้ตั้งแต่วันที่ 1 00:00:00 (เวลาไทย)
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
       startTime = startOfMonth.getTime();
       break;
     case 'year':
-      // ปีนี้ตั้งแต่ 1 มกราคม 00:00:00
+      // ปีนี้ตั้งแต่ 1 มกราคม 00:00:00 (เวลาไทย)
       const startOfYear = new Date(now.getFullYear(), 0, 1, 0, 0, 0);
       startTime = startOfYear.getTime();
       break;
+    case 'all':
+      // ทั้งหมด (ไม่กรอง)
+      startTime = 0;
+      break;
     default:
-      // Default: วันนี้ตั้งแต่ 00:00:00
+      // Default: วันนี้ตั้งแต่ 00:00:00 (เวลาไทย)
       const defaultStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
       startTime = defaultStart.getTime();
   }
