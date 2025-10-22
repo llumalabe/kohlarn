@@ -583,16 +583,19 @@ app.get('/api/admin/stats', verifyToken, async (req, res) => {
     const hotels = await googleSheetsService.getHotels();
     const totalHotels = hotels.length;
     
-    // Get top liked hotels
-    const topLikedHotels = await likesService.getTopLikedHotels(10);
+    // Get top liked hotels (with period filtering)
+    const topLikedHotels = await likesService.getTopLikedHotels(period || 'day', 10);
     
-    // Get click stats
-    const clickStats = await hotelClicksService.getClickStats(period);
-    const topClickedHotels = await hotelClicksService.getTopClickedHotels(period, 'most', 10);
+    // Get like stats for period
+    const likeStats = await likesService.getLikeStats(period || 'day');
+    
+    // Get click stats (with period filtering)
+    const clickStats = await hotelClicksService.getClickStats(period || 'day');
+    const topClickedHotels = await hotelClicksService.getTopClickedHotels(period || 'day', 'most', 10);
     
     const stats = {
-      visits: statsService.getVisitStats(period),
-      likes: { total: topLikedHotels.reduce((sum, h) => sum + h.likes, 0) },
+      visits: statsService.getVisitStats(period || 'day'),
+      likes: { total: likeStats.total },
       clicks: clickStats,
       totalHotels: totalHotels,
       topHotels: topLikedHotels,

@@ -4,6 +4,7 @@ const fs = require('fs');
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 const CLICKS_SHEET = 'HotelClicks';
+const CLICKS_HISTORY_SHEET = 'ClicksHistory';
 
 // Initialize Google Sheets API
 let sheets;
@@ -113,11 +114,38 @@ async function getAllClicks() {
 }
 
 /**
+ * Record click history (for period filtering)
+ */
+async function recordClickHistory(hotelId, ip = '', userAgent = '') {
+    try {
+        const timestamp = new Date().toISOString();
+        
+        // Append to history sheet
+        await sheets.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `${CLICKS_HISTORY_SHEET}!A2:D`,
+            valueInputOption: 'RAW',
+            resource: {
+                values: [[String(hotelId), ip, timestamp, userAgent]]
+            }
+        });
+        
+        return true;
+    } catch (error) {
+        console.error('Error recording click history:', error);
+        return false;
+    }
+}
+
+/**
  * Record a click on hotel card
  */
-async function recordClick(hotelId) {
+async function recordClick(hotelId, ip = '', userAgent = '') {
     try {
-        // Get current clicks
+        // 1. Record in history sheet (for period filtering)
+        await recordClickHistory(hotelId, ip, userAgent);
+        
+        // 2. Update total count in main sheet
         const allClicks = await getAllClicks();
         const currentClicks = allClicks.hotels[hotelId] || { count: 0, lastClicked: new Date().toISOString() };
 
@@ -213,20 +241,113 @@ async function getTopClickedHotels(limit = 10) {
 }
 
 /**
- * Get click stats (for admin dashboard)
+ * Get Thailand time (UTC+7)
  */
-async function getClickStats() {
+function getThailandTime() {
+    const now = new Date();
+    // แปลงเป็นเวลาไทย (UTC+7)
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const thailandTime = new Date(utc + (3600000 * 7));
+    return thailandTime;
+}
+
+/**
+ * Get click statistics for a period from history
+ */
+async function getClickStats(period = 'day') {
     try {
-        const allClicks = await getAllClicks();
-        const total = Object.values(allClicks.hotels).reduce((sum, hotel) => sum + hotel.count, 0);
-        
-        return {
-            total: total,
-            hotels: Object.keys(allClicks.hotels).length
+        // Get history data
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `${CLICKS_HISTORY_SHEET}!A2:D`,
+        });
+
+        const rows = response.data.values || [];
+        const now = getThailandTime();
+        let startTime;
+
+        // Calculate start time based on period
+        switch (period) {
+            case 'day':
+                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                startTime = startOfDay.getTime();
+                break;
+            case 'week':
+                const startOfWeek = new Date(now);
+                const dayOfWeek = now.getDay();
+                const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                startOfWeek.setDate(now.getDate() - daysToMonday);
+                startOfWeek.setHours(0, 0, 0, 0);
+                startTime = startOfWeek.getTime();
+                break;
+            case 'month':
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+                startTime = startOfMonth.getTime();
+                break;
+            case 'year':
+                const startOfYear = new Date(now.getFullYear(), 0, 1, 0, 0, 0);
+                startTime = startOfYear.getTime();
+                break;
+            case 'all':
+                startTime = 0;
+                break;
+            default:
+                const defaultStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                startTime = defaultStart.getTime();
+        }
+
+        // Filter by period
+        const stats = {
+            total: 0,
+            byHotel: {}
         };
+
+        rows.forEach(row => {
+            const hotelId = row[0];
+            const timestamp = row[2];
+            
+            if (hotelId && timestamp) {
+                const clickTime = new Date(timestamp).getTime();
+                
+                if (clickTime >= startTime) {
+                    stats.total++;
+                    stats.byHotel[hotelId] = (stats.byHotel[hotelId] || 0) + 1;
+                }
+            }
+        });
+
+        return stats;
     } catch (error) {
         console.error('Error getting click stats:', error);
-        return { total: 0, hotels: 0 };
+        return { total: 0, byHotel: {} };
+    }
+}
+
+/**
+ * Get top clicked hotels for a specific period
+ */
+async function getTopClickedHotels(period = 'day', sortBy = 'most', limit = 10) {
+    try {
+        const stats = await getClickStats(period);
+        
+        const hotelsArray = Object.entries(stats.byHotel).map(([hotelId, count]) => ({
+            hotelId,
+            clicks: count
+        }));
+
+        // Sort
+        hotelsArray.sort((a, b) => {
+            if (sortBy === 'most') {
+                return b.clicks - a.clicks;
+            } else {
+                return a.clicks - b.clicks;
+            }
+        });
+
+        return hotelsArray.slice(0, limit);
+    } catch (error) {
+        console.error('Error getting top clicked hotels:', error);
+        return [];
     }
 }
 

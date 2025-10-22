@@ -236,21 +236,117 @@ async function updateHotelLikes(hotelId, increment = true) {
 }
 
 /**
- * Get top liked hotels
+ * Get Thailand time (UTC+7)
  */
-async function getTopLikedHotels(limit = 10) {
-    try {
-        const allLikes = await getAllLikes();
-        const hotels = Object.entries(allLikes.hotels)
-            .map(([hotelId, data]) => ({
-                hotelId,
-                likes: data.count,
-                lastUpdated: data.lastUpdated
-            }))
-            .sort((a, b) => b.likes - a.likes)
-            .slice(0, limit);
+function getThailandTime() {
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const thailandTime = new Date(utc + (3600000 * 7));
+    return thailandTime;
+}
 
-        return hotels;
+/**
+ * Get like statistics for a period from history
+ */
+async function getLikeStats(period = 'day') {
+    try {
+        // Get history data from LikesHistory sheet
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'LikesHistory!A2:D',
+        });
+
+        const rows = response.data.values || [];
+        const now = getThailandTime();
+        let startTime;
+
+        // Calculate start time based on period
+        switch (period) {
+            case 'day':
+                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                startTime = startOfDay.getTime();
+                break;
+            case 'week':
+                const startOfWeek = new Date(now);
+                const dayOfWeek = now.getDay();
+                const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                startOfWeek.setDate(now.getDate() - daysToMonday);
+                startOfWeek.setHours(0, 0, 0, 0);
+                startTime = startOfWeek.getTime();
+                break;
+            case 'month':
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+                startTime = startOfMonth.getTime();
+                break;
+            case 'year':
+                const startOfYear = new Date(now.getFullYear(), 0, 1, 0, 0, 0);
+                startTime = startOfYear.getTime();
+                break;
+            case 'all':
+                startTime = 0;
+                break;
+            default:
+                const defaultStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                startTime = defaultStart.getTime();
+        }
+
+        // Filter by period
+        const stats = {
+            total: 0,
+            byHotel: {}
+        };
+
+        rows.forEach(row => {
+            const hotelId = row[0];
+            const timestamp = row[3]; // Column D is Timestamp
+            
+            if (hotelId && timestamp) {
+                const likeTime = new Date(timestamp).getTime();
+                
+                if (likeTime >= startTime) {
+                    stats.total++;
+                    stats.byHotel[hotelId] = (stats.byHotel[hotelId] || 0) + 1;
+                }
+            }
+        });
+
+        return stats;
+    } catch (error) {
+        console.error('Error getting like stats:', error);
+        return { total: 0, byHotel: {} };
+    }
+}
+
+/**
+ * Get top liked hotels for a specific period
+ */
+async function getTopLikedHotels(period = 'day', limit = 10) {
+    try {
+        if (period === 'all') {
+            // Use total likes from main sheet
+            const allLikes = await getAllLikes();
+            const hotels = Object.entries(allLikes.hotels)
+                .map(([hotelId, data]) => ({
+                    hotelId,
+                    likes: data.count,
+                    lastUpdated: data.lastUpdated
+                }))
+                .sort((a, b) => b.likes - a.likes)
+                .slice(0, limit);
+            return hotels;
+        }
+        
+        // Use period-filtered stats from history
+        const stats = await getLikeStats(period);
+        
+        const hotelsArray = Object.entries(stats.byHotel).map(([hotelId, count]) => ({
+            hotelId,
+            likes: count
+        }));
+
+        hotelsArray.sort((a, b) => b.likes - a.likes);
+
+        return hotelsArray.slice(0, limit);
     } catch (error) {
         console.error('Error getting top liked hotels:', error);
         return [];
@@ -269,5 +365,6 @@ module.exports = {
     getHotelLikes,
     updateHotelLikes,
     getTopLikedHotels,
+    getLikeStats,
     clearLikesCache
 };
