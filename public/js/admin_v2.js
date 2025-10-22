@@ -2073,9 +2073,19 @@ function previewImageUrl(url, imageNumber = 1) {
             img.style.setProperty('width', '100%', 'important');
             img.style.setProperty('height', '100%', 'important');
             img.style.setProperty('object-fit', 'cover', 'important');
+            img.style.setProperty('opacity', '1', 'important');
+            img.style.setProperty('visibility', 'visible', 'important');
             
-            console.log('Image display set to:', img.style.display);
-            console.log('Image z-index set to:', img.style.zIndex);
+            console.log('✓ All styles applied!');
+            console.log('Image element:', img);
+            console.log('Image computed display:', window.getComputedStyle(img).display);
+            console.log('Image computed visibility:', window.getComputedStyle(img).visibility);
+            console.log('Image computed opacity:', window.getComputedStyle(img).opacity);
+            console.log('Image computed z-index:', window.getComputedStyle(img).zIndex);
+            console.log('Image offsetWidth:', img.offsetWidth);
+            console.log('Image offsetHeight:', img.offsetHeight);
+            console.log('Parent preview:', preview);
+            console.log('Parent computed overflow:', window.getComputedStyle(preview).overflow);
             
             const emptySlot = preview.querySelector('.empty-slot');
             if (emptySlot) {
