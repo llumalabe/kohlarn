@@ -1815,14 +1815,22 @@ async function deleteCloudinaryImage(publicId, hotelId) {
             // Reload gallery
             await loadCloudinaryImages(hotelId);
             
-            // Clear any URL fields that use this image
+            // Clear any URL fields that use this image and track if we need to save
+            let needsSave = false;
             for (let i = 1; i <= 5; i++) {
                 const urlField = i === 1 ? 'imageUrl' : `imageUrl${i}`;
                 const urlInput = document.getElementById(urlField);
                 if (urlInput && urlInput.value.includes(publicId)) {
                     urlInput.value = '';
                     previewImageUrl('', i);
+                    needsSave = true;
                 }
+            }
+            
+            // Auto-save to Google Sheets if any URL was cleared
+            if (needsSave && hotelId) {
+                showSuccess('กำลังอัปเดตข้อมูลในระบบ...');
+                await saveHotel(hotelId);
             }
         } else {
             showError('เกิดข้อผิดพลาดในการลบรูปภาพ: ' + data.error);
