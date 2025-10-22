@@ -2111,18 +2111,27 @@ async function loadHotelData(hotelId) {
                     }
                 }
                 
-                // Preview all images
-                previewImageUrl(hotel.imageUrl || '', 1);
-                previewImageUrl(hotel.imageUrl2 || '', 2);
-                previewImageUrl(hotel.imageUrl3 || '', 3);
-                previewImageUrl(hotel.imageUrl4 || '', 4);
-                previewImageUrl(hotel.imageUrl5 || '', 5);
+                // Preview all images (with delay to ensure DOM is ready)
+                setTimeout(() => {
+                    console.log('Loading hotel images:', {
+                        img1: hotel.imageUrl,
+                        img2: hotel.imageUrl2,
+                        img3: hotel.imageUrl3,
+                        img4: hotel.imageUrl4,
+                        img5: hotel.imageUrl5
+                    });
+                    previewImageUrl(hotel.imageUrl || '', 1);
+                    previewImageUrl(hotel.imageUrl2 || '', 2);
+                    previewImageUrl(hotel.imageUrl3 || '', 3);
+                    previewImageUrl(hotel.imageUrl4 || '', 4);
+                    previewImageUrl(hotel.imageUrl5 || '', 5);
+                }, 200);
                 
                 // Load Cloudinary images for this hotel
                 await loadCloudinaryImages(hotel.id);
                 
                 // Initialize drag & drop for image slots
-                setTimeout(() => initDragAndDrop(), 100);
+                setTimeout(() => initDragAndDrop(), 300);
             }
         }
     } catch (error) {
