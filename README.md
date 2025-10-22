@@ -26,6 +26,13 @@
 - ดึงข้อมูลโรงแรมจาก Google Sheets
 - ดึงรหัสผ่านแอดมินจาก Google Sheets
 - CRUD operations ผ่าน API
+- สถิติการเข้าชมและกดหัวใจแบบ real-time (ClicksHistory, LikesHistory)
+
+### ☁️ Cloudinary Image Storage
+- อัพโหลดรูปภาพโรงแรมไปยัง Cloudinary CDN
+- Auto-optimization (resize, quality, format)
+- Global CDN delivery สำหรับความเร็วสูง
+- จัดเก็บแบบมีโครงสร้าง (kohlarn/hotels/{hotelId}/)
 
 ## 📋 ข้อมูลที่จัดเก็บ
 
@@ -134,7 +141,33 @@ NODE_ENV=development
 - `GOOGLE_SHEET_ID` คือส่วน ID ใน URL ของ Google Sheet
 - ตัวอย่าง URL: `https://docs.google.com/spreadsheets/d/[GOOGLE_SHEET_ID]/edit`
 
-### 4. เริ่มต้นใช้งาน
+### 4. ตั้งค่า Cloudinary (สำหรับอัพโหลดรูปภาพ)
+
+**🚀 Quick Start - ใช้เวลา 5 นาที**
+
+ดูคู่มือฉบับย่อ: [`QUICK_START_CLOUDINARY.md`](QUICK_START_CLOUDINARY.md)
+
+หรือดูคู่มือแบบเต็ม: [`CLOUDINARY_SETUP.md`](CLOUDINARY_SETUP.md)
+
+**ขั้นตอนโดยย่อ:**
+
+1. สมัครบัญชี Cloudinary (ฟรี): https://cloudinary.com/users/register_free
+2. คัดลอก credentials จาก Dashboard
+3. เพิ่มใน `.env`:
+   ```env
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+   ```
+4. เพิ่ม environment variables ใน Vercel
+5. Deploy!
+
+**ทดสอบว่าตั้งค่าถูกต้อง:**
+```bash
+.\test-cloudinary.bat
+```
+
+### 5. เริ่มต้นใช้งาน
 
 ```bash
 npm start
@@ -149,7 +182,7 @@ npm run dev
 ### 5. เข้าใช้งาน
 
 - **หน้าแรก (Search Engine):** http://localhost:3000
-- **แผงควบคุมแอดมิน:** http://localhost:3000/admin
+- **แผงควบคุมแอดมิน (เวอร์ชั่น 2):** http://localhost:3000/admin_v2.html
 
 ## 📁 โครงสร้างโปรเจกต์
 
@@ -161,13 +194,19 @@ kohlarn/
 │   │   └── admin.css          # สไตล์แผงควบคุม
 │   ├── js/
 │   │   ├── app.js             # JavaScript หน้าแรก
-│   │   └── admin.js           # JavaScript แผงควบคุม
+│   │   ├── admin.js           # JavaScript แผงควบคุม (v1)
+│   │   └── admin_v2.js        # JavaScript แผงควบคุม (v2) ⭐
 │   ├── index.html             # หน้าแรก
-│   └── admin.html             # หน้าแผงควบคุม
+│   ├── admin.html             # หน้าแผงควบคุม (v1)
+│   └── admin_v2.html          # หน้าแผงควบคุม (v2) ⭐
 ├── services/
 │   ├── googleSheets.js        # บริการเชื่อมต่อ Google Sheets
+│   ├── hotelClicksSheet.js    # สถิติคลิกโรงแรม + ClicksHistory
+│   ├── likesSheet.js          # สถิติกดหัวใจ + LikesHistory
 │   ├── stats.js               # บริการสถิติการเข้าชม
-│   └── likes.js               # บริการระบบกดหัวใจ
+│   ├── users.js               # จัดการผู้ใช้งาน (admin, hotel-owner)
+│   ├── cloudinary.js          # อัพโหลดรูปภาพไปยัง Cloudinary ⭐
+│   └── googleDrive.js         # (เลิกใช้แล้ว - ใช้ Cloudinary แทน)
 ├── data/                      # ข้อมูลที่เก็บใน local (auto-generated)
 │   ├── stats.json             # สถิติการเข้าชม
 │   └── likes.json             # ข้อมูลการกดหัวใจ
@@ -175,6 +214,10 @@ kohlarn/
 ├── package.json               # Dependencies
 ├── .env                       # Environment variables
 ├── .env.example               # ตัวอย่าง environment variables
+├── QUICK_START_CLOUDINARY.md  # คู่มือ Cloudinary แบบย่อ ⭐
+├── CLOUDINARY_SETUP.md        # คู่มือ Cloudinary แบบเต็ม ⭐
+├── setup-cloudinary-vercel.ps1 # Script ตั้งค่า Cloudinary ⭐
+├── test-cloudinary.bat        # ทดสอบ Cloudinary config ⭐
 ├── .gitignore                 # Git ignore file
 └── README.md                  # เอกสารนี้
 ```
