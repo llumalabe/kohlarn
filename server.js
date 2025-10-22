@@ -269,7 +269,8 @@ app.post('/api/admin/login', loginLimiter, async (req, res) => {
           username: req.user.username,
           nickname: req.user.nickname,
           role: validation.user.role || 'admin',
-          hotelId: validation.user.hotelId || ''
+          hotelId: validation.user.hotelId || '',
+          hotelIds: validation.user.hotelIds || []
         },
         JWT_SECRET,
         { expiresIn: JWT_EXPIRES_IN }
@@ -281,7 +282,8 @@ app.post('/api/admin/login', loginLimiter, async (req, res) => {
         username: req.user.username,
         nickname: req.user.nickname,
         role: validation.user.role || 'admin',
-        hotelId: validation.user.hotelId || ''
+        hotelId: validation.user.hotelId || '',
+        hotelIds: validation.user.hotelIds || []
       };
       
       // Log login activity with details
@@ -1058,7 +1060,8 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
           username: result.user.username,
           nickname: result.user.nickname,
           role: result.user.role || 'user',
-          hotelId: result.user.hotelId || ''
+          hotelId: result.user.hotelId || '',
+          hotelIds: result.user.hotelIds || []
         },
         JWT_SECRET,
         { expiresIn: JWT_EXPIRES_IN }
@@ -1070,7 +1073,8 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
         username: result.user.username,
         nickname: result.user.nickname,
         role: result.user.role || 'user',
-        hotelId: result.user.hotelId || ''
+        hotelId: result.user.hotelId || '',
+        hotelIds: result.user.hotelIds || []
       };
       // Return user data และ token
       res.json({
@@ -1082,6 +1086,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
           email: result.user.email || '',
           role: result.user.role || 'user',
           hotelId: result.user.hotelId || '',
+          hotelIds: result.user.hotelIds || [],
           phone: result.user.phone || ''
         },
         message: result.message
