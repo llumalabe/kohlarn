@@ -1787,9 +1787,31 @@ function assignImageToSlot(imageUrl, slotNumber) {
     const urlField = slotNumber === 1 ? 'imageUrl' : `imageUrl${slotNumber}`;
     const urlInput = document.getElementById(urlField);
     
-    if (urlInput) {
-        urlInput.value = imageUrl;
-        previewImageUrl(imageUrl, slotNumber);
+    if (!urlInput) return;
+    
+    // Check if this image is already used in another slot
+    for (let i = 1; i <= 5; i++) {
+        if (i === slotNumber) continue; // Skip the target slot
+        
+        const checkUrlField = i === 1 ? 'imageUrl' : `imageUrl${i}`;
+        const checkUrlInput = document.getElementById(checkUrlField);
+        
+        if (checkUrlInput && checkUrlInput.value === imageUrl) {
+            // Image found in another slot - remove it from there
+            console.log(`Image already in slot ${i}, removing from there`);
+            checkUrlInput.value = '';
+            previewImageUrl('', i);
+            showSuccess(`✓ ย้ายรูปจากตำแหน่งที่ ${i} มาที่ ${slotNumber}`);
+            break;
+        }
+    }
+    
+    // Assign to the new slot
+    urlInput.value = imageUrl;
+    previewImageUrl(imageUrl, slotNumber);
+    
+    // Show success message if not already shown (from moving)
+    if (!document.querySelector('.success-message')) {
         showSuccess(`✓ เลือกรูปสำหรับตำแหน่งที่ ${slotNumber} แล้ว`);
     }
 }
