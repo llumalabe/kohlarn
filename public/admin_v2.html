@@ -821,9 +821,8 @@
             <form id="hotelForm">
                 <!-- ID โรงแรม -->
                 <div class="form-group">
-                    <label>ID โรงแรม (รหัสเฉพาะ) * <small style="color: #666;">เช่น hotel-001 หรือ 001</small></label>
-                    <input type="text" id="hotelId" required placeholder="hotel-001 หรือ 001" pattern="[a-zA-Z0-9\-]+" autocomplete="off" inputmode="text">
-                    <small style="color: #999;">สามารถใส่เลข 0 ด้านหน้าได้ เช่น 001, 0123</small>
+                    <label>ID โรงแรม (รหัสเฉพาะ) * <small style="color: #666;">เช่น 001</small></label>
+                    <input type="text" id="hotelId" required placeholder="001" pattern="[a-zA-Z0-9\-]+" autocomplete="off" inputmode="text">
                     <!-- Duplicate ID Warning -->
                     <div id="duplicateIdWarning" style="display: none; background: #e74c3c; color: white; padding: 10px; border-radius: 6px; margin-top: 8px; font-weight: 600;">
                         <i class="fas fa-times-circle"></i> มีรหัสโรงแรมนี้ในระบบแล้ว ไม่สามารถเพิ่มอีกได้
@@ -867,7 +866,7 @@
                 <div class="form-group">
                     <label><i class="fas fa-images"></i> รูปภาพโรงแรม (สูงสุด 5 รูป) *</label>
                     <small style="color: var(--gray); display: block; margin-bottom: 10px;">
-                        อัพโหลดได้พร้อมกันสูงสุด 5 รูป | ลากรูปเพื่อเรียงลำดับการแสดงผล
+                        อัพโหลดได้พร้อมกันสูงสุด 5 รูป
                     </small>
                     
                     <!-- Multi-Upload Section -->
@@ -878,6 +877,10 @@
                         <!-- Hotel ID Validation Warning -->
                         <div id="hotelIdWarning" style="display: none; background: #e74c3c; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-weight: 600;">
                             <i class="fas fa-exclamation-triangle"></i> จำเป็นต้องใส่ รหัสโรงแรมก่อนอัพโหลด
+                        </div>
+                        <!-- 5 Images Limit Warning -->
+                        <div id="imageLimitWarning" style="display: none; background: #e74c3c; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-weight: 600;">
+                            <i class="fas fa-exclamation-circle"></i> รูปภาพถึงขีดจำกัดแล้ว กรุณาลบรูปภาพ ก่อนอัพโหลดเพิ่มเติม
                         </div>
                         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
                             <input type="file" id="multiImageUpload" accept="image/*" multiple onchange="displaySelectedFiles()" style="flex: 1; background: white; padding: 10px; border-radius: 8px; border: none;">
@@ -927,7 +930,7 @@
                             <i class="fas fa-exclamation-circle"></i> กรุณาเลือกรูปหลัก เพราะจำเป็นต้องมี
                         </div>
                         <small style="color: var(--gray); display: block; margin-bottom: 15px;">
-                            คลิก "เลือกรูปนี้" จากแกลเลอรี่ด้านบน | ลากเพื่อเปลี่ยนลำดับการแสดงผล
+                            คลิก "เลือกรูปนี้" จากแกลเลอรี่ด้านบน
                         </small>
                         
                         <!-- Hidden URL inputs for form submission -->

@@ -1929,18 +1929,25 @@ async function loadCloudinaryImages(hotelId) {
     const gallery = document.getElementById('cloudinaryGallery');
     const galleryHeader = document.getElementById('galleryHeader');
     const countEl = document.getElementById('imageCount');
+    const imageLimitWarning = document.getElementById('imageLimitWarning');
     
     if (!gallery) return;
     
-    // If no hotelId, show empty state
-    if (!hotelId || hotelId.trim() === '') {
-        gallery.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">กรุณาใส่รหัสโรงแรมก่อนเพื่อดูรูปภาพ</p>';
+    // Extract only digits from hotelId
+    const digits = hotelId ? hotelId.replace(/\D/g, '') : '';
+    
+    // If no hotelId or less than 3 digits, show empty state
+    if (!hotelId || hotelId.trim() === '' || digits.length < 3) {
+        gallery.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">กรุณาใส่รหัสโรงแรม (ตัวเลขอย่างน้อย 3 หลัก)</p>';
         if (galleryHeader) {
             galleryHeader.textContent = 'รูปภาพที่มี';
         }
         if (countEl) {
             countEl.textContent = '0/5';
             countEl.style.color = '#999';
+        }
+        if (imageLimitWarning) {
+            imageLimitWarning.style.display = 'none';
         }
         return;
     }
@@ -1984,6 +1991,16 @@ async function loadCloudinaryImages(hotelId) {
         if (countEl) {
             countEl.textContent = `${images.length}/5`;
             countEl.style.color = images.length >= 5 ? '#e74c3c' : '#27ae60';
+        }
+        
+        // Show/hide image limit warning
+        const imageLimitWarning = document.getElementById('imageLimitWarning');
+        if (imageLimitWarning) {
+            if (images.length >= 5) {
+                imageLimitWarning.style.display = 'block';
+            } else {
+                imageLimitWarning.style.display = 'none';
+            }
         }
 
     } catch (error) {
