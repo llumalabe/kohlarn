@@ -141,10 +141,7 @@ function applyWebSettings() {
         if (webSettings.footer_text_color) {
             footerElement.style.color = webSettings.footer_text_color;
         }
-        // Use same gradient as body background
-        if (webSettings.body_bg_gradient_start && webSettings.body_bg_gradient_end) {
-            footerElement.style.background = `linear-gradient(135deg, ${webSettings.body_bg_gradient_start} 0%, ${webSettings.body_bg_gradient_end} 100%)`;
-        }
+        footerElement.style.background = 'transparent';
     }
     
     // Update favicon

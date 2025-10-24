@@ -3962,11 +3962,12 @@ tr:hover {
 .preview-footer {
     margin-top: 15px;
     padding: 15px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: transparent;
     color: #ffffff;
     border-radius: 8px;
     text-align: center;
     font-size: 14px;
+    border: 1px dashed rgba(255, 255, 255, 0.3);
 }
 
 .preview-footer p {

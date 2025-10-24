@@ -4619,9 +4619,7 @@ function previewChanges() {
     document.getElementById('footerTextColorText').value = footerTextColor;
     document.getElementById('previewFooterText').textContent = footerText || '2025 Koh Larn Hotel Search';
     document.getElementById('previewFooter').style.color = footerTextColor;
-    // Use same gradient as body background
-    document.getElementById('previewFooter').style.background = 
-        `linear-gradient(135deg, ${bodyStart} 0%, ${bodyEnd} 100%)`;
+    document.getElementById('previewFooter').style.background = 'transparent';
 }
 
 // Save web settings
