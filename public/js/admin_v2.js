@@ -3153,22 +3153,92 @@ function displayActivityLog(logs) {
             actionColor = '#667eea';
         }
         
-        // Build detailed description
+        // Build detailed description with before/after comparison
         let detailsHtml = '';
         
-        // Primary details from details field
+        // Parse and format details for better display
         if (log.details && log.details.trim()) {
-            detailsHtml += `<div class="activity-details">${log.details}</div>`;
+            const details = log.details;
+            
+            // Check if details contain "ก่อน:" and "หลัง:" for edit actions
+            if (details.includes('ก่อน:') && details.includes('หลัง:')) {
+                // Split by newline or common separators
+                const lines = details.split(/\n|; |, /).filter(line => line.trim());
+                
+                let beforeData = {};
+                let afterData = {};
+                let currentSection = null;
+                
+                lines.forEach(line => {
+                    line = line.trim();
+                    if (line.startsWith('ก่อน:')) {
+                        currentSection = 'before';
+                        line = line.replace('ก่อน:', '').trim();
+                    } else if (line.startsWith('หลัง:')) {
+                        currentSection = 'after';
+                        line = line.replace('หลัง:', '').trim();
+                    }
+                    
+                    // Parse key-value pairs
+                    if (line && line.includes(':')) {
+                        const [key, ...valueParts] = line.split(':');
+                        const value = valueParts.join(':').trim();
+                        
+                        if (currentSection === 'before') {
+                            beforeData[key.trim()] = value;
+                        } else if (currentSection === 'after') {
+                            afterData[key.trim()] = value;
+                        }
+                    }
+                });
+                
+                // Build comparison table
+                if (Object.keys(beforeData).length > 0 || Object.keys(afterData).length > 0) {
+                    detailsHtml += '<div class="activity-changes" style="margin-top: 10px; background: #f8f9fa; padding: 12px; border-radius: 8px;">';
+                    detailsHtml += '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+                    detailsHtml += '<thead><tr style="background: #e9ecef;"><th style="padding: 8px; text-align: left; border: 1px solid #dee2e6; width: 30%;">ฟิลด์</th><th style="padding: 8px; text-align: left; border: 1px solid #dee2e6;">ก่อน</th><th style="padding: 8px; text-align: left; border: 1px solid #dee2e6;">หลัง</th></tr></thead>';
+                    detailsHtml += '<tbody>';
+                    
+                    // Combine all keys from both objects
+                    const allKeys = new Set([...Object.keys(beforeData), ...Object.keys(afterData)]);
+                    
+                    allKeys.forEach(key => {
+                        const beforeValue = beforeData[key] || '-';
+                        const afterValue = afterData[key] || '-';
+                        const isChanged = beforeValue !== afterValue;
+                        
+                        detailsHtml += `<tr style="${isChanged ? 'background: #fff3cd;' : ''}">`;
+                        detailsHtml += `<td style="padding: 8px; border: 1px solid #dee2e6; font-weight: 600;">${key}</td>`;
+                        detailsHtml += `<td style="padding: 8px; border: 1px solid #dee2e6; color: #e74c3c;">${beforeValue}</td>`;
+                        detailsHtml += `<td style="padding: 8px; border: 1px solid #dee2e6; color: #00d2a0; font-weight: 600;">${afterValue}</td>`;
+                        detailsHtml += '</tr>';
+                    });
+                    
+                    detailsHtml += '</tbody></table>';
+                    detailsHtml += '</div>';
+                } else {
+                    // Fallback to raw details
+                    detailsHtml += `<div class="activity-details" style="margin-top: 8px; padding: 10px; background: #f8f9fa; border-radius: 6px; white-space: pre-wrap;">${details}</div>`;
+                }
+            } else {
+                // For non-edit actions or simple details, display as-is with formatting
+                const formattedDetails = details
+                    .replace(/ก่อน:/g, '<strong style="color: #e74c3c;">ก่อน:</strong>')
+                    .replace(/หลัง:/g, '<strong style="color: #00d2a0;">หลัง:</strong>')
+                    .replace(/\n/g, '<br>');
+                
+                detailsHtml += `<div class="activity-details" style="margin-top: 8px; padding: 10px; background: #f8f9fa; border-radius: 6px; line-height: 1.6;">${formattedDetails}</div>`;
+            }
         }
         
         // Hotel name as additional info
         if (log.hotelName && log.hotelName.trim()) {
-            detailsHtml += `<div class="activity-hotel"><i class="fas fa-hotel"></i> <strong>${log.hotelName}</strong></div>`;
+            detailsHtml += `<div class="activity-hotel" style="margin-top: 8px; padding: 6px 10px; background: #e3f2fd; border-radius: 4px; display: inline-block;"><i class="fas fa-hotel" style="color: #667eea; margin-right: 6px;"></i> <strong style="color: #667eea;">${log.hotelName}</strong></div>`;
         }
         
         // If no details, show a default message
         if (!detailsHtml) {
-            detailsHtml = '<div class="activity-details" style="color: #999; font-style: italic;">ไม่มีรายละเอียดเพิ่มเติม</div>';
+            detailsHtml = '<div class="activity-details" style="color: #999; font-style: italic; margin-top: 8px;">ไม่มีรายละเอียดเพิ่มเติม</div>';
         }
         
         // Type badge HTML
