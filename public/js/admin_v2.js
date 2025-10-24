@@ -3173,16 +3173,11 @@ function displayActivityLog(logs) {
             
             // Check if details contain "ก่อน:" and "หลัง:" for edit actions
             if (details.includes('ก่อน:') && details.includes('หลัง:')) {
-                console.log('📊 Parsing before/after details:', details);
-                
                 // Split into before and after sections
                 const parts = details.split('หลัง:');
                 if (parts.length === 2) {
                     const beforePart = parts[0].replace('ก่อน:', '').trim();
                     const afterPart = parts[1].trim();
-                    
-                    console.log('📌 Before part:', beforePart);
-                    console.log('📌 After part:', afterPart);
                     
                     // Parse each section into key-value pairs
                     const beforeData = {};
@@ -3217,12 +3212,7 @@ function displayActivityLog(logs) {
                     // Build comparison table
                     const allKeys = new Set([...Object.keys(beforeData), ...Object.keys(afterData)]);
                     
-                    console.log('🔑 All keys:', Array.from(allKeys));
-                    console.log('📋 Before data:', beforeData);
-                    console.log('📋 After data:', afterData);
-                    
                     if (allKeys.size > 0) {
-                        console.log('✅ Building comparison table with', allKeys.size, 'fields');
                         detailsHtml += '<div class="activity-changes" style="margin-top: 10px; background: #f8f9fa; padding: 12px; border-radius: 8px;">';
                         detailsHtml += '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
                         detailsHtml += '<thead><tr style="background: #e9ecef;"><th style="padding: 8px; text-align: left; border: 1px solid #dee2e6; width: 30%;">ฟิลด์</th><th style="padding: 8px; text-align: left; border: 1px solid #dee2e6;">ก่อน</th><th style="padding: 8px; text-align: left; border: 1px solid #dee2e6;">หลัง</th></tr></thead>';
