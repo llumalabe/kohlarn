@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#667eea">
+    <title>โปรไฟล์ - ค้นหาโรงแรมเกาะล้าน</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="header-title">
+                    <h1>
+                        <a href="/" style="text-decoration: none; color: inherit;">
+                            <span id="headerIcon">🏝️</span> 
+                            <span id="headerTitle">ค้นหาโรงแรมเกาะล้าน</span>
+                        </a>
+                    </h1>
+                    <p class="subtitle">Koh Larn Hotel Search Engine</p>
+                </div>
+                <div class="header-actions">
+                    <div class="user-menu" id="userMenu">
+                        <div class="user-profile" id="userProfile">
+                            <button class="profile-btn" id="profileBtn">
+                                <i class="fas fa-user-circle"></i>
+                                <span id="userDisplayName">ผู้ใช้งาน</span>
+                            </button>
+                            <div class="profile-dropdown" id="profileDropdown">
+                                <a href="/profile" class="dropdown-item active">
+                                    <i class="fas fa-user-cog"></i> โปรไฟล์
+                                </a>
+                                <a href="#" class="dropdown-item" id="logoutBtn">
+                                    <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container profile-container">
+        <div class="profile-header">
+            <div class="profile-info">
+                <div class="profile-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="profile-details">
+                    <h2 id="profileNickname">ผู้ใช้งาน</h2>
+                    <p id="profileUsername">@username</p>
+                    <p class="profile-role" id="profileRole">สมาชิก</p>
+                </div>
+            </div>
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <i class="fas fa-bookmark"></i>
+                    <div class="stat-content">
+                        <span class="stat-number" id="followedCount">0</span>
+                        <span class="stat-label">โรงแรมที่ติดตาม</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-tabs">
+            <button class="tab-btn active" data-tab="followed">
+                <i class="fas fa-bookmark"></i> โรงแรมที่ติดตาม
+            </button>
+        </div>
+
+        <div class="profile-content">
+            <!-- Followed Hotels Tab -->
+            <div class="tab-content active" id="followedTab">
+                <div class="section-header">
+                    <h3><i class="fas fa-bookmark"></i> โรงแรมที่ติดตาม (<span id="followedCountText">0</span>)</h3>
+                </div>
+                
+                <div class="hotels-grid" id="followedHotelsGrid">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>กำลังโหลดข้อมูล...</p>
+                    </div>
+                </div>
+
+                <div class="empty-state" id="emptyFollowed" style="display: none;">
+                    <i class="fas fa-bookmark"></i>
+                    <h3>ยังไม่มีโรงแรมที่ติดตาม</h3>
+                    <p>คลิกปุ่ม <i class="fas fa-bookmark"></i> ที่การ์ดโรงแรมเพื่อติดตามโรงแรมที่คุณสนใจ</p>
+                    <a href="/" class="btn btn-primary">
+                        <i class="fas fa-search"></i> ค้นหาโรงแรม
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer id="mainFooter">
+        <div class="container">
+            <p id="footerText">&copy; 2025 Koh Larn Hotel Search. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Hotel Detail Modal -->
+    <div class="modal" id="hotelModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script src="js/profile.js"></script>
+</body>
+</html>

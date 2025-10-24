@@ -533,6 +533,11 @@ async function loadHotels() {
             
             // Filter hotels (will automatically hide inactive hotels)
             filterHotels();
+            
+            // Update follow buttons if user is logged in
+            if (currentUser) {
+                updateFollowButtons();
+            }
         } else {
             showError('ไม่สามารถโหลดข้อมูลโรงแรมได้');
         }
