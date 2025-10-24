@@ -1104,9 +1104,14 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Profile page (admin_v2.html without .html extension)
+// Profile page
 app.get('/profile', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin_v2.html'));
+  res.sendFile(path.join(__dirname, 'public', 'profile.html'));
+});
+
+// Follow page
+app.get('/follow', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'follow.html'));
 });
 
 // ===== Auth API for Public Users =====
