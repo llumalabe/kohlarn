@@ -932,22 +932,21 @@ header .subtitle {
 .follow-btn.following {
     color: #ffc107;
     position: relative;
-    overflow: hidden;
+    background: rgba(255, 193, 7, 0.1);
 }
 
-/* Pulse animation for following state */
+/* Glow animation for following state */
 .follow-btn.following::before {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 193, 7, 0.3);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 193, 7, 0.2);
     border-radius: 20px;
-    animation: pulse 2s ease-out infinite;
-    z-index: -1;
+    animation: glow 2s ease-in-out infinite;
+    z-index: 0;
 }
 
 .follow-btn.following i {
@@ -956,14 +955,25 @@ header .subtitle {
     z-index: 1;
 }
 
-@keyframes pulse {
-    0% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
+@keyframes glow {
+    0%, 100% {
+        opacity: 0.3;
+        box-shadow: 0 0 5px rgba(255, 193, 7, 0.3);
     }
-    100% {
-        transform: translate(-50%, -50%) scale(1.8);
-        opacity: 0;
+    50% {
+        opacity: 0.6;
+        box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+    }
+}
+
+@keyframes glow {
+    0%, 100% {
+        opacity: 0.3;
+        box-shadow: 0 0 5px rgba(255, 193, 7, 0.3);
+    }
+    50% {
+        opacity: 0.6;
+        box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
     }
 }
 
