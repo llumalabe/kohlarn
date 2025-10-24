@@ -1521,7 +1521,7 @@ async function loadFollowedHotels() {
     }
 
     try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('authToken');
         const response = await fetch('/api/followed-hotels', {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -1546,7 +1546,7 @@ async function toggleFollowHotel(hotelId, hotelName, buttonElement) {
     }
 
     const isFollowing = followedHotels.has(hotelId);
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
 
     try {
         if (isFollowing) {
