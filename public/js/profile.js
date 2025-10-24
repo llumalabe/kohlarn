@@ -9,10 +9,17 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
 });
 
+// Get username from URL query parameter
+function getUsernameFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('id');
+}
+
 // Check if user is logged in
 function checkUserLogin() {
     const savedToken = localStorage.getItem('authToken');
     const savedUser = localStorage.getItem('currentUser');
+    const urlUsername = getUsernameFromURL();
     
     if (!savedToken || !savedUser) {
         // Redirect to home page if not logged in
@@ -32,6 +39,14 @@ function checkUserLogin() {
     .then(data => {
         if (data.success) {
             currentUser = JSON.parse(savedUser);
+            
+            // Check if viewing own profile
+            if (urlUsername && urlUsername !== currentUser.username) {
+                // Redirect if trying to view other user's profile
+                window.location.href = `/profile?id=${currentUser.username}`;
+                return;
+            }
+            
             updateUserUI();
             loadFollowedHotels();
         } else {
@@ -53,6 +68,12 @@ function updateUserUI() {
     document.getElementById('userDisplayName').textContent = currentUser.nickname || currentUser.username;
     document.getElementById('profileNickname').textContent = currentUser.nickname || currentUser.username;
     document.getElementById('profileUsername').textContent = `@${currentUser.username}`;
+    
+    // Set profile link with username
+    const profileFollowLink = document.getElementById('profileFollowLink');
+    if (profileFollowLink) {
+        profileFollowLink.href = `/profile?id=${currentUser.username}`;
+    }
     
     // Display role
     const roleMap = {

@@ -1258,12 +1258,18 @@ function updateUserUI() {
     const loginBtn = document.getElementById('loginBtn');
     const userProfile = document.getElementById('userProfile');
     const userDisplayName = document.getElementById('userDisplayName');
+    const profileFollowLink = document.getElementById('profileFollowLink');
     
     if (currentUser) {
         // User is logged in
         loginBtn.style.display = 'none';
         userProfile.style.display = 'block';
         userDisplayName.textContent = currentUser.nickname || currentUser.username;
+        
+        // Set profile link with username as query parameter
+        if (profileFollowLink) {
+            profileFollowLink.href = `/profile?id=${currentUser.username}`;
+        }
     } else {
         // User is not logged in
         loginBtn.style.display = 'flex';

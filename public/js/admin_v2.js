@@ -300,7 +300,6 @@ function initDashboard() {
     loadHotels();
     loadLikesStats();
     loadActivityLog();
-    loadFollowedCount(); // Load followed hotels count for badge
     
     // Start auto-refresh for recent activities
     startAutoRefresh();
@@ -537,7 +536,6 @@ function navigateTo(page, event) {
         'websettings': '<i class="fas fa-palette"></i> แก้ไขหน้าเว็บไซต์',
         'activity': '<i class="fas fa-history"></i> ประวัติการแก้ไข',
         'likes': '<i class="fas fa-heart"></i> สถิติหัวใจ',
-        'followed': '<i class="fas fa-bookmark"></i> การติดตาม',
         'members': '<i class="fas fa-users"></i> ระบบสมาชิก'
     };
     const pageTitle = document.getElementById('pageTitle');
@@ -567,7 +565,6 @@ function navigateTo(page, event) {
         updatePeriodButtons('likes', 'day');
         loadLikesStats();
     }
-    if (page === 'followed') loadFollowedHotels();
     if (page === 'members') loadMembers();
     if (page === 'hotels') {
         loadHotels();
@@ -5511,144 +5508,4 @@ function swapImageSlots(slot1, slot2) {
     // Refresh previews
     previewImageUrl(input1.value, parseInt(slot1));
     previewImageUrl(input2.value, parseInt(slot2));
-}
-
-// ===== FOLLOWED HOTELS FUNCTIONS =====
-
-// Load followed count for sidebar badge
-async function loadFollowedCount() {
-    try {
-        const response = await authenticatedFetch('/api/follow-count');
-        const data = await response.json();
-        
-        if (data.success) {
-            const badge = document.getElementById('followedCount');
-            if (badge) {
-                badge.textContent = data.count;
-                badge.style.display = data.count > 0 ? 'inline-block' : 'none';
-            }
-        }
-    } catch (error) {
-        console.error('Error loading followed count:', error);
-    }
-}
-
-// Load followed hotels for current user
-async function loadFollowedHotels() {
-    const grid = document.getElementById('followedHotelsGrid');
-    const loading = document.getElementById('followedLoading');
-    const emptyState = document.getElementById('followedEmpty');
-    const countBadge = document.getElementById('followedCount');
-    const myCountText = document.getElementById('myFollowedCount');
-    
-    try {
-        // Show loading
-        loading.style.display = 'flex';
-        grid.style.display = 'none';
-        emptyState.style.display = 'none';
-        
-        // Load all hotels first
-        const hotelsResponse = await authenticatedFetch('/api/hotels');
-        const hotelsData = await hotelsResponse.json();
-        
-        // Handle both array and object responses
-        const allHotels = Array.isArray(hotelsData) ? hotelsData : (hotelsData.data || []);
-        
-        // Load followed hotels
-        const followedResponse = await authenticatedFetch('/api/followed-hotels');
-        const followedData = await followedResponse.json();
-        
-        if (followedData.success) {
-            const followedHotels = followedData.data;
-            const count = followedHotels.length;
-            
-            // Update counts
-            if (countBadge) countBadge.textContent = count;
-            if (myCountText) myCountText.textContent = count;
-            
-            loading.style.display = 'none';
-            
-            if (count === 0) {
-                // Show empty state
-                emptyState.style.display = 'flex';
-            } else {
-                // Show hotels grid
-                grid.style.display = 'grid';
-                displayFollowedHotels(followedHotels, allHotels);
-            }
-        }
-    } catch (error) {
-        console.error('Error loading followed hotels:', error);
-        loading.style.display = 'none';
-        grid.innerHTML = `
-            <div class="error-message">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>เกิดข้อผิดพลาดในการโหลดข้อมูล</p>
-            </div>
-        `;
-        grid.style.display = 'block';
-    }
-}
-
-// Display followed hotels in grid
-function displayFollowedHotels(followedHotels, allHotels) {
-    const grid = document.getElementById('followedHotelsGrid');
-    
-    const hotelCards = followedHotels.map(followed => {
-        const hotel = allHotels.find(h => h.id === followed.hotel_id);
-        if (!hotel) return '';
-        
-        const name = hotel.name_th || hotel.name || 'ไม่ระบุชื่อ';
-        const price = hotel.price ? `฿${parseInt(hotel.price).toLocaleString()}` : 'ไม่ระบุราคา';
-        const imageUrl = hotel.image_url || 'https://via.placeholder.com/400x300?text=No+Image';
-        const status = hotel.status === 'active' ? 'เปิด' : 'ปิด';
-        const statusClass = hotel.status === 'active' ? 'status-active' : 'status-inactive';
-        
-        return `
-            <div class="hotel-card">
-                <div class="hotel-image">
-                    <img src="${imageUrl}" alt="${name}" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
-                    <span class="hotel-status ${statusClass}">${status}</span>
-                </div>
-                <div class="hotel-info">
-                    <h3>${name}</h3>
-                    <p class="hotel-price">${price}/คืน</p>
-                    <div class="hotel-actions">
-                        <button class="btn btn-sm btn-primary" onclick="viewHotelDetails('${hotel.id}')">
-                            <i class="fas fa-eye"></i> ดูรายละเอียด
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="unfollowHotel('${hotel.id}', '${name}')">
-                            <i class="fas fa-bookmark"></i> เลิกติดตาม
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).filter(card => card !== '').join('');
-    
-    grid.innerHTML = hotelCards;
-}
-
-// Unfollow hotel
-async function unfollowHotel(hotelId, hotelName) {
-    if (!confirm(`ต้องการเลิกติดตาม "${hotelName}" หรือไม่?`)) {
-        return;
-    }
-    
-    try {
-        const response = await authenticatedFetch(`/api/unfollow-hotel/${hotelId}`, {
-            method: 'DELETE'
-        });
-        
-        if (response.ok) {
-            // Reload followed hotels
-            loadFollowedHotels();
-            loadFollowedCount(); // Update badge count
-        } else {
-            alert('เกิดข้อผิดพลาดในการเลิกติดตามโรงแรม');
-        }
-    } catch (error) {
-        console.error('Error unfollowing hotel:', error);
-        alert('เกิดข้อผิดพลาดในการเลิกติดตามโรงแรม');
-    }
 }
