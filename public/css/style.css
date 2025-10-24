@@ -898,7 +898,6 @@ header .subtitle {
     align-items: center;
     margin-top: 12px;
     padding-top: 10px;
-    border-top: 1px solid var(--light);
     flex-wrap: wrap;
     gap: 10px;
 }
