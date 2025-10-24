@@ -120,6 +120,13 @@ function getAuthHeaders() {
     return headers;
 }
 
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 async function authenticatedFetch(url, options = {}) {
     // รวม headers เดิมกับ auth headers
     const headers = {
@@ -3166,63 +3173,92 @@ function displayActivityLog(logs) {
             
             // Check if details contain "ก่อน:" and "หลัง:" for edit actions
             if (details.includes('ก่อน:') && details.includes('หลัง:')) {
-                // Split by newline or common separators
-                const lines = details.split(/\n|; |, /).filter(line => line.trim());
+                console.log('📊 Parsing before/after details:', details);
                 
-                let beforeData = {};
-                let afterData = {};
-                let currentSection = null;
-                
-                lines.forEach(line => {
-                    line = line.trim();
-                    if (line.startsWith('ก่อน:')) {
-                        currentSection = 'before';
-                        line = line.replace('ก่อน:', '').trim();
-                    } else if (line.startsWith('หลัง:')) {
-                        currentSection = 'after';
-                        line = line.replace('หลัง:', '').trim();
-                    }
+                // Split into before and after sections
+                const parts = details.split('หลัง:');
+                if (parts.length === 2) {
+                    const beforePart = parts[0].replace('ก่อน:', '').trim();
+                    const afterPart = parts[1].trim();
                     
-                    // Parse key-value pairs
-                    if (line && line.includes(':')) {
-                        const [key, ...valueParts] = line.split(':');
-                        const value = valueParts.join(':').trim();
-                        
-                        if (currentSection === 'before') {
-                            beforeData[key.trim()] = value;
-                        } else if (currentSection === 'after') {
-                            afterData[key.trim()] = value;
+                    console.log('📌 Before part:', beforePart);
+                    console.log('📌 After part:', afterPart);
+                    
+                    // Parse each section into key-value pairs
+                    const beforeData = {};
+                    const afterData = {};
+                    
+                    // Parse before section
+                    beforePart.split('\n').forEach(line => {
+                        line = line.trim();
+                        if (line && line.includes(':')) {
+                            const colonIndex = line.indexOf(':');
+                            const key = line.substring(0, colonIndex).trim();
+                            const value = line.substring(colonIndex + 1).trim();
+                            if (key) {
+                                beforeData[key] = value || '-';
+                            }
                         }
-                    }
-                });
-                
-                // Build comparison table
-                if (Object.keys(beforeData).length > 0 || Object.keys(afterData).length > 0) {
-                    detailsHtml += '<div class="activity-changes" style="margin-top: 10px; background: #f8f9fa; padding: 12px; border-radius: 8px;">';
-                    detailsHtml += '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
-                    detailsHtml += '<thead><tr style="background: #e9ecef;"><th style="padding: 8px; text-align: left; border: 1px solid #dee2e6; width: 30%;">ฟิลด์</th><th style="padding: 8px; text-align: left; border: 1px solid #dee2e6;">ก่อน</th><th style="padding: 8px; text-align: left; border: 1px solid #dee2e6;">หลัง</th></tr></thead>';
-                    detailsHtml += '<tbody>';
-                    
-                    // Combine all keys from both objects
-                    const allKeys = new Set([...Object.keys(beforeData), ...Object.keys(afterData)]);
-                    
-                    allKeys.forEach(key => {
-                        const beforeValue = beforeData[key] || '-';
-                        const afterValue = afterData[key] || '-';
-                        const isChanged = beforeValue !== afterValue;
-                        
-                        detailsHtml += `<tr style="${isChanged ? 'background: #fff3cd;' : ''}">`;
-                        detailsHtml += `<td style="padding: 8px; border: 1px solid #dee2e6; font-weight: 600;">${key}</td>`;
-                        detailsHtml += `<td style="padding: 8px; border: 1px solid #dee2e6; color: #e74c3c;">${beforeValue}</td>`;
-                        detailsHtml += `<td style="padding: 8px; border: 1px solid #dee2e6; color: #00d2a0; font-weight: 600;">${afterValue}</td>`;
-                        detailsHtml += '</tr>';
                     });
                     
-                    detailsHtml += '</tbody></table>';
-                    detailsHtml += '</div>';
+                    // Parse after section
+                    afterPart.split('\n').forEach(line => {
+                        line = line.trim();
+                        if (line && line.includes(':')) {
+                            const colonIndex = line.indexOf(':');
+                            const key = line.substring(0, colonIndex).trim();
+                            const value = line.substring(colonIndex + 1).trim();
+                            if (key) {
+                                afterData[key] = value || '-';
+                            }
+                        }
+                    });
+                    
+                    // Build comparison table
+                    const allKeys = new Set([...Object.keys(beforeData), ...Object.keys(afterData)]);
+                    
+                    console.log('🔑 All keys:', Array.from(allKeys));
+                    console.log('📋 Before data:', beforeData);
+                    console.log('📋 After data:', afterData);
+                    
+                    if (allKeys.size > 0) {
+                        console.log('✅ Building comparison table with', allKeys.size, 'fields');
+                        detailsHtml += '<div class="activity-changes" style="margin-top: 10px; background: #f8f9fa; padding: 12px; border-radius: 8px;">';
+                        detailsHtml += '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+                        detailsHtml += '<thead><tr style="background: #e9ecef;"><th style="padding: 8px; text-align: left; border: 1px solid #dee2e6; width: 30%;">ฟิลด์</th><th style="padding: 8px; text-align: left; border: 1px solid #dee2e6;">ก่อน</th><th style="padding: 8px; text-align: left; border: 1px solid #dee2e6;">หลัง</th></tr></thead>';
+                        detailsHtml += '<tbody>';
+                        
+                        allKeys.forEach(key => {
+                            const beforeValue = beforeData[key] || '-';
+                            const afterValue = afterData[key] || '-';
+                            const isChanged = beforeValue !== afterValue;
+                            
+                            detailsHtml += `<tr style="${isChanged ? 'background: #fff3cd;' : ''}">`;
+                            detailsHtml += `<td style="padding: 8px; border: 1px solid #dee2e6; font-weight: 600;">${escapeHtml(key)}</td>`;
+                            detailsHtml += `<td style="padding: 8px; border: 1px solid #dee2e6; color: #e74c3c;">${escapeHtml(beforeValue)}</td>`;
+                            detailsHtml += `<td style="padding: 8px; border: 1px solid #dee2e6; color: #00d2a0; font-weight: 600;">${escapeHtml(afterValue)}</td>`;
+                            detailsHtml += '</tr>';
+                        });
+                        
+                        detailsHtml += '</tbody></table>';
+                        detailsHtml += '</div>';
+                    } else {
+                        // Fallback to formatted text
+                        const formattedDetails = details
+                            .replace(/ก่อน:/g, '<strong style="color: #e74c3c;">ก่อน:</strong>')
+                            .replace(/หลัง:/g, '<strong style="color: #00d2a0;">หลัง:</strong>')
+                            .replace(/\n/g, '<br>');
+                        
+                        detailsHtml += `<div class="activity-details" style="margin-top: 8px; padding: 10px; background: #f8f9fa; border-radius: 6px; line-height: 1.6;">${formattedDetails}</div>`;
+                    }
                 } else {
-                    // Fallback to raw details
-                    detailsHtml += `<div class="activity-details" style="margin-top: 8px; padding: 10px; background: #f8f9fa; border-radius: 6px; white-space: pre-wrap;">${details}</div>`;
+                    // Fallback to formatted text
+                    const formattedDetails = details
+                        .replace(/ก่อน:/g, '<strong style="color: #e74c3c;">ก่อน:</strong>')
+                        .replace(/หลัง:/g, '<strong style="color: #00d2a0;">หลัง:</strong>')
+                        .replace(/\n/g, '<br>');
+                    
+                    detailsHtml += `<div class="activity-details" style="margin-top: 8px; padding: 10px; background: #f8f9fa; border-radius: 6px; line-height: 1.6;">${formattedDetails}</div>`;
                 }
             } else {
                 // For non-edit actions or simple details, display as-is with formatting
