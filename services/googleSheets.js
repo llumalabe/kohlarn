@@ -516,7 +516,7 @@ async function updateWebSettings(settings, modifiedBy = 'Admin') {
       second: '2-digit'
     });
 
-    // Get current settings to update only changed ones
+    // Get current settings to track changes
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${WEBSETTINGS_SHEET}!A2:D`,
@@ -524,18 +524,31 @@ async function updateWebSettings(settings, modifiedBy = 'Admin') {
 
     const rows = response.data.values || [];
     const updates = [];
+    const changedSettings = [];
 
-    // Update each setting
+    // Update each setting and track changes
     Object.keys(settings).forEach(key => {
       const rowIndex = rows.findIndex(row => row[0] === key);
       
       if (rowIndex !== -1) {
-        // Update existing row
-        const actualRow = rowIndex + 2; // +2 because header is row 1 and array is 0-indexed
-        updates.push({
-          range: `${WEBSETTINGS_SHEET}!B${actualRow}:D${actualRow}`,
-          values: [[settings[key], timestamp, modifiedBy]]
-        });
+        const oldValue = rows[rowIndex][1] || '';
+        const newValue = settings[key];
+        
+        // Only update if value changed
+        if (oldValue !== newValue) {
+          const actualRow = rowIndex + 2; // +2 because header is row 1 and array is 0-indexed
+          updates.push({
+            range: `${WEBSETTINGS_SHEET}!B${actualRow}:D${actualRow}`,
+            values: [[newValue, timestamp, modifiedBy]]
+          });
+          
+          // Track change for activity log
+          changedSettings.push({
+            field: key,
+            oldValue: oldValue,
+            newValue: newValue
+          });
+        }
       }
     });
 
@@ -546,6 +559,22 @@ async function updateWebSettings(settings, modifiedBy = 'Admin') {
           valueInputOption: 'RAW',
           data: updates
         }
+      });
+      
+      // Log activity with proper before/after format
+      const beforeLines = changedSettings.map(change => `${change.field}: ${change.oldValue}`).join('\n');
+      const afterLines = changedSettings.map(change => `${change.field}: ${change.newValue}`).join('\n');
+      
+      const details = `ก่อน:\n${beforeLines}\nหลัง:\n${afterLines}`;
+      
+      await logActivity({
+        username: 'admin',
+        nickname: modifiedBy,
+        action: 'แก้ไขการตั้งค่าเว็บไซต์',
+        type: 'system',
+        details: details,
+        hotelName: '',
+        timestamp: new Date().toISOString()
       });
     }
 

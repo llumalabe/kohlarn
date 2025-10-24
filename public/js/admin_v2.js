@@ -2183,8 +2183,12 @@ async function deleteCloudinaryImage(publicId, hotelId) {
 
     try {
         showSuccess('กำลังลบรูปภาพ...');
+        
+        // Get hotel name for logging
+        const hotelNameInput = document.getElementById('nameTh');
+        const hotelName = hotelNameInput ? hotelNameInput.value : '';
 
-        const response = await fetchWithAuth(`/api/cloudinary/image/${encodeURIComponent(publicId)}`, {
+        const response = await fetchWithAuth(`/api/cloudinary/image/${encodeURIComponent(publicId)}?hotelId=${encodeURIComponent(hotelId)}&hotelName=${encodeURIComponent(hotelName)}`, {
             method: 'DELETE'
         });
 

@@ -237,6 +237,8 @@ app.get('/api/cloudinary/images/:hotelId', verifyToken, async (req, res) => {
 app.delete('/api/cloudinary/image/:publicId(*)', verifyToken, async (req, res) => {
   try {
     const publicId = req.params.publicId;
+    const hotelId = req.query.hotelId || '';
+    const hotelName = req.query.hotelName || '';
     
     if (!cloudinaryService.isConfigured()) {
       return res.status(503).json({
@@ -246,6 +248,17 @@ app.delete('/api/cloudinary/image/:publicId(*)', verifyToken, async (req, res) =
     }
 
     const result = await cloudinaryService.deleteImage(publicId);
+    
+    // Log activity
+    await googleSheetsService.logActivity({
+      username: req.user.username || 'unknown',
+      nickname: req.user.nickname || 'Unknown User',
+      action: 'ลบรูปภาพจาก Cloudinary',
+      type: 'hotel',
+      details: `ลบรูปภาพ: ${publicId}`,
+      hotelName: hotelName,
+      timestamp: new Date().toISOString()
+    });
     
     res.json({
       success: true,
