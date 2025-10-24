@@ -177,6 +177,7 @@ header .subtitle {
     text-decoration: none;
     transition: all 0.2s;
     border-bottom: 1px solid #f0f0f0;
+    position: relative;
 }
 
 .dropdown-item:last-child {
@@ -191,6 +192,22 @@ header .subtitle {
 .dropdown-item i {
     width: 20px;
     text-align: center;
+}
+
+.follow-count-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: auto;
+    min-width: 20px;
+    text-align: center;
+}
+
+.follow-count-badge:empty {
+    display: none;
 }
 
 /* Login Modal */

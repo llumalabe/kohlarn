@@ -1532,6 +1532,7 @@ async function loadFollowedHotels() {
             const data = await response.json();
             followedHotels = new Set(data.data.map(h => h.hotel_id));
             updateFollowButtons();
+            updateFollowCountBadge(); // Update badge count
         }
     } catch (error) {
         console.error('Error loading followed hotels:', error);
@@ -1562,6 +1563,7 @@ async function toggleFollowHotel(hotelId, hotelName, buttonElement) {
                 followedHotels.delete(hotelId);
                 buttonElement.classList.remove('following');
                 buttonElement.title = 'ติดตามโรงแรม';
+                updateFollowCountBadge(); // Update badge count
             }
         } else {
             // Follow
@@ -1578,6 +1580,7 @@ async function toggleFollowHotel(hotelId, hotelName, buttonElement) {
                 followedHotels.add(hotelId);
                 buttonElement.classList.add('following');
                 buttonElement.title = 'เลิกติดตามโรงแรม';
+                updateFollowCountBadge(); // Update badge count
             }
         }
     } catch (error) {
@@ -1600,3 +1603,12 @@ function updateFollowButtons() {
     });
 }
 
+// Update follow count badge in menu
+function updateFollowCountBadge() {
+    const badge = document.getElementById('followCountBadge');
+    if (badge) {
+        const count = followedHotels.size;
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline-block' : 'none';
+    }
+}
