@@ -1559,15 +1559,19 @@ async function toggleFollowHotel(hotelId, hotelName, buttonElement) {
     const isFollowing = followedHotels.has(hotelId);
     const token = localStorage.getItem('authToken');
     
-    // Show confirmation dialog
-    let confirmMessage;
+    // Show beautiful confirmation popup
+    let title, message;
     if (isFollowing) {
-        confirmMessage = `ต้องการเลิกติดตาม "${hotelName}" หรือไม่?`;
+        title = 'ยืนยันการเลิกติดตาม';
+        message = `ต้องการเลิกติดตาม "${hotelName}" หรือไม่?`;
     } else {
-        confirmMessage = `ต้องการติดตาม "${hotelName}" หรือไม่?\n\nคุณสามารถดูรายการโรงแรมที่ติดตามได้ที่เมนู "การติดตาม"`;
+        title = 'ยืนยันการติดตาม';
+        message = `ต้องการติดตาม "${hotelName}" หรือไม่?\n\nคุณสามารถดูรายการโรงแรมที่ติดตามได้ที่เมนู "การติดตาม"`;
     }
     
-    if (!confirm(confirmMessage)) {
+    const confirmed = await showFollowPopup(title, message, isFollowing);
+    
+    if (!confirmed) {
         return; // User cancelled
     }
 
@@ -1667,4 +1671,71 @@ function showFollowMessage(message, type = 'success') {
         msgDiv.classList.remove('show');
         setTimeout(() => msgDiv.remove(), 300);
     }, 3000);
+}
+
+// Show beautiful confirmation popup
+function showFollowPopup(title, message, isUnfollow = false) {
+    return new Promise((resolve) => {
+        const popup = document.getElementById('followPopup');
+        const popupTitle = document.getElementById('popupTitle');
+        const popupMessage = document.getElementById('popupMessage');
+        const confirmBtn = document.getElementById('popupConfirmBtn');
+        const cancelBtn = document.getElementById('popupCancelBtn');
+        
+        // Set content
+        popupTitle.textContent = title;
+        popupMessage.innerHTML = message.replace(/\n/g, '<br>');
+        
+        // Add/remove unfollow class for different styling
+        if (isUnfollow) {
+            popup.classList.add('unfollow');
+        } else {
+            popup.classList.remove('unfollow');
+        }
+        
+        // Show popup
+        popup.classList.add('show');
+        
+        // Handle confirm
+        const handleConfirm = () => {
+            popup.classList.remove('show');
+            cleanup();
+            resolve(true);
+        };
+        
+        // Handle cancel
+        const handleCancel = () => {
+            popup.classList.remove('show');
+            cleanup();
+            resolve(false);
+        };
+        
+        // Handle overlay click
+        const handleOverlayClick = (e) => {
+            if (e.target === popup) {
+                handleCancel();
+            }
+        };
+        
+        // Handle Escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                handleCancel();
+            }
+        };
+        
+        // Cleanup function
+        const cleanup = () => {
+            confirmBtn.removeEventListener('click', handleConfirm);
+            cancelBtn.removeEventListener('click', handleCancel);
+            popup.removeEventListener('click', handleOverlayClick);
+            document.removeEventListener('keydown', handleEscape);
+        };
+        
+        // Add event listeners
+        confirmBtn.addEventListener('click', handleConfirm);
+        cancelBtn.addEventListener('click', handleCancel);
+        popup.addEventListener('click', handleOverlayClick);
+        document.addEventListener('keydown', handleEscape);
+    });
 }

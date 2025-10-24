@@ -1032,6 +1032,195 @@ header .subtitle {
     margin-right: 3px;
 }
 
+/* Follow Confirmation Popup */
+.popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    z-index: 10001;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.popup-overlay.show {
+    display: flex;
+}
+
+.popup-container {
+    background: white;
+    border-radius: 20px;
+    padding: 40px 35px;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transform: scale(0.7);
+    opacity: 0;
+    animation: popupSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    text-align: center;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes popupSlideIn {
+    0% {
+        transform: scale(0.7) translateY(-20px);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+.popup-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 25px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    animation: iconBounce 0.6s ease;
+}
+
+@keyframes iconBounce {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.popup-icon i {
+    font-size: 2.5rem;
+    color: white;
+}
+
+.popup-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3436;
+    margin-bottom: 15px;
+}
+
+.popup-message {
+    font-size: 1rem;
+    color: #636e72;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    white-space: pre-line;
+}
+
+.popup-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    animation: buttonsSlideUp 0.5s ease 0.2s backwards;
+}
+
+@keyframes buttonsSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.popup-btn {
+    flex: 1;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.popup-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.popup-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.popup-btn i,
+.popup-btn span {
+    position: relative;
+    z-index: 1;
+}
+
+.popup-btn-cancel {
+    background: #f1f3f5;
+    color: #495057;
+}
+
+.popup-btn-cancel:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.popup-btn-confirm {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.popup-btn-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.popup-btn-confirm:active,
+.popup-btn-cancel:active {
+    transform: translateY(0);
+}
+
+/* Unfollow popup variant */
+.popup-overlay.unfollow .popup-icon {
+    background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+}
+
+.popup-overlay.unfollow .popup-btn-confirm {
+    background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+}
+
 /* Like Success Message */
 .like-success {
     position: fixed;
@@ -1924,4 +2113,41 @@ footer p {
     height: 100%;
     object-fit: cover;
 }
+
+/* Responsive Popup */
+@media (max-width: 768px) {
+    .popup-container {
+        padding: 30px 25px;
+        max-width: 90%;
+    }
+    
+    .popup-icon {
+        width: 70px;
+        height: 70px;
+        margin-bottom: 20px;
+    }
+    
+    .popup-icon i {
+        font-size: 2rem;
+    }
+    
+    .popup-title {
+        font-size: 1.3rem;
+    }
+    
+    .popup-message {
+        font-size: 0.95rem;
+        margin-bottom: 25px;
+    }
+    
+    .popup-buttons {
+        flex-direction: column;
+    }
+    
+    .popup-btn {
+        width: 100%;
+        padding: 12px 20px;
+    }
+}
+
 
