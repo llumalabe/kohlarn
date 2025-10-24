@@ -1021,6 +1021,15 @@ header .subtitle {
     font-size: 1.2rem;
 }
 
+.follow-message.error {
+    border-left-color: #d63031;
+}
+
+.follow-message.error i {
+    color: #d63031;
+    font-size: 1.2rem;
+}
+
 .hotel-id {
     font-size: 0.8rem;
     color: #636e72;

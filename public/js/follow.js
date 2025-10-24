@@ -305,6 +305,20 @@ function createHotelCard(hotel, isFollowed = false) {
 // Unfollow hotel from profile page
 async function unfollowHotel(hotelId, buttonElement) {
     const token = localStorage.getItem('authToken');
+    
+    // Get hotel name
+    const hotelName = buttonElement?.dataset.hotelName || 'โรงแรมนี้';
+    
+    // Show beautiful confirmation popup
+    const confirmed = await showFollowPopup(
+        'ยืนยันการเลิกติดตาม',
+        `ต้องการเลิกติดตาม "${hotelName}" หรือไม่?`,
+        true
+    );
+    
+    if (!confirmed) {
+        return; // User cancelled
+    }
 
     try {
         const response = await fetch(`/api/unfollow-hotel/${hotelId}`, {
@@ -315,6 +329,9 @@ async function unfollowHotel(hotelId, buttonElement) {
         });
 
         if (response.ok) {
+            // Show success message
+            showFollowMessage('เลิกติดตามโรงแรมเรียบร้อยแล้ว', 'info');
+            
             // Remove hotel from list
             followedHotels = followedHotels.filter(h => h.hotel_id !== hotelId);
             
@@ -334,11 +351,11 @@ async function unfollowHotel(hotelId, buttonElement) {
                 displayFollowedHotels();
             }
         } else {
-            alert('เกิดข้อผิดพลาดในการเลิกติดตามโรงแรม');
+            showFollowMessage('เกิดข้อผิดพลาดในการเลิกติดตามโรงแรม', 'error');
         }
     } catch (error) {
         console.error('Error unfollowing hotel:', error);
-        alert('เกิดข้อผิดพลาดในการเลิกติดตามโรงแรม');
+        showFollowMessage('เกิดข้อผิดพลาดในการเลิกติดตามโรงแรม', 'error');
     }
 }
 
@@ -349,6 +366,101 @@ function updateFollowCountBadge(count) {
         badge.textContent = count;
         badge.style.display = count > 0 ? 'inline-block' : 'none';
     }
+}
+
+// Show follow success/info message
+function showFollowMessage(message, type = 'success') {
+    // Remove existing message if any
+    const existingMsg = document.querySelector('.follow-message');
+    if (existingMsg) {
+        existingMsg.remove();
+    }
+    
+    // Create message element
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `follow-message ${type}`;
+    msgDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(msgDiv);
+    
+    // Trigger animation
+    setTimeout(() => msgDiv.classList.add('show'), 10);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        msgDiv.classList.remove('show');
+        setTimeout(() => msgDiv.remove(), 300);
+    }, 3000);
+}
+
+// Show beautiful confirmation popup
+function showFollowPopup(title, message, isUnfollow = false) {
+    return new Promise((resolve) => {
+        const popup = document.getElementById('followPopup');
+        const popupTitle = document.getElementById('popupTitle');
+        const popupMessage = document.getElementById('popupMessage');
+        const confirmBtn = document.getElementById('popupConfirmBtn');
+        const cancelBtn = document.getElementById('popupCancelBtn');
+        
+        // Set content
+        popupTitle.textContent = title;
+        popupMessage.innerHTML = message.replace(/\n/g, '<br>');
+        
+        // Add/remove unfollow class for different styling
+        if (isUnfollow) {
+            popup.classList.add('unfollow');
+        } else {
+            popup.classList.remove('unfollow');
+        }
+        
+        // Show popup
+        popup.classList.add('show');
+        
+        // Handle confirm
+        const handleConfirm = () => {
+            popup.classList.remove('show');
+            cleanup();
+            resolve(true);
+        };
+        
+        // Handle cancel
+        const handleCancel = () => {
+            popup.classList.remove('show');
+            cleanup();
+            resolve(false);
+        };
+        
+        // Handle overlay click
+        const handleOverlayClick = (e) => {
+            if (e.target === popup) {
+                handleCancel();
+            }
+        };
+        
+        // Handle Escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                handleCancel();
+            }
+        };
+        
+        // Cleanup function
+        const cleanup = () => {
+            confirmBtn.removeEventListener('click', handleConfirm);
+            cancelBtn.removeEventListener('click', handleCancel);
+            popup.removeEventListener('click', handleOverlayClick);
+            document.removeEventListener('keydown', handleEscape);
+        };
+        
+        // Add event listeners
+        confirmBtn.addEventListener('click', handleConfirm);
+        cancelBtn.addEventListener('click', handleCancel);
+        popup.addEventListener('click', handleOverlayClick);
+        document.addEventListener('keydown', handleEscape);
+    });
 }
 
 // Show hotel modal (simplified version)
