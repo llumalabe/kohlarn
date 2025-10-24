@@ -550,7 +550,12 @@ function applyRolePermissions() {
 }
 
 // Logout function
-function logout() {
+async function logout() {
+    const confirmed = await showConfirmPopup('ยืนยันการออกจากระบบ', 'คุณต้องการออกจากระบบหรือไม่?');
+    if (!confirmed) {
+        return;
+    }
+    
     clearInterval(statsInterval);
     
     // Clear session from localStorage
@@ -558,6 +563,10 @@ function logout() {
     
     currentUser = { username: '', password: '', nickname: '' };
     isTemporaryPassword = false;
+    
+    // Show success message before redirect
+    await showSuccessPopup('ออกจากระบบสำเร็จ', 'ออกจากระบบเรียบร้อยแล้ว');
+    
     // Redirect ไปหน้าหลัก
     window.location.href = '/';
 }
