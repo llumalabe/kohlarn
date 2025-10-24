@@ -312,7 +312,14 @@ async function loadFollowedHotels() {
             </div>
         `;
 
-        // Load all hotels first
+        // Load all required data in parallel
+        await Promise.all([
+            loadFiltersData(),
+            loadRoomTypesData(),
+            loadAccommodationTypesData()
+        ]);
+
+        // Load all hotels
         const hotelsResponse = await fetch('/api/hotels');
         const hotelsData = await hotelsResponse.json();
         
