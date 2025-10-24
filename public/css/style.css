@@ -820,14 +820,6 @@ header .subtitle {
     font-weight: 500;
 }
 
-.hotel-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid var(--light);
-    padding-top: 12px;
-}
-
 .like-btn {
     background: none;
     border: none;
