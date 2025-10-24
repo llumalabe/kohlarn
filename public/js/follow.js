@@ -5,12 +5,133 @@ let followedHotels = [];
 let allFilters = []; // For filter data
 let allRoomTypes = []; // For room type data
 let allAccommodationTypes = []; // For accommodation type data
+let webSettings = {}; // Web settings from Google Sheets
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadWebSettings(); // Load settings first
     checkUserLogin();
     setupEventListeners();
 });
+
+// Load web settings from server
+async function loadWebSettings() {
+    try {
+        const response = await fetch('/api/websettings');
+        webSettings = await response.json();
+        console.log('Web settings loaded:', webSettings);
+        
+        // Apply settings to the page
+        applyWebSettings();
+    } catch (error) {
+        console.error('Error loading web settings:', error);
+        webSettings = {
+            site_name_th: 'ค้นหาโรงแรมเกาะล้าน',
+            site_name_en: 'Koh Larn Hotel Search',
+            favicon_emoji: '🏝️',
+            footer_text: '2025 Koh Larn Hotel Search',
+            footer_text_color: '#ffffff'
+        };
+        applyWebSettings();
+    }
+}
+
+// Apply web settings to page elements
+function applyWebSettings() {
+    // Site names
+    const headerIcon = document.getElementById('headerIcon');
+    const headerTitle = document.getElementById('headerTitle');
+    const headerSubtitle = document.querySelector('header .subtitle');
+    
+    // Update header icon
+    if (headerIcon && webSettings.favicon_emoji) {
+        headerIcon.textContent = webSettings.favicon_emoji;
+    }
+    
+    // Update header text
+    if (headerTitle && webSettings.site_name_th) {
+        headerTitle.textContent = webSettings.site_name_th;
+    }
+    
+    if (headerSubtitle && webSettings.site_name_en) {
+        headerSubtitle.textContent = webSettings.site_name_en;
+    }
+    
+    // Update page title
+    if (webSettings.site_name_th) {
+        document.title = `${webSettings.site_name_th} - ${webSettings.site_name_en}`;
+    }
+    
+    // Apply colors via CSS custom properties
+    const root = document.documentElement;
+    
+    if (webSettings.site_name_th_color) {
+        root.style.setProperty('--site-name-th-color', webSettings.site_name_th_color);
+    }
+    
+    if (webSettings.site_name_en_color) {
+        root.style.setProperty('--site-name-en-color', webSettings.site_name_en_color);
+    }
+    
+    if (webSettings.header_bg_color) {
+        root.style.setProperty('--header-bg-color', webSettings.header_bg_color);
+    }
+    
+    if (webSettings.body_bg_gradient_start && webSettings.body_bg_gradient_end) {
+        root.style.setProperty('--body-bg-gradient-start', webSettings.body_bg_gradient_start);
+        root.style.setProperty('--body-bg-gradient-end', webSettings.body_bg_gradient_end);
+    }
+    
+    if (webSettings.filter_button_bg_start && webSettings.filter_button_bg_end) {
+        root.style.setProperty('--filter-btn-bg-start', webSettings.filter_button_bg_start);
+        root.style.setProperty('--filter-btn-bg-end', webSettings.filter_button_bg_end);
+    }
+    
+    if (webSettings.card_hotel_name_color) {
+        root.style.setProperty('--card-hotel-name-color', webSettings.card_hotel_name_color);
+    }
+    
+    if (webSettings.card_price_color) {
+        root.style.setProperty('--card-price-color', webSettings.card_price_color);
+    }
+    
+    // Update footer
+    const footerElement = document.getElementById('mainFooter');
+    const footerText = document.getElementById('footerText');
+    
+    if (footerText && webSettings.footer_text) {
+        footerText.textContent = webSettings.footer_text;
+    }
+    
+    if (footerElement) {
+        if (webSettings.footer_text_color) {
+            footerElement.style.color = webSettings.footer_text_color;
+        }
+        footerElement.style.background = 'transparent';
+    }
+    
+    // Update favicon
+    updateFavicon();
+}
+
+// Update favicon dynamically
+function updateFavicon() {
+    const faviconType = webSettings.favicon_type || 'emoji';
+    const faviconLink = document.getElementById('favicon');
+    
+    if (!faviconLink) return;
+    
+    if (faviconType === 'emoji') {
+        const emoji = webSettings.favicon_emoji || '🏝️';
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">${emoji}</text></svg>`;
+        const blob = new Blob([svg], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        faviconLink.href = url;
+    } else if (faviconType === 'image' && webSettings.favicon_url) {
+        faviconLink.href = webSettings.favicon_url;
+        faviconLink.type = 'image/png';
+    }
+}
 
 // Get username from URL query parameter
 function getUsernameFromURL() {
