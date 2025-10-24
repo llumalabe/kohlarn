@@ -213,7 +213,6 @@ async function loadFollowedHotels() {
             // Update count
             const count = followedHotels.length;
             document.getElementById('followedCount').textContent = count;
-            document.getElementById('followedCountText').textContent = count;
 
             if (count === 0) {
                 // Show empty state
@@ -409,7 +408,6 @@ async function unfollowHotel(hotelId, buttonElement) {
             // Update count
             const count = followedHotels.length;
             document.getElementById('followedCount').textContent = count;
-            document.getElementById('followedCountText').textContent = count;
             
             // Update badge count in menu (if exists)
             updateFollowCountBadge(count);
