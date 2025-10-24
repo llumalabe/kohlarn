@@ -651,6 +651,58 @@
                             </div>
                         </div>
 
+                        <!-- Footer Settings -->
+                        <div class="settings-section">
+                            <h3><i class="fas fa-shoe-prints"></i> Footer (ข้อความท้ายเว็บ)</h3>
+                            <div class="settings-grid">
+                                <div class="form-group" style="grid-column: 1 / -1;">
+                                    <label for="footerText">
+                                        <i class="fas fa-copyright"></i> ข้อความ Footer
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="footerText" 
+                                        placeholder="2025 Koh Larn Hotel Search"
+                                        oninput="previewChanges()">
+                                    <small style="color: #999; display: block; margin-top: 5px;">
+                                        ข้อความที่แสดงที่ท้ายหน้าเว็บหลัก เช่น "2025 ค้นหาที่พักเกาะล้าน" หรือ "© 2025 Your Company"
+                                    </small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="footerTextColor">
+                                        <i class="fas fa-palette"></i> สีข้อความ Footer
+                                    </label>
+                                    <div class="color-input-wrapper">
+                                        <input 
+                                            type="color" 
+                                            id="footerTextColor" 
+                                            oninput="previewChanges()">
+                                        <input 
+                                            type="text" 
+                                            id="footerTextColorText" 
+                                            placeholder="#ffffff"
+                                            oninput="syncColorPicker('footerTextColor', this.value); previewChanges()">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="footerBgColor">
+                                        <i class="fas fa-fill"></i> สีพื้นหลัง Footer
+                                    </label>
+                                    <div class="color-input-wrapper">
+                                        <input 
+                                            type="color" 
+                                            id="footerBgColor" 
+                                            oninput="previewChanges()">
+                                        <input 
+                                            type="text" 
+                                            id="footerBgColorText" 
+                                            placeholder="#2d3436"
+                                            oninput="syncColorPicker('footerBgColor', this.value); previewChanges()">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Favicon Settings -->
                         <div class="settings-section">
                             <h3><i class="fas fa-icons"></i> ไอคอนเว็บไซต์ (Favicon)</h3>
@@ -711,6 +763,11 @@
                                                 <span class="preview-feature-tag"><i class="fas fa-utensils"></i> ร้านอาหาร</span>
                                             </div>
                                         </div>
+                                    </div>
+                                    
+                                    <!-- Preview Footer -->
+                                    <div class="preview-footer" id="previewFooter">
+                                        <p id="previewFooterText">2025 Koh Larn Hotel Search</p>
                                     </div>
                                 </div>
                             </div>

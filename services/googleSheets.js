@@ -490,7 +490,10 @@ async function getWebSettings() {
       card_price_color: '#0066cc',
       favicon_type: 'emoji',
       favicon_emoji: '🏝️',
-      favicon_url: ''
+      favicon_url: '',
+      footer_text: '2025 Koh Larn Hotel Search',
+      footer_text_color: '#ffffff',
+      footer_bg_color: '#2d3436'
     };
   }
 }

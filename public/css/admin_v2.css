@@ -3958,6 +3958,21 @@ tr:hover {
     font-size: 24px;
 }
 
+/* ===== Footer Preview Styles ===== */
+.preview-footer {
+    margin-top: 15px;
+    padding: 15px;
+    background: #2d3436;
+    color: #ffffff;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.preview-footer p {
+    margin: 0;
+}
+
 /* Hide add hotel button for hotel_owner - Set by JavaScript based on role */
 body.role-hotel_owner #addHotelBtn,
 /* Hide add hotel buttons for hotel-owner and user roles */

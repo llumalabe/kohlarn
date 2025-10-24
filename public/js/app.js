@@ -62,7 +62,10 @@ async function loadWebSettings() {
             filter_button_bg_start: '#667eea',
             filter_button_bg_end: '#764ba2',
             card_hotel_name_color: '#2d3436',
-            card_price_color: '#0066cc'
+            card_price_color: '#0066cc',
+            footer_text: '2025 Koh Larn Hotel Search',
+            footer_text_color: '#ffffff',
+            footer_bg_color: '#2d3436'
         };
     }
 }
@@ -125,6 +128,23 @@ function applyWebSettings() {
     
     if (webSettings.card_price_color) {
         root.style.setProperty('--card-price-color', webSettings.card_price_color);
+    }
+    
+    // Update footer
+    const footerElement = document.getElementById('mainFooter');
+    const footerText = document.getElementById('footerText');
+    
+    if (footerText && webSettings.footer_text) {
+        footerText.textContent = webSettings.footer_text;
+    }
+    
+    if (footerElement) {
+        if (webSettings.footer_text_color) {
+            footerElement.style.color = webSettings.footer_text_color;
+        }
+        if (webSettings.footer_bg_color) {
+            footerElement.style.backgroundColor = webSettings.footer_bg_color;
+        }
     }
     
     // Update favicon
