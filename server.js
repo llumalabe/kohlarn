@@ -1104,9 +1104,9 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Profile page
+// Profile page - Admin panel
 app.get('/profile', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'profile.html'));
+  res.sendFile(path.join(__dirname, 'public', 'admin_v2.html'));
 });
 
 // Follow page
