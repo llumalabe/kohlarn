@@ -2167,7 +2167,8 @@ function assignImageToSlot(imageUrl, slotNumber) {
 
 // Delete image from Cloudinary
 async function deleteCloudinaryImage(publicId, hotelId) {
-    if (!confirm('คุณต้องการลบรูปภาพนี้ออกจากระบบหรือไม่?\nการลบจะไม่สามารถย้อนกลับได้')) {
+    const confirmed = await showConfirmPopup('ยืนยันการลบรูปภาพ', 'คุณต้องการลบรูปภาพนี้ออกจากระบบหรือไม่?\nการลบจะไม่สามารถย้อนกลับได้');
+    if (!confirmed) {
         return;
     }
 
@@ -2181,7 +2182,7 @@ async function deleteCloudinaryImage(publicId, hotelId) {
         const data = await response.json();
 
         if (data.success) {
-            showSuccess('✓ ลบรูปภาพสำเร็จ');
+            await showSuccessPopup('ลบรูปภาพสำเร็จ', 'ลบรูปภาพออกจากระบบเรียบร้อยแล้ว');
             
             // Reload gallery
             await loadCloudinaryImages(hotelId);
@@ -2426,8 +2427,9 @@ function previewImageUrl(url, imageNumber = 1) {
 }
 
 // Remove image from slot
-function removeImageFromSlot(slotNumber) {
-    if (!confirm('ต้องการลบรูปภาพจากตำแหน่งนี้หรือไม่?')) {
+async function removeImageFromSlot(slotNumber) {
+    const confirmed = await showConfirmPopup('ยืนยันการลบ', 'ต้องการลบรูปภาพจากตำแหน่งนี้หรือไม่?');
+    if (!confirmed) {
         return;
     }
     
@@ -2441,7 +2443,7 @@ function removeImageFromSlot(slotNumber) {
         // Update selected images display
         updateSelectedImagesDisplay();
         
-        showSuccess(`✓ ลบรูปออกจากตำแหน่งที่ ${slotNumber} แล้ว`);
+        await showSuccessPopup('ลบรูปสำเร็จ', `ลบรูปออกจากตำแหน่งที่ ${slotNumber} แล้ว`);
     }
 }
 
@@ -2713,7 +2715,8 @@ function editHotel(hotelId) {
 
 // Delete hotel
 async function deleteHotel(hotelId, hotelName) {
-    if (!confirm(`ต้องการลบโรงแรม "${hotelName}" หรือไม่?`)) {
+    const confirmed = await showConfirmPopup('ยืนยันการลบโรงแรม', `ต้องการลบโรงแรม "${hotelName}" หรือไม่?`);
+    if (!confirmed) {
         return;
     }
     
@@ -2746,7 +2749,8 @@ async function toggleHotelStatus(hotelId, hotelName, currentStatus) {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
     const actionText = newStatus === 'active' ? 'เปิด' : 'ปิด';
     
-    if (!confirm(`ต้องการ${actionText}โรงแรม "${hotelName}" หรือไม่?`)) {
+    const confirmed = await showConfirmPopup(`ยืนยันการ${actionText}โรงแรม`, `ต้องการ${actionText}โรงแรม "${hotelName}" หรือไม่?`);
+    if (!confirmed) {
         return;
     }
     
@@ -2761,7 +2765,7 @@ async function toggleHotelStatus(hotelId, hotelName, currentStatus) {
         const data = await response.json();
         
         if (data.success) {
-            showSuccess(`${actionText}โรงแรมสำเร็จ`);
+            await showSuccessPopup(`${actionText}โรงแรมสำเร็จ`, `${actionText}โรงแรม "${hotelName}" เรียบร้อยแล้ว`);
             loadHotels(); // Reload to show updated status
         } else {
             showError(data.error || 'เกิดข้อผิดพลาด');
@@ -3541,8 +3545,9 @@ async function saveFilter(event) {
 }
 
 // Delete filter with confirmation
-function deleteFilterConfirm(filterId, filterName) {
-    if (confirm(`ต้องการลบ "${filterName}" ใช่หรือไม่?`)) {
+async function deleteFilterConfirm(filterId, filterName) {
+    const confirmed = await showConfirmPopup('ยืนยันการลบ', `ต้องการลบสิ่งอำนวยความสะดวก "${filterName}" ใช่หรือไม่?`);
+    if (confirmed) {
         deleteFilter(filterId, filterName);
     }
 }
@@ -4077,8 +4082,9 @@ async function saveRoomType(event) {
 }
 
 // Delete room type with confirmation
-function deleteRoomTypeConfirm(roomTypeId, roomTypeName) {
-    if (confirm(`ต้องการลบ "${roomTypeName}" ใช่หรือไม่?`)) {
+async function deleteRoomTypeConfirm(roomTypeId, roomTypeName) {
+    const confirmed = await showConfirmPopup('ยืนยันการลบ', `ต้องการลบประเภทห้องพัก "${roomTypeName}" ใช่หรือไม่?`);
+    if (confirmed) {
         deleteRoomType(roomTypeId, roomTypeName);
     }
 }
@@ -4338,7 +4344,8 @@ async function saveAccommodationType(event) {
 
 // Delete accommodation type
 async function deleteAccommodationType(typeId, typeName) {
-    if (!confirm(`คุณแน่ใจหรือไม่ที่จะลบประเภทที่พัก "${typeName}"?`)) {
+    const confirmed = await showConfirmPopup('ยืนยันการลบ', `คุณแน่ใจหรือไม่ที่จะลบประเภทที่พัก "${typeName}"?`);
+    if (!confirmed) {
         return;
     }
     
@@ -5278,7 +5285,8 @@ async function saveMember(event) {
 
 // Delete member
 async function deleteMember(memberId, memberName) {
-    if (!confirm(`ต้องการลบสมาชิก "${memberName}" หรือไม่?`)) {
+    const confirmed = await showConfirmPopup('ยืนยันการลบสมาชิก', `ต้องการลบสมาชิก "${memberName}" หรือไม่?`);
+    if (!confirmed) {
         return;
     }
     
@@ -5290,7 +5298,7 @@ async function deleteMember(memberId, memberName) {
         const data = await response.json();
         
         if (data.success) {
-            showSuccess('ลบสมาชิกสำเร็จ');
+            await showSuccessPopup('ลบสมาชิกสำเร็จ', `ลบสมาชิก "${memberName}" ออกจากระบบเรียบร้อยแล้ว`);
             loadMembers();
         } else {
             showError(data.error || data.message || 'เกิดข้อผิดพลาด');
