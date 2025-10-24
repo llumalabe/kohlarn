@@ -2149,4 +2149,302 @@ footer p {
     }
 }
 
+/* ==================== SUCCESS POPUP ==================== */
+.success-popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 100000;
+    animation: fadeIn 0.3s ease;
+    align-items: center;
+    justify-content: center;
+}
+
+.success-popup-overlay.show {
+    display: flex;
+}
+
+.success-popup-container {
+    background: white;
+    border-radius: 24px;
+    padding: 45px 40px;
+    max-width: 450px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+    animation: successPopupSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+}
+
+@keyframes successPopupSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.success-icon-wrapper {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 25px;
+    background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: successIconBounce 0.8s ease 0.3s backwards;
+    box-shadow: 0 10px 30px rgba(0, 184, 148, 0.4);
+}
+
+@keyframes successIconBounce {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.success-icon-wrapper i {
+    font-size: 3rem;
+    color: white;
+}
+
+.success-popup-container h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2d3436;
+    margin-bottom: 15px;
+    animation: slideDown 0.5s ease 0.4s backwards;
+}
+
+.success-popup-container p {
+    font-size: 1.1rem;
+    color: #636e72;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    animation: slideDown 0.5s ease 0.5s backwards;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.success-btn {
+    background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+    color: white;
+    border: none;
+    padding: 16px 50px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 184, 148, 0.3);
+    animation: slideDown 0.5s ease 0.6s backwards;
+    width: 100%;
+}
+
+.success-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 184, 148, 0.4);
+}
+
+.success-btn:active {
+    transform: translateY(0);
+}
+
+/* ==================== CONFIRM POPUP ==================== */
+.confirm-popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 100000;
+    animation: fadeIn 0.3s ease;
+    align-items: center;
+    justify-content: center;
+}
+
+.confirm-popup-overlay.show {
+    display: flex;
+}
+
+.confirm-popup-container {
+    background: white;
+    border-radius: 24px;
+    padding: 45px 40px;
+    max-width: 450px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+    animation: confirmPopupSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+}
+
+@keyframes confirmPopupSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.confirm-icon-wrapper {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 25px;
+    background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: confirmIconBounce 0.6s ease backwards;
+    box-shadow: 0 10px 30px rgba(253, 203, 110, 0.4);
+}
+
+@keyframes confirmIconBounce {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1) rotate(0);
+        opacity: 1;
+    }
+}
+
+.confirm-icon-wrapper i {
+    font-size: 3rem;
+    color: white;
+}
+
+.confirm-popup-container h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2d3436;
+    margin-bottom: 15px;
+}
+
+.confirm-popup-container p {
+    font-size: 1.1rem;
+    color: #636e72;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.confirm-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.confirm-btn {
+    flex: 1;
+    padding: 16px 30px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.confirm-yes {
+    background: linear-gradient(135deg, #e17055 0%, #d63031 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(225, 112, 85, 0.3);
+}
+
+.confirm-yes:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(225, 112, 85, 0.4);
+}
+
+.confirm-no {
+    background: #f1f3f5;
+    color: #495057;
+}
+
+.confirm-no:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.confirm-btn:active {
+    transform: translateY(0);
+}
+
+/* Responsive Success/Confirm Popups */
+@media (max-width: 768px) {
+    .success-popup-container,
+    .confirm-popup-container {
+        padding: 35px 25px;
+        max-width: 90%;
+    }
+    
+    .success-icon-wrapper,
+    .confirm-icon-wrapper {
+        width: 75px;
+        height: 75px;
+        margin-bottom: 20px;
+    }
+    
+    .success-icon-wrapper i,
+    .confirm-icon-wrapper i {
+        font-size: 2.5rem;
+    }
+    
+    .success-popup-container h3,
+    .confirm-popup-container h3 {
+        font-size: 1.5rem;
+    }
+    
+    .success-popup-container p,
+    .confirm-popup-container p {
+        font-size: 1rem;
+        margin-bottom: 25px;
+    }
+    
+    .success-btn,
+    .confirm-btn {
+        padding: 14px 25px;
+        font-size: 1rem;
+    }
+    
+    .confirm-actions {
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+}
+
+
 

@@ -1281,6 +1281,87 @@ function updateUserUI() {
     }
 }
 
+/**
+ * Show Success Popup
+ */
+function showSuccessPopup(title, message) {
+    return new Promise((resolve) => {
+        const popup = document.getElementById('successPopup');
+        const titleEl = document.getElementById('successTitle');
+        const messageEl = document.getElementById('successMessage');
+        const okBtn = document.getElementById('successOkBtn');
+        
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        
+        popup.classList.add('show');
+        
+        const handleClose = () => {
+            popup.classList.remove('show');
+            okBtn.removeEventListener('click', handleClose);
+            resolve();
+        };
+        
+        okBtn.addEventListener('click', handleClose);
+        
+        // Support Escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape' && popup.classList.contains('show')) {
+                handleClose();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    });
+}
+
+/**
+ * Show Confirm Popup
+ */
+function showConfirmPopup(title, message) {
+    return new Promise((resolve) => {
+        const popup = document.getElementById('confirmPopup');
+        const titleEl = document.getElementById('confirmTitle');
+        const messageEl = document.getElementById('confirmMessage');
+        const yesBtn = document.getElementById('confirmYesBtn');
+        const noBtn = document.getElementById('confirmNoBtn');
+        
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        
+        popup.classList.add('show');
+        
+        const handleYes = () => {
+            popup.classList.remove('show');
+            cleanup();
+            resolve(true);
+        };
+        
+        const handleNo = () => {
+            popup.classList.remove('show');
+            cleanup();
+            resolve(false);
+        };
+        
+        const cleanup = () => {
+            yesBtn.removeEventListener('click', handleYes);
+            noBtn.removeEventListener('click', handleNo);
+            document.removeEventListener('keydown', handleEscape);
+        };
+        
+        yesBtn.addEventListener('click', handleYes);
+        noBtn.addEventListener('click', handleNo);
+        
+        // Support Escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape' && popup.classList.contains('show')) {
+                handleNo();
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    });
+}
+
 // Setup login/logout handlers
 function setupLoginHandlers() {
     const loginBtn = document.getElementById('loginBtn');
@@ -1350,14 +1431,17 @@ function setupLoginHandlers() {
                 loginModal.classList.remove('show');
                 loginForm.reset();
                 
-                // Show success message
-                alert(`ยินดีต้อนรับ ${currentUser.nickname || currentUser.username}!`);
+                // Show success popup
+                await showSuccessPopup(
+                    'เข้าสู่ระบบสำเร็จ!',
+                    `ยินดีต้อนรับ ${currentUser.nickname || currentUser.username}!`
+                );
             } else {
-                alert('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+                await showSuccessPopup('เกิดข้อผิดพลาด', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
             }
         } catch (error) {
             console.error('Login error:', error);
-            alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+            await showSuccessPopup('เกิดข้อผิดพลาด', 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
         }
     });
     
@@ -1377,7 +1461,12 @@ function setupLoginHandlers() {
     logoutBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         
-        if (confirm('ต้องการออกจากระบบหรือไม่?')) {
+        const confirmed = await showConfirmPopup(
+            'ยืนยันการออกจากระบบ',
+            'คุณต้องการออกจากระบบหรือไม่?'
+        );
+        
+        if (confirmed) {
             try {
                 // เรียก API logout เพื่อลบ session
                 const token = localStorage.getItem('authToken');
@@ -1398,7 +1487,8 @@ function setupLoginHandlers() {
             localStorage.removeItem('currentUser');
             updateUserUI();
             profileDropdown.classList.remove('show');
-            alert('ออกจากระบบเรียบร้อยแล้ว');
+            
+            await showSuccessPopup('ออกจากระบบสำเร็จ', 'ขอบคุณที่ใช้บริการ');
         }
     });
     
@@ -1462,22 +1552,22 @@ function setupRegistrationHandlers() {
         
         // Client-side validation
         if (username.length < 4) {
-            alert('ชื่อผู้ใช้ต้องมีอย่างน้อย 4 ตัวอักษร');
+            await showSuccessPopup('ข้อมูลไม่ถูกต้อง', 'ชื่อผู้ใช้ต้องมีอย่างน้อย 4 ตัวอักษร');
             return;
         }
         
         if (password.length < 6) {
-            alert('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+            await showSuccessPopup('ข้อมูลไม่ถูกต้อง', 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
             return;
         }
         
         if (password !== confirmPassword) {
-            alert('รหัสผ่านไม่ตรงกัน');
+            await showSuccessPopup('ข้อมูลไม่ถูกต้อง', 'รหัสผ่านไม่ตรงกัน');
             return;
         }
         
         if (!nickname) {
-            alert('กรุณากรอกชื่อ-นามสกุล');
+            await showSuccessPopup('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกชื่อ-นามสกุล');
             return;
         }
         
@@ -1509,14 +1599,17 @@ function setupRegistrationHandlers() {
                 registerModal.classList.remove('show');
                 registerForm.reset();
                 
-                // Show success message
-                alert(`สมัครสมาชิกสำเร็จ! ยินดีต้อนรับ ${currentUser.nickname}!`);
+                // Show success popup
+                await showSuccessPopup(
+                    'สมัครสมาชิกสำเร็จ!',
+                    `ยินดีต้อนรับ ${currentUser.nickname}!`
+                );
             } else {
-                alert(data.message || 'เกิดข้อผิดพลาดในการสมัครสมาชิก');
+                await showSuccessPopup('เกิดข้อผิดพลาด', data.message || 'เกิดข้อผิดพลาดในการสมัครสมาชิก');
             }
         } catch (error) {
             console.error('Registration error:', error);
-                alert('เกิดข้อผิดพลาดในการสมัครสมาชิก');
+            await showSuccessPopup('เกิดข้อผิดพลาด', 'เกิดข้อผิดพลาดในการสมัครสมาชิก');
         }
     });
 }
