@@ -2,6 +2,9 @@
 let currentUser = null;
 let allHotels = [];
 let followedHotels = [];
+let allFilters = []; // For filter data
+let allRoomTypes = []; // For room type data
+let allAccommodationTypes = []; // For accommodation type data
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -260,8 +263,10 @@ function displayFollowedHotels() {
     });
 }
 
-// Create hotel card (simplified version from app.js)
+// Create hotel card (same as main page)
 function createHotelCard(hotel, isFollowed = false) {
+    const filters = hotel.filters ? hotel.filters.split(',').map(f => f.trim()).filter(f => f) : [];
+    const roomTypesList = hotel.roomTypes ? hotel.roomTypes.split(',').map(rt => rt.trim()).filter(rt => rt) : [];
     const name = hotel.nameTh || hotel.nameEn || 'ไม่มีชื่อ';
     const nameEn = hotel.nameTh && hotel.nameEn ? hotel.nameEn : '';
     const price = hotel.priceStart || 0;
@@ -271,12 +276,55 @@ function createHotelCard(hotel, isFollowed = false) {
         ? hotel.images 
         : [hotel.imageUrl || 'https://via.placeholder.com/300x200'];
     
+    // Get amenities for display (first 3)
+    const displayAmenities = filters.slice(0, 3);
+    const remainingCount = filters.length - displayAmenities.length;
+    
+    // Get room types for display (first 2)
+    const displayRoomTypes = roomTypesList.slice(0, 2);
+    const remainingRoomTypesCount = roomTypesList.length - displayRoomTypes.length;
+    
+    // Get accommodation type data
+    const accommodationTypesList = hotel.accommodationTypes ? hotel.accommodationTypes.split(',').map(at => at.trim()).filter(at => at) : [];
+    const firstAccommodationType = accommodationTypesList.length > 0 ? getAccommodationTypeData(accommodationTypesList[0]) : null;
+    
+    // Create carousel HTML if multiple images
+    const carouselHTML = images.length > 1 ? `
+        <div class="hotel-carousel" data-hotel-id="${hotel.id}">
+            ${images.map((img, idx) => `
+                <div class="carousel-slide ${idx === 0 ? 'active' : ''}" style="display: ${idx === 0 ? 'block' : 'none'};">
+                    <img src="${img}" alt="${name}" onerror="this.src='https://via.placeholder.com/300x200'">
+                </div>
+            `).join('')}
+            ${images.length > 1 ? `
+                <button class="carousel-btn prev" onclick="event.stopPropagation(); prevImage('${hotel.id}')">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="carousel-btn next" onclick="event.stopPropagation(); nextImage('${hotel.id}')">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <div class="carousel-indicators">
+                    ${images.map((_, idx) => `<span class="indicator ${idx === 0 ? 'active' : ''}" onclick="event.stopPropagation(); goToSlide('${hotel.id}', ${idx})"></span>`).join('')}
+                </div>
+            ` : ''}
+            ${hotel.maxGuests ? `<span class="guests-badge"><i class="fas fa-users"></i> ${hotel.maxGuests} คน</span>` : ''}
+            ${firstAccommodationType ? `<span class="accommodation-badge" style="background: ${firstAccommodationType.color || '#667eea'};">
+                <i class="fas ${firstAccommodationType.icon || 'fa-hotel'}"></i> ${firstAccommodationType.nameTh || firstAccommodationType.nameEn}
+            </span>` : ''}
+        </div>
+    ` : `
+        <div class="hotel-image">
+            <img src="${images[0]}" alt="${name}" onerror="this.src='https://via.placeholder.com/300x200'">
+            ${hotel.maxGuests ? `<span class="guests-badge"><i class="fas fa-users"></i> ${hotel.maxGuests} คน</span>` : ''}
+            ${firstAccommodationType ? `<span class="accommodation-badge" style="background: ${firstAccommodationType.color || '#667eea'};">
+                <i class="fas ${firstAccommodationType.icon || 'fa-hotel'}"></i> ${firstAccommodationType.nameTh || firstAccommodationType.nameEn}
+            </span>` : ''}
+        </div>
+    `;
+    
     return `
         <div class="hotel-card" data-hotel-id="${hotel.id}">
-            <div class="hotel-image">
-                <img src="${images[0]}" alt="${name}" onerror="this.src='https://via.placeholder.com/300x200'">
-                ${hotel.maxGuests ? `<span class="guests-badge"><i class="fas fa-users"></i> ${hotel.maxGuests} คน</span>` : ''}
-            </div>
+            ${carouselHTML}
             <div class="hotel-info">
                 <h3 class="hotel-name">${name}</h3>
                 ${nameEn ? `<p class="hotel-name-en">${nameEn}</p>` : ''}
@@ -284,6 +332,29 @@ function createHotelCard(hotel, isFollowed = false) {
                     <i class="fas fa-tag"></i>
                     <span>${price.toLocaleString('th-TH')} ${priceEnd > price ? '- ' + priceEnd.toLocaleString('th-TH') : ''} บาท</span>
                 </div>
+                ${displayAmenities.length > 0 ? `
+                <div class="hotel-features">
+                    ${displayAmenities.map(amenityName => {
+                        const amenityData = getFilterData(amenityName);
+                        return `<span class="feature-badge" style="background: ${amenityData.color};" title="${amenityName}">
+                            <i class="fas ${amenityData.icon}"></i> ${amenityName}
+                        </span>`;
+                    }).join('')}
+                    ${remainingCount > 0 ? `<span class="feature-more" title="มีสิ่งอำนวยความสะดวกเพิ่มเติม ${remainingCount} รายการ">+${remainingCount}</span>` : ''}
+                </div>
+                ` : ''}
+                ${displayRoomTypes.length > 0 ? `
+                <div class="hotel-room-types">
+                    ${displayRoomTypes.map(roomTypeId => {
+                        const roomTypeData = getRoomTypeData(roomTypeId);
+                        if (!roomTypeData) return '';
+                        return `<span class="room-type-badge" style="background: ${roomTypeData.color || '#667eea'};" title="${roomTypeData.nameTh || roomTypeId}">
+                            <i class="fas ${roomTypeData.icon || 'fa-bed'}"></i> ${roomTypeData.nameTh || roomTypeId}
+                        </span>`;
+                    }).join('')}
+                    ${remainingRoomTypesCount > 0 ? `<span class="feature-more" title="มีประเภทห้องพักเพิ่มเติม ${remainingRoomTypesCount} รายการ">+${remainingRoomTypesCount}</span>` : ''}
+                </div>
+                ` : ''}
                 <div class="hotel-footer">
                     <span class="hotel-id"><i class="fas fa-tag"></i> ${hotel.id}</span>
                     <div class="hotel-actions">
@@ -463,45 +534,160 @@ function showFollowPopup(title, message, isUnfollow = false) {
     });
 }
 
-// Show hotel modal (simplified version)
-function showHotelModal(hotel) {
+// Show hotel modal (same as main page)
+async function showHotelModal(hotel) {
+    if (!hotel) return;
+    
+    // Track click
+    try {
+        await fetch(`/api/hotels/${hotel.id}/click`, { method: 'POST' });
+    } catch (error) {
+        console.error('Error tracking click:', error);
+    }
+    
+    // Get click count
+    let clicks = 0;
+    try {
+        const response = await fetch(`/api/hotels/${hotel.id}/clicks`);
+        const data = await response.json();
+        clicks = data.clicks || 0;
+    } catch (error) {
+        console.error('Error fetching clicks:', error);
+    }
+    
     const modal = document.getElementById('hotelModal');
     const modalContent = document.getElementById('modalContent');
 
+    const filters = hotel.filters ? hotel.filters.split(',').map(f => f.trim()).filter(f => f) : [];
+    const roomTypesList = hotel.roomTypes ? hotel.roomTypes.split(',').map(rt => rt.trim()).filter(rt => rt) : [];
     const name = hotel.nameTh || hotel.nameEn || 'ไม่มีชื่อ';
     const nameEn = hotel.nameTh && hotel.nameEn ? hotel.nameEn : '';
-    const price = hotel.priceStart || 0;
-    const priceEnd = hotel.priceEnd || price;
     
-    const images = hotel.images && hotel.images.length > 0 
-        ? hotel.images 
-        : [hotel.imageUrl || 'https://via.placeholder.com/300x200'];
+    // Get all images
+    const images = hotel.images && hotel.images.length > 0 ? hotel.images : [hotel.imageUrl || 'https://via.placeholder.com/600x400'];
+    
+    // Get accommodation type data
+    const accommodationTypesList = hotel.accommodationTypes ? hotel.accommodationTypes.split(',').map(at => at.trim()).filter(at => at) : [];
+    const firstAccommodationType = accommodationTypesList.length > 0 ? getAccommodationTypeData(accommodationTypesList[0]) : null;
+    
+    // Create carousel HTML for modal
+    const modalImageHTML = images.length > 1 ? `
+        <div class="modal-carousel" data-hotel-id="${hotel.id}">
+            ${images.map((img, idx) => `
+                <div class="modal-carousel-slide ${idx === 0 ? 'active' : ''}" style="display: ${idx === 0 ? 'block' : 'none'};">
+                    <img src="${img}" alt="${name}" onerror="this.src='https://via.placeholder.com/600x400'">
+                </div>
+            `).join('')}
+            ${images.length > 1 ? `
+                <button class="modal-carousel-btn prev" onclick="event.stopPropagation(); prevModalImage('${hotel.id}')">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="modal-carousel-btn next" onclick="event.stopPropagation(); nextModalImage('${hotel.id}')">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <div class="modal-carousel-indicators">
+                    ${images.map((_, idx) => `<span class="modal-indicator ${idx === 0 ? 'active' : ''}" onclick="event.stopPropagation(); goToModalSlide('${hotel.id}', ${idx})"></span>`).join('')}
+                </div>
+            ` : ''}
+            ${firstAccommodationType ? `<span class="modal-accommodation-badge" style="background: ${firstAccommodationType.color || '#667eea'};">
+                <i class="fas ${firstAccommodationType.icon || 'fa-hotel'}"></i> ${firstAccommodationType.nameTh || firstAccommodationType.nameEn}
+            </span>` : ''}
+        </div>
+    ` : `
+        <div class="detail-image">
+            <img src="${images[0]}" alt="${name}" onerror="this.src='https://via.placeholder.com/600x400'">
+            ${firstAccommodationType ? `<span class="modal-accommodation-badge" style="background: ${firstAccommodationType.color || '#667eea'};">
+                <i class="fas ${firstAccommodationType.icon || 'fa-hotel'}"></i> ${firstAccommodationType.nameTh || firstAccommodationType.nameEn}
+            </span>` : ''}
+        </div>
+    `;
 
     modalContent.innerHTML = `
-        <div class="modal-header">
-            <h2>${name}</h2>
-            ${nameEn ? `<p class="modal-subtitle">${nameEn}</p>` : ''}
-        </div>
-        <div class="modal-body">
-            <div class="modal-images">
-                ${images.map(img => `<img src="${img}" alt="${name}" onerror="this.src='https://via.placeholder.com/600x400'">`).join('')}
-            </div>
-            <div class="modal-info">
-                <div class="info-row">
-                    <i class="fas fa-tag"></i>
-                    <strong>ราคา:</strong> ${price.toLocaleString('th-TH')} ${priceEnd > price ? '- ' + priceEnd.toLocaleString('th-TH') : ''} บาท
+        <div class="hotel-detail">
+            <div class="detail-header">
+                <h2>${name}</h2>
+                ${nameEn ? `<p class="detail-name-en">${nameEn}</p>` : ''}
+                <div class="detail-stats">
+                    <span class="stat-item"><i class="fas fa-eye"></i> ${clicks.toLocaleString('th-TH')} ครั้ง</span>
+                    <span class="stat-item"><i class="fas fa-tag"></i> ${hotel.id}</span>
                 </div>
-                ${hotel.maxGuests ? `
+            </div>
+            
+            ${modalImageHTML}
+            
+            <div class="detail-info">
                 <div class="info-row">
-                    <i class="fas fa-users"></i>
-                    <strong>รองรับผู้เข้าพัก:</strong> ${hotel.maxGuests} คน
+                    <div class="info-item">
+                        <i class="fas fa-tag"></i>
+                        <div>
+                            <strong>ราคา</strong>
+                            <p>${(hotel.priceStart || 0).toLocaleString('th-TH')} - ${(hotel.priceEnd || hotel.priceStart || 0).toLocaleString('th-TH')} บาท</p>
+                        </div>
+                    </div>
+                    
+                    ${hotel.maxGuests ? `
+                    <div class="info-item">
+                        <i class="fas fa-users"></i>
+                        <div>
+                            <strong>รองรับผู้เข้าพัก</strong>
+                            <p>${hotel.maxGuests} คน</p>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-item">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <strong>โทรศัพท์</strong>
+                            <p><a href="tel:${hotel.phone}">${hotel.phone || '-'}</a></p>
+                        </div>
+                    </div>
+                </div>
+                
+                ${hotel.lineId || hotel.facebookUrl || hotel.websiteUrl ? `
+                <div class="contact-links">
+                    <strong><i class="fas fa-link"></i> ช่องทางติดต่อ</strong>
+                    <div class="links">
+                        ${hotel.lineId ? `<a href="https://line.me/ti/p/~${hotel.lineId.replace('@', '')}" target="_blank" class="link-btn line"><i class="fab fa-line"></i> Line</a>` : ''}
+                        ${hotel.facebookUrl ? `<a href="${hotel.facebookUrl}" target="_blank" class="link-btn facebook"><i class="fab fa-facebook"></i> Facebook</a>` : ''}
+                        ${hotel.websiteUrl ? `<a href="${hotel.websiteUrl}" target="_blank" class="link-btn website"><i class="fas fa-globe"></i> เว็บไซต์</a>` : ''}
+                    </div>
                 </div>
                 ` : ''}
-                ${hotel.description ? `
-                <div class="info-row description">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>รายละเอียด:</strong>
-                    <p>${hotel.description}</p>
+                
+                ${filters.length > 0 ? `
+                <div class="facilities">
+                    <strong><i class="fas fa-check-circle"></i> สิ่งอำนวยความสะดวก</strong>
+                    <div class="facility-tags">
+                        ${filters.map(f => {
+                            const filterData = getFilterData(f);
+                            return `<span class="facility-tag" style="background: ${filterData.color};"><i class="fas ${filterData.icon}"></i> ${f}</span>`;
+                        }).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                
+                ${roomTypesList.length > 0 ? `
+                <div class="facilities">
+                    <strong><i class="fas fa-bed"></i> ประเภทห้องพัก</strong>
+                    <div class="facility-tags">
+                        ${roomTypesList.map(rtId => {
+                            const roomTypeData = getRoomTypeData(rtId);
+                            if (!roomTypeData) return '';
+                            return `<span class="facility-tag" style="background: ${roomTypeData.color || '#667eea'};"><i class="fas ${roomTypeData.icon || 'fa-bed'}"></i> ${roomTypeData.nameTh || rtId}</span>`;
+                        }).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                
+                ${hotel.bankName || hotel.accountName || hotel.accountNumber ? `
+                <div class="bank-info">
+                    <strong><i class="fas fa-university"></i> ข้อมูลบัญชีธนาคาร</strong>
+                    ${hotel.bankName ? `<p><i class="fas fa-building"></i> <strong>ธนาคาร:</strong> ${hotel.bankName}</p>` : ''}
+                    ${hotel.accountName ? `<p><i class="fas fa-user"></i> <strong>ชื่อบัญชี:</strong> ${hotel.accountName}</p>` : ''}
+                    ${hotel.accountNumber ? `<p><i class="fas fa-credit-card"></i> <strong>เลขที่บัญชี:</strong> ${hotel.accountNumber}</p>` : ''}
                 </div>
                 ` : ''}
             </div>
@@ -510,3 +696,190 @@ function showHotelModal(hotel) {
 
     modal.classList.add('show');
 }
+
+// ==================== HELPER FUNCTIONS ====================
+
+// Load filters data
+async function loadFiltersData() {
+    if (allFilters.length === 0) {
+        try {
+            const response = await fetch('/api/filters');
+            const data = await response.json();
+            if (data.success && data.data) {
+                allFilters = data.data;
+            }
+        } catch (error) {
+            console.error('Error loading filters:', error);
+        }
+    }
+}
+
+// Load room types data
+async function loadRoomTypesData() {
+    if (allRoomTypes.length === 0) {
+        try {
+            const response = await fetch('/api/room-types');
+            const data = await response.json();
+            if (data.success && data.data) {
+                allRoomTypes = data.data;
+            }
+        } catch (error) {
+            console.error('Error loading room types:', error);
+        }
+    }
+}
+
+// Load accommodation types data
+async function loadAccommodationTypesData() {
+    if (allAccommodationTypes.length === 0) {
+        try {
+            const response = await fetch('/api/accommodation-types');
+            const data = await response.json();
+            if (data.success && data.data) {
+                allAccommodationTypes = data.data;
+            }
+        } catch (error) {
+            console.error('Error loading accommodation types:', error);
+        }
+    }
+}
+
+// Get filter data by name
+function getFilterData(filterName) {
+    const filter = allFilters.find(f => f.nameTh === filterName || f.nameEn === filterName);
+    return filter || {
+        nameTh: filterName,
+        nameEn: filterName,
+        icon: 'fa-check',
+        color: '#95a5a6'
+    };
+}
+
+// Get room type data by ID
+function getRoomTypeData(roomTypeId) {
+    return allRoomTypes.find(rt => rt.id === roomTypeId);
+}
+
+// Get accommodation type data by ID
+function getAccommodationTypeData(accommodationTypeId) {
+    return allAccommodationTypes.find(at => at.id === accommodationTypeId);
+}
+
+// Carousel navigation for cards
+function nextImage(hotelId) {
+    const carousel = document.querySelector(`.hotel-carousel[data-hotel-id="${hotelId}"]`);
+    if (!carousel) return;
+    
+    const slides = carousel.querySelectorAll('.carousel-slide');
+    const indicators = carousel.querySelectorAll('.indicator');
+    let currentIndex = Array.from(slides).findIndex(slide => slide.classList.contains('active'));
+    
+    slides[currentIndex].classList.remove('active');
+    slides[currentIndex].style.display = 'none';
+    indicators[currentIndex].classList.remove('active');
+    
+    const nextIndex = (currentIndex + 1) % slides.length;
+    slides[nextIndex].classList.add('active');
+    slides[nextIndex].style.display = 'block';
+    indicators[nextIndex].classList.add('active');
+}
+
+function prevImage(hotelId) {
+    const carousel = document.querySelector(`.hotel-carousel[data-hotel-id="${hotelId}"]`);
+    if (!carousel) return;
+    
+    const slides = carousel.querySelectorAll('.carousel-slide');
+    const indicators = carousel.querySelectorAll('.indicator');
+    let currentIndex = Array.from(slides).findIndex(slide => slide.classList.contains('active'));
+    
+    slides[currentIndex].classList.remove('active');
+    slides[currentIndex].style.display = 'none';
+    indicators[currentIndex].classList.remove('active');
+    
+    const prevIndex = currentIndex === 0 ? slides.length - 1 : currentIndex - 1;
+    slides[prevIndex].classList.add('active');
+    slides[prevIndex].style.display = 'block';
+    indicators[prevIndex].classList.add('active');
+}
+
+function goToSlide(hotelId, index) {
+    const carousel = document.querySelector(`.hotel-carousel[data-hotel-id="${hotelId}"]`);
+    if (!carousel) return;
+    
+    const slides = carousel.querySelectorAll('.carousel-slide');
+    const indicators = carousel.querySelectorAll('.indicator');
+    
+    slides.forEach(slide => {
+        slide.classList.remove('active');
+        slide.style.display = 'none';
+    });
+    indicators.forEach(ind => ind.classList.remove('active'));
+    
+    slides[index].classList.add('active');
+    slides[index].style.display = 'block';
+    indicators[index].classList.add('active');
+}
+
+// Modal carousel navigation
+function nextModalImage(hotelId) {
+    const carousel = document.querySelector(`.modal-carousel[data-hotel-id="${hotelId}"]`);
+    if (!carousel) return;
+    
+    const slides = carousel.querySelectorAll('.modal-carousel-slide');
+    const indicators = carousel.querySelectorAll('.modal-indicator');
+    let currentIndex = Array.from(slides).findIndex(slide => slide.classList.contains('active'));
+    
+    slides[currentIndex].classList.remove('active');
+    slides[currentIndex].style.display = 'none';
+    indicators[currentIndex].classList.remove('active');
+    
+    const nextIndex = (currentIndex + 1) % slides.length;
+    slides[nextIndex].classList.add('active');
+    slides[nextIndex].style.display = 'block';
+    indicators[nextIndex].classList.add('active');
+}
+
+function prevModalImage(hotelId) {
+    const carousel = document.querySelector(`.modal-carousel[data-hotel-id="${hotelId}"]`);
+    if (!carousel) return;
+    
+    const slides = carousel.querySelectorAll('.modal-carousel-slide');
+    const indicators = carousel.querySelectorAll('.modal-indicator');
+    let currentIndex = Array.from(slides).findIndex(slide => slide.classList.contains('active'));
+    
+    slides[currentIndex].classList.remove('active');
+    slides[currentIndex].style.display = 'none';
+    indicators[currentIndex].classList.remove('active');
+    
+    const prevIndex = currentIndex === 0 ? slides.length - 1 : currentIndex - 1;
+    slides[prevIndex].classList.add('active');
+    slides[prevIndex].style.display = 'block';
+    indicators[prevIndex].classList.add('active');
+}
+
+function goToModalSlide(hotelId, index) {
+    const carousel = document.querySelector(`.modal-carousel[data-hotel-id="${hotelId}"]`);
+    if (!carousel) return;
+    
+    const slides = carousel.querySelectorAll('.modal-carousel-slide');
+    const indicators = carousel.querySelectorAll('.modal-indicator');
+    
+    slides.forEach(slide => {
+        slide.classList.remove('active');
+        slide.style.display = 'none';
+    });
+    indicators.forEach(ind => ind.classList.remove('active'));
+    
+    slides[index].classList.add('active');
+    slides[index].style.display = 'block';
+    indicators[index].classList.add('active');
+}
+
+// Load reference data on page load
+(async function() {
+    await Promise.all([
+        loadFiltersData(),
+        loadRoomTypesData(),
+        loadAccommodationTypesData()
+    ]);
+})();
