@@ -322,6 +322,9 @@ async function unfollowHotel(hotelId, buttonElement) {
             const count = followedHotels.length;
             document.getElementById('followedCount').textContent = count;
             document.getElementById('followedCountText').textContent = count;
+            
+            // Update badge count in menu (if exists)
+            updateFollowCountBadge(count);
 
             // Reload display
             if (count === 0) {
@@ -336,6 +339,15 @@ async function unfollowHotel(hotelId, buttonElement) {
     } catch (error) {
         console.error('Error unfollowing hotel:', error);
         alert('เกิดข้อผิดพลาดในการเลิกติดตามโรงแรม');
+    }
+}
+
+// Update follow count badge
+function updateFollowCountBadge(count) {
+    const badge = document.getElementById('followCountBadge');
+    if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline-block' : 'none';
     }
 }
 
