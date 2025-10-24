@@ -1558,6 +1558,18 @@ async function toggleFollowHotel(hotelId, hotelName, buttonElement) {
 
     const isFollowing = followedHotels.has(hotelId);
     const token = localStorage.getItem('authToken');
+    
+    // Show confirmation dialog
+    let confirmMessage;
+    if (isFollowing) {
+        confirmMessage = `ต้องการเลิกติดตาม "${hotelName}" หรือไม่?`;
+    } else {
+        confirmMessage = `ต้องการติดตาม "${hotelName}" หรือไม่?\n\nคุณสามารถดูรายการโรงแรมที่ติดตามได้ที่เมนู "การติดตาม"`;
+    }
+    
+    if (!confirm(confirmMessage)) {
+        return; // User cancelled
+    }
 
     try {
         if (isFollowing) {
@@ -1574,6 +1586,9 @@ async function toggleFollowHotel(hotelId, hotelName, buttonElement) {
                 buttonElement.classList.remove('following');
                 buttonElement.title = 'ติดตามโรงแรม';
                 updateFollowCountBadge(); // Update badge count
+                
+                // Show success message
+                showFollowMessage('เลิกติดตามโรงแรมเรียบร้อยแล้ว', 'info');
             }
         } else {
             // Follow
@@ -1591,6 +1606,9 @@ async function toggleFollowHotel(hotelId, hotelName, buttonElement) {
                 buttonElement.classList.add('following');
                 buttonElement.title = 'เลิกติดตามโรงแรม';
                 updateFollowCountBadge(); // Update badge count
+                
+                // Show success message
+                showFollowMessage(`ติดตาม "${hotelName}" เรียบร้อยแล้ว`, 'success');
             }
         }
     } catch (error) {
@@ -1621,4 +1639,32 @@ function updateFollowCountBadge() {
         badge.textContent = count;
         badge.style.display = count > 0 ? 'inline-block' : 'none';
     }
+}
+
+// Show follow success/info message
+function showFollowMessage(message, type = 'success') {
+    // Remove existing message if any
+    const existingMsg = document.querySelector('.follow-message');
+    if (existingMsg) {
+        existingMsg.remove();
+    }
+    
+    // Create message element
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `follow-message ${type}`;
+    msgDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(msgDiv);
+    
+    // Trigger animation
+    setTimeout(() => msgDiv.classList.add('show'), 10);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        msgDiv.classList.remove('show');
+        setTimeout(() => msgDiv.remove(), 300);
+    }, 3000);
 }
