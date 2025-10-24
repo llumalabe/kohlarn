@@ -40,6 +40,23 @@ try {
 }
 
 /**
+ * Get sheet ID by name
+ */
+async function getSheetIdByName(sheetName) {
+  try {
+    const response = await sheets.spreadsheets.get({
+      spreadsheetId: SPREADSHEET_ID,
+    });
+    
+    const sheet = response.data.sheets.find(s => s.properties.title === sheetName);
+    return sheet ? sheet.properties.sheetId : 0;
+  } catch (error) {
+    console.error('Error getting sheet ID:', error);
+    return 0;
+  }
+}
+
+/**
  * Get all followed hotels for a specific user
  */
 async function getFollowedHotels(username) {
@@ -164,13 +181,16 @@ async function unfollowHotel(username, hotelId) {
     // Delete the row (row number is index + 2 because of header and 0-based index)
     const actualRow = rowIndex + 2;
     
+    // Get the correct sheet ID
+    const sheetId = await getSheetIdByName(FOLLOWED_HOTELS_SHEET);
+    
     await sheets.spreadsheets.batchUpdate({
       spreadsheetId: SPREADSHEET_ID,
       resource: {
         requests: [{
           deleteDimension: {
             range: {
-              sheetId: 0, // You may need to get the actual sheet ID
+              sheetId: sheetId,
               dimension: 'ROWS',
               startIndex: actualRow - 1,
               endIndex: actualRow
