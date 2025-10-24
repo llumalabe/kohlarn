@@ -1084,6 +1084,16 @@ app.put('/api/admin/members/:id', verifyToken, async (req, res) => {
     res.json({ success: true, data: updatedUser });
   } catch (error) {
     console.error('❌ Error updating user:', error);
+    
+    // Check if it's a rate limit error
+    if (error.code === 429 || (error.message && error.message.includes('Quota exceeded'))) {
+      return res.status(429).json({ 
+        success: false, 
+        error: 'กรุณารอสักครู่ก่อนทำรายการอีกครั้ง (Google Sheets API Limit)',
+        rateLimitError: true
+      });
+    }
+    
     res.status(500).json({ success: false, error: error.message || 'Failed to update user' });
   }
 });

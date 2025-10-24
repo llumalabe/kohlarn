@@ -47,6 +47,61 @@ try {
 
 const USERS_SHEET = 'Users';
 
+// Cache for users data to reduce API calls
+const CACHE_DURATION = 30 * 1000; // 30 seconds
+let usersCache = {
+  data: null,
+  timestamp: 0
+};
+
+// Rate limiting
+const requestQueue = [];
+let isProcessingQueue = false;
+const REQUEST_DELAY = 100; // 100ms between requests
+
+/**
+ * Rate limiting helper
+ */
+async function throttleRequest(requestFn) {
+  return new Promise((resolve, reject) => {
+    requestQueue.push({ requestFn, resolve, reject });
+    processQueue();
+  });
+}
+
+async function processQueue() {
+  if (isProcessingQueue || requestQueue.length === 0) {
+    return;
+  }
+  
+  isProcessingQueue = true;
+  
+  while (requestQueue.length > 0) {
+    const { requestFn, resolve, reject } = requestQueue.shift();
+    
+    try {
+      const result = await requestFn();
+      resolve(result);
+    } catch (error) {
+      reject(error);
+    }
+    
+    if (requestQueue.length > 0) {
+      await new Promise(resolve => setTimeout(resolve, REQUEST_DELAY));
+    }
+  }
+  
+  isProcessingQueue = false;
+}
+
+/**
+ * Clear users cache
+ */
+function clearUsersCache() {
+  usersCache.data = null;
+  usersCache.timestamp = 0;
+}
+
 /**
  * Get all users from Google Sheets
  */
@@ -195,70 +250,89 @@ async function updateUser(userId, userData) {
   }
   
   try {
-    // Get all users to find the row
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${USERS_SHEET}!A2:E`,
-    });
-
-    const rows = response.data.values || [];
-    const rowIndex = rows.findIndex(row => row[0] === userId);
-    
-    if (rowIndex === -1) {
-      throw new Error('User not found');
-    }
-    
-    const existingUser = rows[rowIndex];
-    
-    // Hash new password if provided
-    let passwordToSave = existingUser[1]; // Default: keep existing password
-    if (userData.password && userData.password.trim() !== '') {
-      passwordToSave = await bcrypt.hash(userData.password, 10);
-    }
-    
-    // Handle hotelIds: can be array or comma-separated string
-    let hotelIdValue;
-    if (userData.hotelIds !== undefined) {
-      // Array provided: join with commas
-      if (Array.isArray(userData.hotelIds)) {
-        hotelIdValue = userData.hotelIds.filter(id => id).join(',');
+    // Use throttled request to avoid rate limiting
+    return await throttleRequest(async () => {
+      // Check cache first
+      const now = Date.now();
+      let rows;
+      
+      if (usersCache.data && (now - usersCache.timestamp) < CACHE_DURATION) {
+        console.log('✅ Using cached users data for update');
+        rows = usersCache.data;
       } else {
-        hotelIdValue = userData.hotelIds;
+        // Get all users to find the row
+        const response = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${USERS_SHEET}!A2:E`,
+        });
+        rows = response.data.values || [];
+        
+        // Update cache
+        usersCache.data = rows;
+        usersCache.timestamp = Date.now();
       }
-      hotelIdValue = hotelIdValue ? `'${hotelIdValue}` : '';
-    } else if (userData.hotelId !== undefined) {
-      // Single string (backward compatibility)
-      hotelIdValue = userData.hotelId ? `'${userData.hotelId}` : '';
-    } else {
-      // Not provided: keep existing
-      hotelIdValue = existingUser[4] || '';
-    }
-    
-    // Update row (preserve username, update password if provided)
-    const updatedRow = [
-      existingUser[0], // username (preserve)
-      passwordToSave, // password (update if provided, otherwise preserve)
-      userData.nickname || existingUser[2],
-      userData.role || existingUser[3] || 'user',
-      hotelIdValue
-    ];
-    
-    const sheetRow = rowIndex + 2; // +2 because: +1 for header, +1 for 0-based to 1-based
-    
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${USERS_SHEET}!A${sheetRow}:E${sheetRow}`,
-      valueInputOption: 'USER_ENTERED',
-      resource: {
-        values: [updatedRow]
-      }
-    });
 
-    return {
-      username: updatedRow[0],
-      nickname: updatedRow[2],
-      role: updatedRow[3]
-    };
+      const rowIndex = rows.findIndex(row => row[0] === userId);
+      
+      if (rowIndex === -1) {
+        throw new Error('User not found');
+      }
+      
+      const existingUser = rows[rowIndex];
+      
+      // Hash new password if provided
+      let passwordToSave = existingUser[1]; // Default: keep existing password
+      if (userData.password && userData.password.trim() !== '') {
+        passwordToSave = await bcrypt.hash(userData.password, 10);
+      }
+      
+      // Handle hotelIds: can be array or comma-separated string
+      let hotelIdValue;
+      if (userData.hotelIds !== undefined) {
+        // Array provided: join with commas
+        if (Array.isArray(userData.hotelIds)) {
+          hotelIdValue = userData.hotelIds.filter(id => id).join(',');
+        } else {
+          hotelIdValue = userData.hotelIds;
+        }
+        hotelIdValue = hotelIdValue ? `'${hotelIdValue}` : '';
+      } else if (userData.hotelId !== undefined) {
+        // Single string (backward compatibility)
+        hotelIdValue = userData.hotelId ? `'${userData.hotelId}` : '';
+      } else {
+        // Not provided: keep existing
+        hotelIdValue = existingUser[4] || '';
+      }
+      
+      // Update row (preserve username, update password if provided)
+      const updatedRow = [
+        existingUser[0], // username (preserve)
+        passwordToSave, // password (update if provided, otherwise preserve)
+        userData.nickname || existingUser[2],
+        userData.role || existingUser[3] || 'user',
+        hotelIdValue
+      ];
+      
+      const sheetRow = rowIndex + 2; // +2 because: +1 for header, +1 for 0-based to 1-based
+      
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${USERS_SHEET}!A${sheetRow}:E${sheetRow}`,
+        valueInputOption: 'USER_ENTERED',
+        resource: {
+          values: [updatedRow]
+        }
+      });
+
+      // Clear cache after update
+      clearUsersCache();
+
+      return {
+        username: updatedRow[0],
+        nickname: updatedRow[2],
+        role: updatedRow[3]
+      };
+    });
   } catch (error) {
     console.error('Error updating user:', error);
     throw error;
@@ -335,5 +409,6 @@ module.exports = {
   validateUser,
   addUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  clearUsersCache
 };

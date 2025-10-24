@@ -12,6 +12,23 @@ let hotelsCache = {
   timestamp: 0
 };
 
+// Cache for users data
+let usersCache = {
+  data: null,
+  timestamp: 0
+};
+
+// Cache for web settings
+let webSettingsCache = {
+  data: null,
+  timestamp: 0
+};
+
+// Rate limiting queue
+const requestQueue = [];
+let isProcessingQueue = false;
+const REQUEST_DELAY = 100; // 100ms between requests (max 600 requests/minute, well under 60/minute limit)
+
 // Try to use Service Account for read/write, fallback to API Key for read-only
 let sheets;
 let canWrite = false;
@@ -62,6 +79,55 @@ const USERS_SHEET = 'Users';
 const FILTERS_SHEET = 'Filters';
 const ACTIVITY_LOG_SHEET = 'ActivityLog';
 const WEBSETTINGS_SHEET = 'WebSettings';
+
+/**
+ * Rate limiting helper - throttles API requests
+ */
+async function throttleRequest(requestFn) {
+  return new Promise((resolve, reject) => {
+    requestQueue.push({ requestFn, resolve, reject });
+    processQueue();
+  });
+}
+
+async function processQueue() {
+  if (isProcessingQueue || requestQueue.length === 0) {
+    return;
+  }
+  
+  isProcessingQueue = true;
+  
+  while (requestQueue.length > 0) {
+    const { requestFn, resolve, reject } = requestQueue.shift();
+    
+    try {
+      const result = await requestFn();
+      resolve(result);
+    } catch (error) {
+      reject(error);
+    }
+    
+    // Wait before processing next request
+    if (requestQueue.length > 0) {
+      await new Promise(resolve => setTimeout(resolve, REQUEST_DELAY));
+    }
+  }
+  
+  isProcessingQueue = false;
+}
+
+/**
+ * Clear all caches
+ */
+function clearAllCaches() {
+  hotelsCache.data = null;
+  hotelsCache.timestamp = 0;
+  usersCache.data = null;
+  usersCache.timestamp = 0;
+  webSettingsCache.data = null;
+  webSettingsCache.timestamp = 0;
+  console.log('🗑️ All caches cleared');
+}
 
 /**
  * Get all hotels from Google Sheets (with caching)
@@ -793,6 +859,7 @@ module.exports = {
   getWebSettings,
   updateWebSettings,
   clearHotelsCache,
+  clearAllCaches,
   getHotelClicks,
   updateHotelClick,
   getHotelLikes,

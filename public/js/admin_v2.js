@@ -5354,15 +5354,26 @@ async function saveMember(event) {
         const data = await response.json();
         
         if (data.success) {
-            showSuccess(isEdit ? 'แก้ไขสมาชิกสำเร็จ' : 'เพิ่มสมาชิกสำเร็จ');
+            await showSuccessPopup(isEdit ? 'แก้ไขสมาชิกสำเร็จ' : 'เพิ่มสมาชิกสำเร็จ', 'บันทึกข้อมูลสมาชิกเรียบร้อยแล้ว');
             closeMemberModal();
             loadMembers();
         } else {
-            showError(data.error || data.message || 'เกิดข้อผิดพลาด');
+            // Check if it's a rate limit error
+            if (data.rateLimitError || response.status === 429) {
+                showError('⏱️ ' + (data.error || 'กรุณารอสักครู่ก่อนทำรายการอีกครั้ง'));
+            } else {
+                showError(data.error || data.message || 'เกิดข้อผิดพลาด');
+            }
         }
     } catch (error) {
         console.error('Error saving member:', error);
-        showError('เกิดข้อผิดพลาดในการบันทึก');
+        
+        // Check if it's a network error or rate limit
+        if (error.message && error.message.includes('429')) {
+            showError('⏱️ กรุณารอสักครู่ก่อนทำรายการอีกครั้ง (ระบบกำลังประมวลผลข้อมูล)');
+        } else {
+            showError('เกิดข้อผิดพลาดในการบันทึก');
+        }
     }
 }
 
