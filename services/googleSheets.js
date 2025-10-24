@@ -335,6 +335,22 @@ async function addHotel(hotel, editorNickname = '') {
     // Clear cache after adding hotel
     clearHotelsCache();
 
+    // Log activity for new hotel
+    const details = `ชื่อบรรทัดที่ 1: ${hotel.nameTh || ''}
+ชื่อบรรทัดที่ 2: ${hotel.nameEn || ''}
+ราคา: ${hotel.priceStart || 0} - ${hotel.priceEnd || hotel.priceStart || 0} บาท
+เบอร์โทร: ${hotel.phone || ''}
+ชื่อเจ้าของ: ${hotel.ownerName || ''}`;
+    
+    await activityLogService.logActivity(
+      'admin',
+      editorNickname,
+      'เพิ่มโรงแรมใหม่',
+      hotel.nameTh || '',
+      'hotel',
+      details
+    );
+
     return { success: true };
   } catch (error) {
     console.error('Error adding hotel:', error);
@@ -362,8 +378,8 @@ async function updateHotel(hotelId, hotel, editorNickname = '') {
     // Track changes for activity log
     const changes = [];
     const fieldNames = {
-      nameTh: 'ชื่อไทย',
-      nameEn: 'ชื่ออังกฤษ',
+      nameTh: 'ชื่อบรรทัดที่ 1',
+      nameEn: 'ชื่อบรรทัดที่ 2',
       priceStart: 'ราคาต่ำสุด',
       priceEnd: 'ราคาสูงสุด',
       phone: 'เบอร์โทร',
@@ -491,6 +507,14 @@ async function deleteHotel(hotelId) {
   }
   
   try {
+    // Get hotel data before deletion for logging
+    const currentHotels = await getHotels();
+    const hotelToDelete = currentHotels.find(h => h.id === hotelId);
+    
+    if (!hotelToDelete) {
+      throw new Error('Hotel not found');
+    }
+
     // Find the row
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
@@ -526,7 +550,21 @@ async function deleteHotel(hotelId) {
     // Clear cache after deleting hotel
     clearHotelsCache();
 
-    return { success: true };
+    // Log activity for hotel deletion
+    const details = `ลบโรงแรม: ${hotelToDelete.nameTh || ''} (${hotelToDelete.nameEn || ''})
+เบอร์โทร: ${hotelToDelete.phone || ''}
+ชื่อเจ้าของ: ${hotelToDelete.ownerName || ''}`;
+    
+    await activityLogService.logActivity(
+      'admin',
+      'Admin',
+      'ลบโรงแรม',
+      hotelToDelete.nameTh || '',
+      'hotel',
+      details
+    );
+
+    return { success: true, deletedHotel: hotelToDelete };
   } catch (error) {
     console.error('Error deleting hotel:', error);
     throw error;
@@ -536,12 +574,22 @@ async function deleteHotel(hotelId) {
 /**
  * Toggle hotel status (active/inactive)
  */
-async function toggleHotelStatus(hotelId, newStatus) {
+async function toggleHotelStatus(hotelId, newStatus, editorNickname = 'Admin') {
   if (!canWrite) {
     throw new Error('Write access not available. Please configure Service Account.');
   }
   
   try {
+    // Get hotel data for logging
+    const currentHotels = await getHotels();
+    const hotel = currentHotels.find(h => h.id === hotelId);
+    
+    if (!hotel) {
+      throw new Error('Hotel not found');
+    }
+    
+    const oldStatus = hotel.status || 'active';
+
     // Find the row
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
@@ -572,6 +620,19 @@ async function toggleHotelStatus(hotelId, newStatus) {
         values: [[newStatus]]
       }
     });
+
+    // Log activity with before/after
+    const statusMap = { 'active': 'เปิดใช้งาน', 'inactive': 'ปิดใช้งาน' };
+    const details = `ก่อน:\nสถานะ: ${statusMap[oldStatus] || oldStatus}\nหลัง:\nสถานะ: ${statusMap[newStatus] || newStatus}`;
+    
+    await activityLogService.logActivity(
+      'admin',
+      editorNickname,
+      'เปลี่ยนสถานะโรงแรม',
+      hotel.nameTh || '',
+      'hotel',
+      details
+    );
 
     return { success: true, status: newStatus };
   } catch (error) {

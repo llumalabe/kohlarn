@@ -1069,18 +1069,46 @@ app.put('/api/admin/members/:id', verifyToken, async (req, res) => {
   try {
     const memberData = req.body;
     const userId = req.params.id;
+    
+    // Get current user data for comparison
+    const currentUsers = await usersService.getUsers();
+    const currentUser = currentUsers.find(u => u.username === userId);
+    
     // Update user
     const updatedUser = await usersService.updateUser(userId, memberData);
     
-    // Log activity
-    await activityLogService.logActivity(
-      req.user.username,
-      req.user.nickname,
-      'แก้ไขสมาชิก',
-      memberData.nickname || userId,
-      'user',
-      `แก้ไขข้อมูลสมาชิก ${memberData.nickname || userId}`
-    );
+    // Track changes for detailed logging
+    const changes = [];
+    const roleMap = { 'admin': 'คณะกรรมการ', 'hotel_owner': 'เจ้าของที่พัก', 'user': 'ผู้ใช้ทั่วไป' };
+    
+    if (currentUser) {
+      if (currentUser.nickname !== (memberData.nickname || currentUser.nickname)) {
+        changes.push({ field: 'ชื่อเล่น', old: currentUser.nickname, new: memberData.nickname });
+      }
+      if (currentUser.role !== (memberData.role || currentUser.role)) {
+        changes.push({ field: 'บทบาท', old: roleMap[currentUser.role] || currentUser.role, new: roleMap[memberData.role] || memberData.role });
+      }
+      if (memberData.password && memberData.password.trim() !== '') {
+        changes.push({ field: 'รหัสผ่าน', old: '********', new: '********' });
+      }
+    }
+    
+    // Log activity with before/after if there are changes
+    if (changes.length > 0) {
+      const beforeLines = changes.map(c => `${c.field}: ${c.old}`).join('\n');
+      const afterLines = changes.map(c => `${c.field}: ${c.new}`).join('\n');
+      const details = `ก่อน:\n${beforeLines}\nหลัง:\n${afterLines}`;
+      
+      await activityLogService.logActivity(
+        req.user.username,
+        req.user.nickname,
+        'แก้ไขสมาชิก',
+        memberData.nickname || userId,
+        'user',
+        details
+      );
+    }
+    
     res.json({ success: true, data: updatedUser });
   } catch (error) {
     console.error('❌ Error updating user:', error);
