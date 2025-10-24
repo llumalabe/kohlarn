@@ -84,7 +84,7 @@ function updateUserUI() {
     
     // Display role
     const roleMap = {
-        'admin': 'ผู้ดูแลระบบ',
+        'admin': 'คณะกรรมการ',
         'hotel_owner': 'เจ้าของโรงแรม',
         'user': 'สมาชิก'
     };
