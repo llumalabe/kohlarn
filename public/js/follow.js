@@ -608,8 +608,14 @@ async function showHotelModal(hotel) {
                 <h2>${name}</h2>
                 ${nameEn ? `<p class="detail-name-en">${nameEn}</p>` : ''}
                 <div class="detail-stats">
-                    <span class="stat-item"><i class="fas fa-eye"></i> ${clicks.toLocaleString('th-TH')} ครั้ง</span>
-                    <span class="stat-item"><i class="fas fa-tag"></i> ${hotel.id}</span>
+                    <span class="stat-item">
+                        <i class="fas fa-eye"></i> 
+                        ${clicks.toLocaleString('th-TH')} ครั้ง
+                    </span>
+                    <span class="stat-item">
+                        <i class="fas fa-tag"></i> 
+                        ${hotel.id}
+                    </span>
                 </div>
             </div>
             
