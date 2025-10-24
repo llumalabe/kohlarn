@@ -5549,7 +5549,10 @@ async function loadFollowedHotels() {
         
         // Load all hotels first
         const hotelsResponse = await authenticatedFetch('/api/hotels');
-        const allHotels = await hotelsResponse.json();
+        const hotelsData = await hotelsResponse.json();
+        
+        // Handle both array and object responses
+        const allHotels = Array.isArray(hotelsData) ? hotelsData : (hotelsData.data || []);
         
         // Load followed hotels
         const followedResponse = await authenticatedFetch('/api/followed-hotels');
