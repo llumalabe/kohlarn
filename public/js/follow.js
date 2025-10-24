@@ -609,11 +609,11 @@ async function showHotelModal(hotel) {
                 ${nameEn ? `<p class="detail-name-en">${nameEn}</p>` : ''}
                 <div class="detail-stats">
                     <span class="stat-item">
-                        <i class="fas fa-eye"></i> 
+                        <i class="fas fa-eye" style="margin-right: 5px; color: #667eea;"></i> 
                         ${clicks.toLocaleString('th-TH')} ครั้ง
                     </span>
                     <span class="stat-item">
-                        <i class="fas fa-tag"></i> 
+                        <i class="fas fa-tag" style="margin-right: 5px; color: #667eea;"></i> 
                         ${hotel.id}
                     </span>
                 </div>
