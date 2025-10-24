@@ -24,6 +24,87 @@ if (window.location.pathname === '/profile') {
     document.title = 'Profile - Koh Larn Hotels';
 }
 
+/**
+ * Show Success Popup
+ */
+function showSuccessPopup(title, message) {
+    return new Promise((resolve) => {
+        const popup = document.getElementById('successPopup');
+        const titleEl = document.getElementById('successTitle');
+        const messageEl = document.getElementById('successMessage');
+        const okBtn = document.getElementById('successOkBtn');
+        
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        
+        popup.classList.add('show');
+        
+        const handleClose = () => {
+            popup.classList.remove('show');
+            okBtn.removeEventListener('click', handleClose);
+            resolve();
+        };
+        
+        okBtn.addEventListener('click', handleClose);
+        
+        // Support Escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape' && popup.classList.contains('show')) {
+                handleClose();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    });
+}
+
+/**
+ * Show Confirm Popup
+ */
+function showConfirmPopup(title, message) {
+    return new Promise((resolve) => {
+        const popup = document.getElementById('confirmPopup');
+        const titleEl = document.getElementById('confirmTitle');
+        const messageEl = document.getElementById('confirmMessage');
+        const yesBtn = document.getElementById('confirmYesBtn');
+        const noBtn = document.getElementById('confirmNoBtn');
+        
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        
+        popup.classList.add('show');
+        
+        const handleYes = () => {
+            popup.classList.remove('show');
+            cleanup();
+            resolve(true);
+        };
+        
+        const handleNo = () => {
+            popup.classList.remove('show');
+            cleanup();
+            resolve(false);
+        };
+        
+        const cleanup = () => {
+            yesBtn.removeEventListener('click', handleYes);
+            noBtn.removeEventListener('click', handleNo);
+            document.removeEventListener('keydown', handleEscape);
+        };
+        
+        yesBtn.addEventListener('click', handleYes);
+        noBtn.addEventListener('click', handleNo);
+        
+        // Support Escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape' && popup.classList.contains('show')) {
+                handleNo();
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    });
+}
+
 // Helper function: Authenticated Fetch
 // ส่ง JWT Token กับทุก request ที่ต้องการ authentication
 function getAuthHeaders() {
@@ -4652,20 +4733,21 @@ async function saveWebSettings() {
         const result = await response.json();
 
         if (result.success) {
-            alert('✅ บันทึกการตั้งค่าเรียบร้อย');
+            await showSuccessPopup('บันทึกสำเร็จ', 'บันทึกการตั้งค่าเรียบร้อยแล้ว');
             currentWebSettings = settings;
         } else {
-            alert('❌ ไม่สามารถบันทึกการตั้งค่าได้: ' + result.error);
+            await showSuccessPopup('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกการตั้งค่าได้: ' + result.error);
         }
     } catch (error) {
         console.error('Error saving web settings:', error);
-        alert('❌ เกิดข้อผิดพลาดในการบันทึก');
+        await showSuccessPopup('เกิดข้อผิดพลาด', 'เกิดข้อผิดพลาดในการบันทึก');
     }
 }
 
 // Reset to default values
-function resetToDefaults() {
-    if (!confirm('คุณต้องการรีเซ็ตเป็นค่าเริ่มต้นใช่หรือไม่?')) {
+async function resetToDefaults() {
+    const confirmed = await showConfirmPopup('ยืนยันการรีเซ็ต', 'คุณต้องการรีเซ็ตเป็นค่าเริ่มต้นใช่หรือไม่?');
+    if (!confirmed) {
         return;
     }
 
@@ -4718,7 +4800,7 @@ function resetToDefaults() {
     toggleFaviconInput();
 
     previewChanges();
-    alert('🔄 รีเซ็ตเป็นค่าเริ่มต้นแล้ว');
+    await showSuccessPopup('รีเซ็ตสำเร็จ', 'รีเซ็ตเป็นค่าเริ่มต้นแล้ว');
 }
 
 // ==================== MEMBERS MANAGEMENT ====================
