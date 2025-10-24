@@ -1,6 +1,7 @@
 const { google } = require('googleapis');
 const fs = require('fs');
 const path = require('path');
+const activityLogService = require('./activityLog');
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 const API_KEY = process.env.GOOGLE_API_KEY;
@@ -350,7 +351,51 @@ async function updateHotel(hotelId, hotel, editorNickname = '') {
   }
   
   try {
-    // First, find the row
+    // First, get current hotel data for comparison
+    const currentHotels = await getHotels();
+    const currentHotel = currentHotels.find(h => h.id === hotelId);
+    
+    if (!currentHotel) {
+      throw new Error('Hotel not found');
+    }
+
+    // Track changes for activity log
+    const changes = [];
+    const fieldNames = {
+      nameTh: 'ชื่อไทย',
+      nameEn: 'ชื่ออังกฤษ',
+      priceStart: 'ราคาต่ำสุด',
+      priceEnd: 'ราคาสูงสุด',
+      phone: 'เบอร์โทร',
+      ownerName: 'ชื่อเจ้าของ',
+      lineId: 'Line ID',
+      maxGuests: 'รองรับลูกค้าสูงสุด',
+      facebookUrl: 'Facebook',
+      websiteUrl: 'เว็บไซต์',
+      filters: 'สิ่งอำนวยความสะดวก',
+      bankName: 'ธนาคาร',
+      accountName: 'ชื่อบัญชี',
+      accountNumber: 'เลขบัญชี',
+      roomTypes: 'ประเภทห้องพัก',
+      accommodationTypes: 'ประเภทที่พัก',
+      status: 'สถานะ'
+    };
+
+    // Compare and track changes
+    Object.keys(fieldNames).forEach(key => {
+      const oldValue = String(currentHotel[key] || '');
+      const newValue = String(hotel[key] || '');
+      
+      if (oldValue !== newValue) {
+        changes.push({
+          field: fieldNames[key],
+          oldValue: oldValue || '(ว่าง)',
+          newValue: newValue || '(ว่าง)'
+        });
+      }
+    });
+
+    // Find the row for update
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${HOTELS_SHEET}!A2:A`,
@@ -410,6 +455,22 @@ async function updateHotel(hotelId, hotel, editorNickname = '') {
         values: [updatedRow]
       }
     });
+
+    // Log activity with before/after format
+    if (changes.length > 0) {
+      const beforeLines = changes.map(c => `${c.field}: ${c.oldValue}`).join('\n');
+      const afterLines = changes.map(c => `${c.field}: ${c.newValue}`).join('\n');
+      const details = `ก่อน:\n${beforeLines}\nหลัง:\n${afterLines}`;
+
+      await activityLogService.logActivity(
+        'admin',
+        editorNickname,
+        'แก้ไขข้อมูลโรงแรม',
+        hotel.nameTh || currentHotel.nameTh,
+        'hotel',
+        details
+      );
+    }
 
     // Clear cache after updating hotel
     clearHotelsCache();
