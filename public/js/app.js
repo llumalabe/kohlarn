@@ -1258,7 +1258,8 @@ function updateUserUI() {
     const loginBtn = document.getElementById('loginBtn');
     const userProfile = document.getElementById('userProfile');
     const userDisplayName = document.getElementById('userDisplayName');
-    const profileFollowLink = document.getElementById('profileFollowLink');
+    const profileLink = document.getElementById('profileLink');
+    const followLink = document.getElementById('followLink');
     
     if (currentUser) {
         // User is logged in
@@ -1266,9 +1267,12 @@ function updateUserUI() {
         userProfile.style.display = 'block';
         userDisplayName.textContent = currentUser.nickname || currentUser.username;
         
-        // Set profile link with username as query parameter
-        if (profileFollowLink) {
-            profileFollowLink.href = `/profile?id=${currentUser.username}`;
+        // Set profile and follow links with username as query parameter
+        if (profileLink) {
+            profileLink.href = `/profile?id=${currentUser.username}`;
+        }
+        if (followLink) {
+            followLink.href = `/follow?id=${currentUser.username}`;
         }
     } else {
         // User is not logged in
