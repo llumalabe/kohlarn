@@ -17,6 +17,7 @@ let activeFilters = {
 
 // Current user data
 let currentUser = null;
+let followedHotels = new Set(); // เก็บ hotel IDs ที่ติดตาม
 
 // Pagination and randomization variables
 let shuffledHotels = []; // โรงแรมที่ถูกสุ่มลำดับแล้ว
@@ -817,10 +818,15 @@ function createHotelCard(hotel) {
                 ` : ''}
                 <div class="hotel-footer">
                     <span class="hotel-id"><i class="fas fa-tag"></i> ${hotel.id}</span>
-                    <button class="like-btn" data-hotel-id="${hotel.id}" title="กดหัวใจ">
-                        <i class="fas fa-heart"></i>
-                        <span>${hotel.likes || 0}</span>
-                    </button>
+                    <div class="hotel-actions">
+                        <button class="follow-btn" data-hotel-id="${hotel.id}" data-hotel-name="${name}" title="ติดตามโรงแรม" onclick="event.stopPropagation(); toggleFollowHotel('${hotel.id}', '${name.replace(/'/g, "\\'")}', this)">
+                            <i class="fas fa-bookmark"></i>
+                        </button>
+                        <button class="like-btn" data-hotel-id="${hotel.id}" title="กดหัวใจ">
+                            <i class="fas fa-heart"></i>
+                            <span>${hotel.likes || 0}</span>
+                        </button>
+                    </div>
                     <span class="view-details">ดูรายละเอียด <i class="fas fa-arrow-right"></i></span>
                 </div>
             </div>
@@ -1225,6 +1231,7 @@ function checkUserLogin() {
                 // Token ยังใช้งานได้
                 currentUser = JSON.parse(savedUser);
                 updateUserUI();
+                loadFollowedHotels(); // Load followed hotels
             } else {
                 // Token หมดอายุหรือไม่ถูกต้อง
                 localStorage.removeItem('authToken');
@@ -1320,6 +1327,9 @@ function setupLoginHandlers() {
                 
                 // Update UI
                 updateUserUI();
+                
+                // Load followed hotels
+                await loadFollowedHotels();
                 
                 // Close modal
                 loginModal.classList.remove('show');
@@ -1491,7 +1501,96 @@ function setupRegistrationHandlers() {
             }
         } catch (error) {
             console.error('Registration error:', error);
-            alert('เกิดข้อผิดพลาดในการสมัครสมาชิก');
+                alert('เกิดข้อผิดพลาดในการสมัครสมาชิก');
+        }
+    });
+}
+
+// ===== FOLLOWED HOTELS FUNCTIONS =====
+
+// Load followed hotels for current user
+async function loadFollowedHotels() {
+    if (!currentUser) {
+        followedHotels.clear();
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/followed-hotels', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            followedHotels = new Set(data.data.map(h => h.hotel_id));
+            updateFollowButtons();
+        }
+    } catch (error) {
+        console.error('Error loading followed hotels:', error);
+    }
+}
+
+// Toggle follow/unfollow hotel
+async function toggleFollowHotel(hotelId, hotelName, buttonElement) {
+    if (!currentUser) {
+        alert('กรุณาเข้าสู่ระบบเพื่อติดตามโรงแรม');
+        return;
+    }
+
+    const isFollowing = followedHotels.has(hotelId);
+    const token = localStorage.getItem('token');
+
+    try {
+        if (isFollowing) {
+            // Unfollow
+            const response = await fetch(`/api/unfollow-hotel/${hotelId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                followedHotels.delete(hotelId);
+                buttonElement.classList.remove('following');
+                buttonElement.title = 'ติดตามโรงแรม';
+            }
+        } else {
+            // Follow
+            const response = await fetch('/api/follow-hotel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ hotelId, hotelName })
+            });
+
+            if (response.ok) {
+                followedHotels.add(hotelId);
+                buttonElement.classList.add('following');
+                buttonElement.title = 'เลิกติดตามโรงแรม';
+            }
+        }
+    } catch (error) {
+        console.error('Error toggling follow:', error);
+        alert('เกิดข้อผิดพลาดในการติดตาม/เลิกติดตามโรงแรม');
+    }
+}
+
+// Update all follow buttons based on current follow status
+function updateFollowButtons() {
+    document.querySelectorAll('.follow-btn').forEach(btn => {
+        const hotelId = btn.dataset.hotelId;
+        if (followedHotels.has(hotelId)) {
+            btn.classList.add('following');
+            btn.title = 'เลิกติดตามโรงแรม';
+        } else {
+            btn.classList.remove('following');
+            btn.title = 'ติดตามโรงแรม';
         }
     });
 }

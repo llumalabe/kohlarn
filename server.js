@@ -20,6 +20,7 @@ const roomTypesService = require('./services/roomTypes');
 const accommodationTypesService = require('./services/accommodationTypes');
 const cloudinaryService = require('./services/cloudinary');
 const hotelClicksService = require('./services/hotelClicksSheet'); // Use Google Sheets for clicks
+const followedHotelsService = require('./services/followedHotels'); // Followed hotels management
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -1293,6 +1294,111 @@ app.post('/api/websettings', verifyToken, async (req, res) => {
     res.status(500).json({ 
       error: 'Failed to update web settings',
       details: error.message 
+    });
+  }
+});
+
+// ===== FOLLOWED HOTELS API =====
+
+// Get all followed hotels for current user
+app.get('/api/followed-hotels', verifyToken, async (req, res) => {
+  try {
+    const username = req.user.username;
+    const followedHotels = await followedHotelsService.getFollowedHotels(username);
+    
+    res.json({ 
+      success: true, 
+      data: followedHotels,
+      count: followedHotels.length
+    });
+  } catch (error) {
+    console.error('Error fetching followed hotels:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch followed hotels' 
+    });
+  }
+});
+
+// Check if user is following a specific hotel
+app.get('/api/follow-status/:hotelId', verifyToken, async (req, res) => {
+  try {
+    const username = req.user.username;
+    const { hotelId } = req.params;
+    
+    const isFollowing = await followedHotelsService.isFollowing(username, hotelId);
+    
+    res.json({ 
+      success: true, 
+      isFollowing 
+    });
+  } catch (error) {
+    console.error('Error checking follow status:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to check follow status' 
+    });
+  }
+});
+
+// Follow a hotel
+app.post('/api/follow-hotel', verifyToken, async (req, res) => {
+  try {
+    const username = req.user.username;
+    const { hotelId, hotelName } = req.body;
+    
+    if (!hotelId || !hotelName) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Hotel ID and name are required' 
+      });
+    }
+    
+    const result = await followedHotelsService.followHotel(username, hotelId, hotelName);
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Error following hotel:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to follow hotel' 
+    });
+  }
+});
+
+// Unfollow a hotel
+app.delete('/api/unfollow-hotel/:hotelId', verifyToken, async (req, res) => {
+  try {
+    const username = req.user.username;
+    const { hotelId } = req.params;
+    
+    const result = await followedHotelsService.unfollowHotel(username, hotelId);
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Error unfollowing hotel:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to unfollow hotel' 
+    });
+  }
+});
+
+// Get follow count for current user
+app.get('/api/follow-count', verifyToken, async (req, res) => {
+  try {
+    const username = req.user.username;
+    const count = await followedHotelsService.getFollowCount(username);
+    
+    res.json({ 
+      success: true, 
+      count 
+    });
+  } catch (error) {
+    console.error('Error getting follow count:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to get follow count' 
     });
   }
 });
