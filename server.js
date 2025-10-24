@@ -396,18 +396,8 @@ app.post('/api/admin/hotels', verifyToken, async (req, res) => {
   try {
     const { hotel } = req.body;
     
-    await googleSheetsService.addHotel(hotel, req.user.nickname);
-    
-    // Log activity with details
-    const addDetails = `เพิ่มโรงแรมใหม่: ${hotel.nameTh} (ID: ${hotel.id || 'Auto'})`;
-    await activityLogService.logActivity(
-      req.user.username,
-      req.user.nickname,
-      'เพิ่มโรงแรม',
-      hotel.nameTh,
-      'hotel',
-      addDetails
-    );
+    // addHotel now handles logging internally with correct username
+    await googleSheetsService.addHotel(hotel, req.user.nickname, req.user.username);
     
     res.json({ success: true, message: 'Hotel added successfully' });
   } catch (error) {
@@ -422,111 +412,8 @@ app.put('/api/admin/hotels/:id', verifyToken, async (req, res) => {
     const { hotel } = req.body;
     const { id } = req.params;
     
-    // Get old hotel data before update
-    const oldHotelData = await googleSheetsService.getHotelById(id);
-    
-    await googleSheetsService.updateHotel(id, hotel, req.user.nickname);
-    
-    // Generate detailed change log
-    const changes = [];
-    if (oldHotelData) {
-      if (oldHotelData.nameTh !== hotel.nameTh) {
-        changes.push(`ชื่อไทย: "${oldHotelData.nameTh}" → "${hotel.nameTh}"`);
-      }
-      if (oldHotelData.nameEn !== hotel.nameEn) {
-        changes.push(`ชื่ออังกฤษ: "${oldHotelData.nameEn}" → "${hotel.nameEn}"`);
-      }
-      if (oldHotelData.priceStart !== hotel.priceStart) {
-        changes.push(`ราคาต่ำสุด: ${oldHotelData.priceStart} → ${hotel.priceStart} บาท`);
-      }
-      if (oldHotelData.priceEnd !== hotel.priceEnd) {
-        changes.push(`ราคาสูงสุด: ${oldHotelData.priceEnd} → ${hotel.priceEnd} บาท`);
-      }
-      if (oldHotelData.maxGuests !== hotel.maxGuests) {
-        changes.push(`รองรับลูกค้า: ${oldHotelData.maxGuests} → ${hotel.maxGuests} คน`);
-      }
-      if (oldHotelData.phone !== hotel.phone) {
-        changes.push(`เบอร์โทร: ${oldHotelData.phone || '-'} → ${hotel.phone || '-'}`);
-      }
-      if (oldHotelData.lineId !== hotel.lineId) {
-        changes.push(`Line ID: ${oldHotelData.lineId || '-'} → ${hotel.lineId || '-'}`);
-      }
-      if (oldHotelData.facebookUrl !== hotel.facebookUrl) {
-        changes.push(`Facebook: เปลี่ยนแปลง`);
-      }
-      if (oldHotelData.websiteUrl !== hotel.websiteUrl) {
-        changes.push(`Website: เปลี่ยนแปลง`);
-      }
-      if (oldHotelData.ownerName !== hotel.ownerName) {
-        changes.push(`ชื่อเจ้าของ: "${oldHotelData.ownerName}" → "${hotel.ownerName}"`);
-      }
-      if (oldHotelData.bankName !== hotel.bankName) {
-        changes.push(`ธนาคาร: ${oldHotelData.bankName || '-'} → ${hotel.bankName || '-'}`);
-      }
-      if (oldHotelData.accountNumber !== hotel.accountNumber) {
-        changes.push(`เลขบัญชี: ${oldHotelData.accountNumber || '-'} → ${hotel.accountNumber || '-'}`);
-      }
-      if (oldHotelData.accountName !== hotel.accountName) {
-        changes.push(`ชื่อบัญชี: ${oldHotelData.accountName || '-'} → ${hotel.accountName || '-'}`);
-      }
-      // Check all image URLs
-      if (oldHotelData.imageUrl !== hotel.imageUrl) {
-        changes.push(`รูปภาพหลัก: เปลี่ยนแปลง`);
-      }
-      if (oldHotelData.imageUrl2 !== hotel.imageUrl2) {
-        changes.push(`รูปภาพที่ 2: ${hotel.imageUrl2 ? 'เปลี่ยนแปลง' : 'ลบ'}`);
-      }
-      if (oldHotelData.imageUrl3 !== hotel.imageUrl3) {
-        changes.push(`รูปภาพที่ 3: ${hotel.imageUrl3 ? 'เปลี่ยนแปลง' : 'ลบ'}`);
-      }
-      if (oldHotelData.imageUrl4 !== hotel.imageUrl4) {
-        changes.push(`รูปภาพที่ 4: ${hotel.imageUrl4 ? 'เปลี่ยนแปลง' : 'ลบ'}`);
-      }
-      if (oldHotelData.imageUrl5 !== hotel.imageUrl5) {
-        changes.push(`รูปภาพที่ 5: ${hotel.imageUrl5 ? 'เปลี่ยนแปลง' : 'ลบ'}`);
-      }
-      // Check filters (amenities)
-      if (oldHotelData.filters !== hotel.filters) {
-        const oldFilters = (oldHotelData.filters || '').split(',').map(f => f.trim()).filter(f => f);
-        const newFilters = (hotel.filters || '').split(',').map(f => f.trim()).filter(f => f);
-        const added = newFilters.filter(f => !oldFilters.includes(f));
-        const removed = oldFilters.filter(f => !newFilters.includes(f));
-        
-        if (added.length > 0) {
-          changes.push(`เพิ่มสิ่งอำนวยความสะดวก: ${added.join(', ')}`);
-        }
-        if (removed.length > 0) {
-          changes.push(`ลบสิ่งอำนวยความสะดวก: ${removed.join(', ')}`);
-        }
-      }
-      // Check room types
-      if (oldHotelData.roomTypes !== hotel.roomTypes) {
-        const oldRoomTypes = (oldHotelData.roomTypes || '').split(',').map(rt => rt.trim()).filter(rt => rt);
-        const newRoomTypes = (hotel.roomTypes || '').split(',').map(rt => rt.trim()).filter(rt => rt);
-        const added = newRoomTypes.filter(rt => !oldRoomTypes.includes(rt));
-        const removed = oldRoomTypes.filter(rt => !newRoomTypes.includes(rt));
-        
-        if (added.length > 0) {
-          changes.push(`เพิ่มประเภทห้องพัก: ${added.length} รายการ`);
-        }
-        if (removed.length > 0) {
-          changes.push(`ลบประเภทห้องพัก: ${removed.length} รายการ`);
-        }
-      }
-    }
-    
-    const updateDetails = changes.length > 0 
-      ? `${changes.join(' • ')}`
-      : `ตรวจสอบข้อมูล (ไม่พบการเปลี่ยนแปลง)`;
-    
-    await activityLogService.logActivity(
-      req.user.username,
-      req.user.nickname,
-      'แก้ไขโรงแรม',
-      hotel.nameTh,
-      'hotel',
-      updateDetails
-    );
+    // updateHotel now handles logging internally with before/after table format
+    await googleSheetsService.updateHotel(id, hotel, req.user.nickname, req.user.username);
     
     res.json({ success: true, message: 'Hotel updated successfully' });
   } catch (error) {

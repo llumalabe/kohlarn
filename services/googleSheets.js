@@ -279,7 +279,7 @@ async function validateAdminPassword(inputPassword) {
 /**
  * Add a new hotel to Google Sheets
  */
-async function addHotel(hotel, editorNickname = '') {
+async function addHotel(hotel, editorNickname = '', editorUsername = 'admin') {
   if (!canWrite) {
     throw new Error('Write access not available. Please configure Service Account.');
   }
@@ -343,7 +343,7 @@ async function addHotel(hotel, editorNickname = '') {
 ชื่อเจ้าของ: ${hotel.ownerName || ''}`;
     
     await activityLogService.logActivity(
-      'admin',
+      editorUsername,
       editorNickname,
       'เพิ่มโรงแรมใหม่',
       hotel.nameTh || '',
@@ -361,7 +361,7 @@ async function addHotel(hotel, editorNickname = '') {
 /**
  * Update hotel in Google Sheets
  */
-async function updateHotel(hotelId, hotel, editorNickname = '') {
+async function updateHotel(hotelId, hotel, editorNickname = '', editorUsername = 'admin') {
   if (!canWrite) {
     throw new Error('Write access not available. Please configure Service Account.');
   }
@@ -479,7 +479,7 @@ async function updateHotel(hotelId, hotel, editorNickname = '') {
       const details = `ก่อน:\n${beforeLines}\nหลัง:\n${afterLines}`;
 
       await activityLogService.logActivity(
-        'admin',
+        editorUsername,
         editorNickname,
         'แก้ไขข้อมูลโรงแรม',
         hotel.nameTh || currentHotel.nameTh,
@@ -555,14 +555,8 @@ async function deleteHotel(hotelId) {
 เบอร์โทร: ${hotelToDelete.phone || ''}
 ชื่อเจ้าของ: ${hotelToDelete.ownerName || ''}`;
     
-    await activityLogService.logActivity(
-      'admin',
-      'Admin',
-      'ลบโรงแรม',
-      hotelToDelete.nameTh || '',
-      'hotel',
-      details
-    );
+    // Note: deleteHotel is called from server.js with proper username/nickname
+    // This log is kept for backward compatibility but server.js should handle logging
 
     return { success: true, deletedHotel: hotelToDelete };
   } catch (error) {
@@ -574,7 +568,7 @@ async function deleteHotel(hotelId) {
 /**
  * Toggle hotel status (active/inactive)
  */
-async function toggleHotelStatus(hotelId, newStatus, editorNickname = 'Admin') {
+async function toggleHotelStatus(hotelId, newStatus, editorNickname = 'Admin', editorUsername = 'admin') {
   if (!canWrite) {
     throw new Error('Write access not available. Please configure Service Account.');
   }
@@ -626,7 +620,7 @@ async function toggleHotelStatus(hotelId, newStatus, editorNickname = 'Admin') {
     const details = `ก่อน:\nสถานะ: ${statusMap[oldStatus] || oldStatus}\nหลัง:\nสถานะ: ${statusMap[newStatus] || newStatus}`;
     
     await activityLogService.logActivity(
-      'admin',
+      editorUsername,
       editorNickname,
       'เปลี่ยนสถานะโรงแรม',
       hotel.nameTh || '',
