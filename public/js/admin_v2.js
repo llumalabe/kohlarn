@@ -4526,8 +4526,6 @@ async function loadWebSettings() {
         document.getElementById('footerText').value = settings.footer_text || '2025 Koh Larn Hotel Search';
         document.getElementById('footerTextColor').value = settings.footer_text_color || '#ffffff';
         document.getElementById('footerTextColorText').value = settings.footer_text_color || '#ffffff';
-        document.getElementById('footerBgColor').value = settings.footer_bg_color || '#2d3436';
-        document.getElementById('footerBgColorText').value = settings.footer_bg_color || '#2d3436';
         
         // Update preview
         previewChanges();
@@ -4618,12 +4616,12 @@ function previewChanges() {
     // Footer preview
     const footerText = document.getElementById('footerText').value;
     const footerTextColor = document.getElementById('footerTextColor').value;
-    const footerBgColor = document.getElementById('footerBgColor').value;
     document.getElementById('footerTextColorText').value = footerTextColor;
-    document.getElementById('footerBgColorText').value = footerBgColor;
     document.getElementById('previewFooterText').textContent = footerText || '2025 Koh Larn Hotel Search';
     document.getElementById('previewFooter').style.color = footerTextColor;
-    document.getElementById('previewFooter').style.backgroundColor = footerBgColor;
+    // Use same gradient as body background
+    document.getElementById('previewFooter').style.background = 
+        `linear-gradient(135deg, ${bodyStart} 0%, ${bodyEnd} 100%)`;
 }
 
 // Save web settings
@@ -4643,7 +4641,6 @@ async function saveWebSettings() {
             card_price_color: document.getElementById('cardPriceColor').value,
             footer_text: document.getElementById('footerText').value,
             footer_text_color: document.getElementById('footerTextColor').value,
-            footer_bg_color: document.getElementById('footerBgColor').value,
             favicon_type: document.getElementById('faviconType').value,
             favicon_emoji: document.getElementById('faviconEmoji').value,
             favicon_url: document.getElementById('faviconUrl').value
@@ -4687,8 +4684,7 @@ function resetToDefaults() {
         card_hotel_name_color: '#2d3436',
         card_price_color: '#0066cc',
         footer_text: '2025 Koh Larn Hotel Search',
-        footer_text_color: '#ffffff',
-        footer_bg_color: '#2d3436'
+        footer_text_color: '#ffffff'
     };
 
     document.getElementById('siteNameTh').value = defaults.site_name_th;
@@ -4716,8 +4712,6 @@ function resetToDefaults() {
     document.getElementById('footerText').value = defaults.footer_text;
     document.getElementById('footerTextColor').value = defaults.footer_text_color;
     document.getElementById('footerTextColorText').value = defaults.footer_text_color;
-    document.getElementById('footerBgColor').value = defaults.footer_bg_color;
-    document.getElementById('footerBgColorText').value = defaults.footer_bg_color;
 
     // Favicon
     document.getElementById('faviconType').value = 'emoji';

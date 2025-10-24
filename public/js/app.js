@@ -64,8 +64,7 @@ async function loadWebSettings() {
             card_hotel_name_color: '#2d3436',
             card_price_color: '#0066cc',
             footer_text: '2025 Koh Larn Hotel Search',
-            footer_text_color: '#ffffff',
-            footer_bg_color: '#2d3436'
+            footer_text_color: '#ffffff'
         };
     }
 }
@@ -142,8 +141,9 @@ function applyWebSettings() {
         if (webSettings.footer_text_color) {
             footerElement.style.color = webSettings.footer_text_color;
         }
-        if (webSettings.footer_bg_color) {
-            footerElement.style.backgroundColor = webSettings.footer_bg_color;
+        // Use same gradient as body background
+        if (webSettings.body_bg_gradient_start && webSettings.body_bg_gradient_end) {
+            footerElement.style.background = `linear-gradient(135deg, ${webSettings.body_bg_gradient_start} 0%, ${webSettings.body_bg_gradient_end} 100%)`;
         }
     }
     

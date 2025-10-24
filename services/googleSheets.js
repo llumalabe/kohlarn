@@ -492,8 +492,7 @@ async function getWebSettings() {
       favicon_emoji: '🏝️',
       favicon_url: '',
       footer_text: '2025 Koh Larn Hotel Search',
-      footer_text_color: '#ffffff',
-      footer_bg_color: '#2d3436'
+      footer_text_color: '#ffffff'
     };
   }
 }
