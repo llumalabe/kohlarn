@@ -397,19 +397,55 @@ async function updateHotel(hotelId, hotel, editorNickname = '', editorUsername =
       status: 'สถานะ'
     };
 
-    // Helper function to convert IDs to names
-    const convertIdsToNames = async (ids, type) => {
+    // Helper function to get room type names by IDs
+    const getRoomTypeNames = async (ids) => {
       if (!ids) return '';
       const idArray = ids.split(',').map(id => id.trim()).filter(id => id);
       if (idArray.length === 0) return '';
       
       try {
-        const endpoint = type === 'room' ? '/api/admin/room-types' : '/api/admin/accommodation-types';
-        // Fetch from API would require HTTP client, so we'll use a simpler approach
-        // For now, return count or simplified display
-        return `${idArray.length} รายการ`;
+        // Fetch room types from the sheet
+        const response = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: 'RoomTypes!A2:B',
+        });
+        
+        const rows = response.data.values || [];
+        const names = idArray.map(id => {
+          const row = rows.find(r => r[0] === id);
+          return row ? row[1] : id; // Return name or ID if not found
+        });
+        
+        return names.join(', ');
       } catch (error) {
-        return ids; // Fallback to IDs if conversion fails
+        console.error('Error fetching room types:', error);
+        return `${idArray.length} รายการ`;
+      }
+    };
+
+    // Helper function to get accommodation type names by IDs
+    const getAccommodationTypeNames = async (ids) => {
+      if (!ids) return '';
+      const idArray = ids.split(',').map(id => id.trim()).filter(id => id);
+      if (idArray.length === 0) return '';
+      
+      try {
+        // Fetch accommodation types from the sheet
+        const response = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: 'AccommodationTypes!A2:B',
+        });
+        
+        const rows = response.data.values || [];
+        const names = idArray.map(id => {
+          const row = rows.find(r => r[0] === id);
+          return row ? row[1] : id; // Return name or ID if not found
+        });
+        
+        return names.join(', ');
+      } catch (error) {
+        console.error('Error fetching accommodation types:', error);
+        return `${idArray.length} รายการ`;
       }
     };
 
@@ -418,17 +454,13 @@ async function updateHotel(hotelId, hotel, editorNickname = '', editorUsername =
       let oldValue = String(currentHotel[key] || '');
       let newValue = String(hotel[key] || '');
       
-      // Convert IDs to readable format for room types and accommodation types
+      // Convert IDs to names for room types and accommodation types
       if (key === 'roomTypes' && (oldValue || newValue)) {
-        const oldIds = oldValue.split(',').filter(id => id.trim());
-        const newIds = newValue.split(',').filter(id => id.trim());
-        oldValue = oldIds.length > 0 ? `${oldIds.length} รายการ` : 'ไม่มี';
-        newValue = newIds.length > 0 ? `${newIds.length} รายการ` : 'ไม่มี';
+        oldValue = await getRoomTypeNames(oldValue) || 'ไม่มี';
+        newValue = await getRoomTypeNames(newValue) || 'ไม่มี';
       } else if (key === 'accommodationTypes' && (oldValue || newValue)) {
-        const oldIds = oldValue.split(',').filter(id => id.trim());
-        const newIds = newValue.split(',').filter(id => id.trim());
-        oldValue = oldIds.length > 0 ? `${oldIds.length} รายการ` : 'ไม่มี';
-        newValue = newIds.length > 0 ? `${newIds.length} รายการ` : 'ไม่มี';
+        oldValue = await getAccommodationTypeNames(oldValue) || 'ไม่มี';
+        newValue = await getAccommodationTypeNames(newValue) || 'ไม่มี';
       }
       
       if (oldValue !== newValue) {
