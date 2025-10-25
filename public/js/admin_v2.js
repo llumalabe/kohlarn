@@ -3213,9 +3213,9 @@ function displayActivityLog(logs) {
                     const allKeys = new Set([...Object.keys(beforeData), ...Object.keys(afterData)]);
                     
                     if (allKeys.size > 0) {
-                        detailsHtml += '<div class="activity-changes" style="margin-top: 10px; background: #f8f9fa; padding: 12px; border-radius: 8px;">';
-                        detailsHtml += '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
-                        detailsHtml += '<thead><tr style="background: #e9ecef;"><th style="padding: 8px; text-align: left; border: 1px solid #dee2e6; width: 30%;">ฟิลด์</th><th style="padding: 8px; text-align: left; border: 1px solid #dee2e6;">ก่อน</th><th style="padding: 8px; text-align: left; border: 1px solid #dee2e6;">หลัง</th></tr></thead>';
+                        detailsHtml += '<div class="activity-changes" style="margin-top: 10px; background: #f8f9fa; padding: 12px; border-radius: 8px; overflow-x: auto;">';
+                        detailsHtml += '<table style="width: 100%; min-width: 300px; border-collapse: collapse; font-size: 12px;">';
+                        detailsHtml += '<thead><tr style="background: #e9ecef;"><th style="padding: 6px; text-align: left; border: 1px solid #dee2e6; min-width: 80px; max-width: 120px; word-wrap: break-word;">ฟิลด์</th><th style="padding: 6px; text-align: left; border: 1px solid #dee2e6; word-wrap: break-word;">ก่อน</th><th style="padding: 6px; text-align: left; border: 1px solid #dee2e6; word-wrap: break-word;">หลัง</th></tr></thead>';
                         detailsHtml += '<tbody>';
                         
                         allKeys.forEach(key => {
@@ -3224,9 +3224,9 @@ function displayActivityLog(logs) {
                             const isChanged = beforeValue !== afterValue;
                             
                             detailsHtml += `<tr style="${isChanged ? 'background: #fff3cd;' : ''}">`;
-                            detailsHtml += `<td style="padding: 8px; border: 1px solid #dee2e6; font-weight: 600;">${escapeHtml(key)}</td>`;
-                            detailsHtml += `<td style="padding: 8px; border: 1px solid #dee2e6; color: #e74c3c;">${escapeHtml(beforeValue)}</td>`;
-                            detailsHtml += `<td style="padding: 8px; border: 1px solid #dee2e6; color: #00d2a0; font-weight: 600;">${escapeHtml(afterValue)}</td>`;
+                            detailsHtml += `<td style="padding: 6px; border: 1px solid #dee2e6; font-weight: 600; word-wrap: break-word; max-width: 120px;">${escapeHtml(key)}</td>`;
+                            detailsHtml += `<td style="padding: 6px; border: 1px solid #dee2e6; color: #e74c3c; word-wrap: break-word; overflow-wrap: break-word;">${escapeHtml(beforeValue)}</td>`;
+                            detailsHtml += `<td style="padding: 6px; border: 1px solid #dee2e6; color: #00d2a0; font-weight: 600; word-wrap: break-word; overflow-wrap: break-word;">${escapeHtml(afterValue)}</td>`;
                             detailsHtml += '</tr>';
                         });
                         

@@ -397,10 +397,39 @@ async function updateHotel(hotelId, hotel, editorNickname = '', editorUsername =
       status: 'สถานะ'
     };
 
-    // Compare and track changes
-    Object.keys(fieldNames).forEach(key => {
-      const oldValue = String(currentHotel[key] || '');
-      const newValue = String(hotel[key] || '');
+    // Helper function to convert IDs to names
+    const convertIdsToNames = async (ids, type) => {
+      if (!ids) return '';
+      const idArray = ids.split(',').map(id => id.trim()).filter(id => id);
+      if (idArray.length === 0) return '';
+      
+      try {
+        const endpoint = type === 'room' ? '/api/admin/room-types' : '/api/admin/accommodation-types';
+        // Fetch from API would require HTTP client, so we'll use a simpler approach
+        // For now, return count or simplified display
+        return `${idArray.length} รายการ`;
+      } catch (error) {
+        return ids; // Fallback to IDs if conversion fails
+      }
+    };
+
+    // Compare and track changes with special handling for roomTypes and accommodationTypes
+    for (const key of Object.keys(fieldNames)) {
+      let oldValue = String(currentHotel[key] || '');
+      let newValue = String(hotel[key] || '');
+      
+      // Convert IDs to readable format for room types and accommodation types
+      if (key === 'roomTypes' && (oldValue || newValue)) {
+        const oldIds = oldValue.split(',').filter(id => id.trim());
+        const newIds = newValue.split(',').filter(id => id.trim());
+        oldValue = oldIds.length > 0 ? `${oldIds.length} รายการ` : 'ไม่มี';
+        newValue = newIds.length > 0 ? `${newIds.length} รายการ` : 'ไม่มี';
+      } else if (key === 'accommodationTypes' && (oldValue || newValue)) {
+        const oldIds = oldValue.split(',').filter(id => id.trim());
+        const newIds = newValue.split(',').filter(id => id.trim());
+        oldValue = oldIds.length > 0 ? `${oldIds.length} รายการ` : 'ไม่มี';
+        newValue = newIds.length > 0 ? `${newIds.length} รายการ` : 'ไม่มี';
+      }
       
       if (oldValue !== newValue) {
         changes.push({
@@ -409,7 +438,7 @@ async function updateHotel(hotelId, hotel, editorNickname = '', editorUsername =
           newValue: newValue || '(ว่าง)'
         });
       }
-    });
+    }
 
     // Find the row for update
     const response = await sheets.spreadsheets.values.get({
