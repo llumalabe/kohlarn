@@ -810,15 +810,14 @@ async function updateWebSettings(settings, modifiedBy = 'Admin') {
       
       const details = `ก่อน:\n${beforeLines}\nหลัง:\n${afterLines}`;
       
-      await logActivity({
-        username: 'admin',
-        nickname: modifiedBy,
-        action: 'แก้ไขการตั้งค่าเว็บไซต์',
-        type: 'system',
-        details: details,
-        hotelName: '',
-        timestamp: new Date().toISOString()
-      });
+      await activityLogService.logActivity(
+        'admin',
+        modifiedBy,
+        'แก้ไขการตั้งค่าเว็บไซต์',
+        '',
+        'system',
+        details
+      );
     }
 
     return { success: true, updated: updates.length };
