@@ -3213,24 +3213,32 @@ function displayActivityLog(logs) {
                     const allKeys = new Set([...Object.keys(beforeData), ...Object.keys(afterData)]);
                     
                     if (allKeys.size > 0) {
-                        detailsHtml += '<div class="activity-changes" style="margin-top: 10px; background: #f8f9fa; padding: 12px; border-radius: 8px; overflow-x: auto;">';
-                        detailsHtml += '<table style="width: 100%; min-width: 300px; border-collapse: collapse; font-size: 12px;">';
-                        detailsHtml += '<thead><tr style="background: #e9ecef;"><th style="padding: 6px; text-align: left; border: 1px solid #dee2e6; min-width: 80px; max-width: 120px; word-wrap: break-word;">ฟิลด์</th><th style="padding: 6px; text-align: left; border: 1px solid #dee2e6; word-wrap: break-word;">ก่อน</th><th style="padding: 6px; text-align: left; border: 1px solid #dee2e6; word-wrap: break-word;">หลัง</th></tr></thead>';
-                        detailsHtml += '<tbody>';
+                        detailsHtml += '<div class="activity-changes" style="margin-top: 10px; background: #f8f9fa; padding: 8px; border-radius: 8px; overflow-x: auto;">';
+                        detailsHtml += '<div style="display: grid; gap: 8px;">';
                         
                         allKeys.forEach(key => {
                             const beforeValue = beforeData[key] || '-';
                             const afterValue = afterData[key] || '-';
                             const isChanged = beforeValue !== afterValue;
                             
-                            detailsHtml += `<tr style="${isChanged ? 'background: #fff3cd;' : ''}">`;
-                            detailsHtml += `<td style="padding: 6px; border: 1px solid #dee2e6; font-weight: 600; word-wrap: break-word; max-width: 120px;">${escapeHtml(key)}</td>`;
-                            detailsHtml += `<td style="padding: 6px; border: 1px solid #dee2e6; color: #e74c3c; word-wrap: break-word; overflow-wrap: break-word;">${escapeHtml(beforeValue)}</td>`;
-                            detailsHtml += `<td style="padding: 6px; border: 1px solid #dee2e6; color: #00d2a0; font-weight: 600; word-wrap: break-word; overflow-wrap: break-word;">${escapeHtml(afterValue)}</td>`;
-                            detailsHtml += '</tr>';
+                            // Card-based layout for better mobile support
+                            detailsHtml += `<div style="background: ${isChanged ? '#fff3cd' : 'white'}; border: 1px solid #dee2e6; border-radius: 6px; padding: 10px;">`;
+                            detailsHtml += `<div style="font-weight: 600; color: #495057; margin-bottom: 6px; font-size: 13px;">${escapeHtml(key)}</div>`;
+                            detailsHtml += `<div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center;">`;
+                            detailsHtml += `<div style="padding: 8px; background: #fff; border: 1px solid #dee2e6; border-radius: 4px; font-size: 12px; word-wrap: break-word; overflow-wrap: break-word;">`;
+                            detailsHtml += `<div style="color: #6c757d; font-size: 10px; margin-bottom: 4px;">ก่อน</div>`;
+                            detailsHtml += `<div style="color: #e74c3c;">${escapeHtml(beforeValue)}</div>`;
+                            detailsHtml += `</div>`;
+                            detailsHtml += `<div style="color: #6c757d; font-size: 18px; text-align: center;">→</div>`;
+                            detailsHtml += `<div style="padding: 8px; background: #fff; border: 1px solid #dee2e6; border-radius: 4px; font-size: 12px; word-wrap: break-word; overflow-wrap: break-word;">`;
+                            detailsHtml += `<div style="color: #6c757d; font-size: 10px; margin-bottom: 4px;">หลัง</div>`;
+                            detailsHtml += `<div style="color: #00d2a0; font-weight: 600;">${escapeHtml(afterValue)}</div>`;
+                            detailsHtml += `</div>`;
+                            detailsHtml += `</div>`;
+                            detailsHtml += `</div>`;
                         });
                         
-                        detailsHtml += '</tbody></table>';
+                        detailsHtml += '</div>';
                         detailsHtml += '</div>';
                     } else {
                         // Fallback to formatted text
