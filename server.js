@@ -250,15 +250,14 @@ app.delete('/api/cloudinary/image/:publicId(*)', verifyToken, async (req, res) =
     const result = await cloudinaryService.deleteImage(publicId);
     
     // Log activity
-    await googleSheetsService.logActivity({
-      username: req.user.username || 'unknown',
-      nickname: req.user.nickname || 'Unknown User',
-      action: 'ลบรูปภาพจาก Cloudinary',
-      type: 'hotel',
-      details: `ลบรูปภาพ: ${publicId}`,
-      hotelName: hotelName,
-      timestamp: new Date().toISOString()
-    });
+    await activityLogService.logActivity(
+      req.user.username || 'unknown',
+      req.user.nickname || 'Unknown User',
+      'ลบรูปภาพจาก Cloudinary',
+      hotelName || '',
+      'hotel',
+      `ลบรูปภาพ: ${publicId}`
+    );
     
     res.json({
       success: true,
