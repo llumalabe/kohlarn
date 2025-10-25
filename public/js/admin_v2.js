@@ -3213,26 +3213,26 @@ function displayActivityLog(logs) {
                     const allKeys = new Set([...Object.keys(beforeData), ...Object.keys(afterData)]);
                     
                     if (allKeys.size > 0) {
-                        detailsHtml += '<div class="activity-changes" style="margin-top: 10px; background: #f8f9fa; padding: 8px; border-radius: 8px; max-width: 100%; overflow: hidden;">';
-                        detailsHtml += '<div style="display: grid; gap: 8px;">';
+                        detailsHtml += '<div class="activity-changes" style="margin-top: 8px; max-width: 100%; overflow: hidden;">';
+                        detailsHtml += '<div style="display: grid; gap: 6px;">';
                         
                         allKeys.forEach(key => {
                             const beforeValue = beforeData[key] || '-';
                             const afterValue = afterData[key] || '-';
                             const isChanged = beforeValue !== afterValue;
                             
-                            // Card-based layout for better mobile support
-                            detailsHtml += `<div style="background: ${isChanged ? '#fff3cd' : 'white'}; border: 1px solid #dee2e6; border-radius: 6px; padding: 10px; max-width: 100%; box-sizing: border-box;">`;
-                            detailsHtml += `<div style="font-weight: 600; color: #495057; margin-bottom: 6px; font-size: 13px; word-wrap: break-word; overflow-wrap: break-word;">${escapeHtml(key)}</div>`;
-                            detailsHtml += `<div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">`;
-                            detailsHtml += `<div style="padding: 8px; background: #fff; border: 1px solid #dee2e6; border-radius: 4px; font-size: 11px; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; max-width: 100%; box-sizing: border-box;">`;
-                            detailsHtml += `<div style="color: #6c757d; font-size: 9px; margin-bottom: 4px; font-weight: 600;">ก่อน</div>`;
-                            detailsHtml += `<div style="color: #e74c3c; white-space: pre-wrap;">${escapeHtml(beforeValue)}</div>`;
+                            // Compact card design
+                            detailsHtml += `<div style="background: ${isChanged ? '#fff9e6' : '#f8f9fa'}; border-left: 3px solid ${isChanged ? '#ffc107' : '#dee2e6'}; border-radius: 4px; padding: 8px; max-width: 100%; box-sizing: border-box;">`;
+                            detailsHtml += `<div style="font-weight: 600; color: #495057; font-size: 11px; margin-bottom: 6px; word-wrap: break-word; overflow-wrap: break-word;">${escapeHtml(key)}</div>`;
+                            detailsHtml += `<div style="display: flex; align-items: center; gap: 6px; width: 100%;">`;
+                            detailsHtml += `<div style="flex: 1; padding: 6px 8px; background: white; border-radius: 3px; font-size: 10px; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; max-width: calc(50% - 10px); box-sizing: border-box; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">`;
+                            detailsHtml += `<div style="color: #999; font-size: 8px; margin-bottom: 2px; text-transform: uppercase;">ก่อน</div>`;
+                            detailsHtml += `<div style="color: #dc3545; white-space: pre-wrap;">${escapeHtml(beforeValue)}</div>`;
                             detailsHtml += `</div>`;
-                            detailsHtml += `<div style="text-align: center; color: #6c757d; font-size: 14px;">↓</div>`;
-                            detailsHtml += `<div style="padding: 8px; background: #fff; border: 1px solid #dee2e6; border-radius: 4px; font-size: 11px; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; max-width: 100%; box-sizing: border-box;">`;
-                            detailsHtml += `<div style="color: #6c757d; font-size: 9px; margin-bottom: 4px; font-weight: 600;">หลัง</div>`;
-                            detailsHtml += `<div style="color: #00d2a0; font-weight: 600; white-space: pre-wrap;">${escapeHtml(afterValue)}</div>`;
+                            detailsHtml += `<div style="color: #6c757d; font-size: 12px; flex-shrink: 0;">→</div>`;
+                            detailsHtml += `<div style="flex: 1; padding: 6px 8px; background: white; border-radius: 3px; font-size: 10px; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; max-width: calc(50% - 10px); box-sizing: border-box; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">`;
+                            detailsHtml += `<div style="color: #999; font-size: 8px; margin-bottom: 2px; text-transform: uppercase;">หลัง</div>`;
+                            detailsHtml += `<div style="color: #28a745; font-weight: 600; white-space: pre-wrap;">${escapeHtml(afterValue)}</div>`;
                             detailsHtml += `</div>`;
                             detailsHtml += `</div>`;
                             detailsHtml += `</div>`;
