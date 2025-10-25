@@ -38,8 +38,23 @@ console.log('✅ Using Service Account - Full access (read/write)');
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID || '1lrveylO3qD8fZlJWqiyEz3KaRojT3PObzTMqIt1hKNA';
 const SHEET_NAME = 'AccommodationTypes';
 
-// Cache for sheet ID
+// Cache for sheet ID (permanent)
 let cachedSheetId = null;
+
+// Cache for accommodation types data (30 seconds TTL)
+const CACHE_DURATION = 30 * 1000; // 30 seconds
+let accommodationTypesCache = {
+  data: null,
+  timestamp: 0
+};
+
+/**
+ * Clear accommodation types cache
+ */
+function clearAccommodationTypesCache() {
+  accommodationTypesCache = { data: null, timestamp: 0 };
+  console.log('🗑️  Accommodation types cache cleared');
+}
 
 // Get sheet ID by name
 async function getSheetId() {
@@ -96,13 +111,26 @@ function accommodationTypeToRow(type) {
 // Get all accommodation types
 async function getAllAccommodationTypes() {
     try {
+        // Check cache
+        const now = Date.now();
+        if (accommodationTypesCache.data && (now - accommodationTypesCache.timestamp) < CACHE_DURATION) {
+            console.log('✅ Returning cached accommodation types');
+            return accommodationTypesCache.data;
+        }
+
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
             range: `${SHEET_NAME}!A2:G`, // Skip header row
         });
 
         const rows = response.data.values || [];
-        return rows.map(rowToAccommodationType).filter(type => type && type.id);
+        const result = rows.map(rowToAccommodationType).filter(type => type && type.id);
+        
+        // Update cache
+        accommodationTypesCache = { data: result, timestamp: Date.now() };
+        console.log('💾 Accommodation types cached');
+        
+        return result;
     } catch (error) {
         console.error('Error reading accommodation types from Google Sheets:', error.message);
         throw error;
@@ -136,6 +164,9 @@ async function createAccommodationType(typeData) {
                 values: [accommodationTypeToRow(typeData)]
             }
         });
+        
+        // Clear cache after creating
+        clearAccommodationTypesCache();
         
         return typeData;
     } catch (error) {
@@ -182,6 +213,9 @@ async function updateAccommodationType(id, updates) {
                 values: [accommodationTypeToRow(updatedType)]
             }
         });
+        
+        // Clear cache after updating
+        clearAccommodationTypesCache();
         
         return updatedType;
     } catch (error) {
@@ -230,6 +264,9 @@ async function deleteAccommodationType(id) {
             }
         });
         
+        // Clear cache after deleting
+        clearAccommodationTypesCache();
+        
         return deletedType;
     } catch (error) {
         console.error('Error deleting accommodation type:', error.message);
@@ -242,5 +279,6 @@ module.exports = {
     getAccommodationTypeById,
     createAccommodationType,
     updateAccommodationType,
-    deleteAccommodationType
+    deleteAccommodationType,
+    clearAccommodationTypesCache
 };

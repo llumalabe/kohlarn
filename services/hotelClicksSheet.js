@@ -6,6 +6,41 @@ const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 const CLICKS_SHEET = 'HotelClicks';
 const CLICKS_HISTORY_SHEET = 'ClicksHistory';
 
+// Cache for clicks data (30 seconds TTL)
+const CACHE_DURATION = 30 * 1000; // 30 seconds
+let clicksCache = {
+  data: null,
+  timestamp: 0
+};
+
+// Cache for stats (30 seconds TTL)
+let statsCache = {
+  data: {},  // Store by period as key
+  timestamp: {}
+};
+
+/**
+ * Clear clicks cache
+ */
+function clearClicksCache() {
+  clicksCache = { data: null, timestamp: 0 };
+  console.log('🗑️  Clicks cache cleared');
+}
+
+/**
+ * Clear stats cache
+ */
+function clearStatsCache(period = null) {
+  if (period) {
+    delete statsCache.data[period];
+    delete statsCache.timestamp[period];
+    console.log(`🗑️  Stats cache cleared for period: ${period}`);
+  } else {
+    statsCache = { data: {}, timestamp: {} };
+    console.log('🗑️  All stats cache cleared');
+  }
+}
+
 // Initialize Google Sheets API
 let sheets;
 let serviceAccount;
@@ -84,6 +119,13 @@ async function createClicksSheet() {
  */
 async function getAllClicks() {
     try {
+        // Check cache
+        const now = Date.now();
+        if (clicksCache.data && (now - clicksCache.timestamp) < CACHE_DURATION) {
+            console.log('✅ Returning cached clicks data');
+            return clicksCache.data;
+        }
+
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
             range: `${CLICKS_SHEET}!A2:C`,
@@ -101,12 +143,18 @@ async function getAllClicks() {
             }
         });
 
+        // Update cache
+        clicksCache = { data: clicks, timestamp: Date.now() };
+        console.log('💾 Clicks data cached');
+
         return clicks;
     } catch (error) {
         // Sheet might not exist yet
         if (error.message.includes('Unable to parse range')) {
             await createClicksSheet();
-            return { hotels: {} };
+            const emptyClicks = { hotels: {} };
+            clicksCache = { data: emptyClicks, timestamp: Date.now() };
+            return emptyClicks;
         }
         console.error('Error getting clicks:', error.message);
         return { hotels: {} };
@@ -191,6 +239,11 @@ async function recordClick(hotelId, ip = '', userAgent = '') {
             });
         }
 
+        // Clear clicks cache after recording new click
+        clearClicksCache();
+        // Also clear all stats cache since stats depend on clicks
+        clearStatsCache();
+
         return {
             success: true,
             hotelId: hotelId,
@@ -256,6 +309,15 @@ function getThailandTime() {
  */
 async function getClickStats(period = 'day') {
     try {
+        // Check cache for this period
+        const now = Date.now();
+        if (statsCache.data[period] && 
+            statsCache.timestamp[period] &&
+            (now - statsCache.timestamp[period]) < CACHE_DURATION) {
+            console.log(`✅ Returning cached stats for period: ${period}`);
+            return statsCache.data[period];
+        }
+
         // Get history data
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -263,36 +325,36 @@ async function getClickStats(period = 'day') {
         });
 
         const rows = response.data.values || [];
-        const now = getThailandTime();
+        const thailandTime = getThailandTime();
         let startTime;
 
         // Calculate start time based on period
         switch (period) {
             case 'day':
-                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                const startOfDay = new Date(thailandTime.getFullYear(), thailandTime.getMonth(), thailandTime.getDate(), 0, 0, 0);
                 startTime = startOfDay.getTime();
                 break;
             case 'week':
-                const startOfWeek = new Date(now);
-                const dayOfWeek = now.getDay();
+                const startOfWeek = new Date(thailandTime);
+                const dayOfWeek = thailandTime.getDay();
                 const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-                startOfWeek.setDate(now.getDate() - daysToMonday);
+                startOfWeek.setDate(thailandTime.getDate() - daysToMonday);
                 startOfWeek.setHours(0, 0, 0, 0);
                 startTime = startOfWeek.getTime();
                 break;
             case 'month':
-                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+                const startOfMonth = new Date(thailandTime.getFullYear(), thailandTime.getMonth(), 1, 0, 0, 0);
                 startTime = startOfMonth.getTime();
                 break;
             case 'year':
-                const startOfYear = new Date(now.getFullYear(), 0, 1, 0, 0, 0);
+                const startOfYear = new Date(thailandTime.getFullYear(), 0, 1, 0, 0, 0);
                 startTime = startOfYear.getTime();
                 break;
             case 'all':
                 startTime = 0;
                 break;
             default:
-                const defaultStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                const defaultStart = new Date(thailandTime.getFullYear(), thailandTime.getMonth(), thailandTime.getDate(), 0, 0, 0);
                 startTime = defaultStart.getTime();
         }
 
@@ -315,6 +377,11 @@ async function getClickStats(period = 'day') {
                 }
             }
         });
+
+        // Update cache for this period
+        statsCache.data[period] = stats;
+        statsCache.timestamp[period] = Date.now();
+        console.log(`💾 Stats cached for period: ${period}`);
 
         return stats;
     } catch (error) {
@@ -354,6 +421,11 @@ async function getTopClickedHotels(period = 'day', sortBy = 'most', limit = 10) 
 module.exports = {
     recordClick,
     getHotelClicks,
+    getAllClicks,
+    getTopClickedHotels,
+    getClickStats,
+    clearClicksCache,
+    clearStatsCache
     getTopClickedHotels,
     getClickStats,
     getAllClicks

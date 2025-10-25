@@ -66,11 +66,33 @@ const DEFAULT_ROOM_TYPES = [
   { id: 'dormitory', nameTh: 'ห้องรวม/ดอร์ม', nameEn: 'Dormitory', icon: 'fa-bed-bunk', color: '#a8edea' }
 ];
 
+// Cache for room types (30 seconds TTL)
+const CACHE_DURATION = 30 * 1000; // 30 seconds
+let roomTypesCache = {
+  data: null,
+  timestamp: 0
+};
+
+/**
+ * Clear room types cache
+ */
+function clearRoomTypesCache() {
+  roomTypesCache = { data: null, timestamp: 0 };
+  console.log('🗑️  Room types cache cleared');
+}
+
 /**
  * Get all room types
  */
 async function getRoomTypes() {
   try {
+    // Check cache
+    const now = Date.now();
+    if (roomTypesCache.data && (now - roomTypesCache.timestamp) < CACHE_DURATION) {
+      console.log('✅ Returning cached room types');
+      return roomTypesCache.data;
+    }
+
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${ROOM_TYPES_SHEET}!A2:F`,
@@ -79,7 +101,9 @@ async function getRoomTypes() {
     const rows = response.data.values || [];
     
     if (rows.length === 0) {
-      return []; // ไม่มีข้อมูลเริ่มต้น - แสดงเฉพาะข้อมูลจาก Google Sheets
+      const result = []; // ไม่มีข้อมูลเริ่มต้น - แสดงเฉพาะข้อมูลจาก Google Sheets
+      roomTypesCache = { data: result, timestamp: Date.now() };
+      return result;
     }
 
     const roomTypes = rows.map(row => ({
@@ -91,7 +115,13 @@ async function getRoomTypes() {
       color: row[5] || '#667eea' // Default color
     }));
 
-    return roomTypes.filter(f => f.enabled !== false);
+    const result = roomTypes.filter(f => f.enabled !== false);
+    
+    // Update cache
+    roomTypesCache = { data: result, timestamp: Date.now() };
+    console.log('💾 Room types cached');
+    
+    return result;
   } catch (error) {
     console.error('Error fetching room types:', error);
     return []; // เกิด error - return array ว่าง
@@ -124,6 +154,9 @@ async function addRoomType(roomType) {
         values: [newRow]
       }
     });
+
+    // Clear cache after adding
+    clearRoomTypesCache();
 
     return { success: true };
   } catch (error) {
@@ -172,6 +205,9 @@ async function updateRoomType(roomTypeId, roomType) {
       }
     });
 
+    // Clear cache after updating
+    clearRoomTypesCache();
+
     return { success: true };
   } catch (error) {
     console.error('Error updating room type:', error);
@@ -219,6 +255,9 @@ async function deleteRoomType(roomTypeId) {
       }
     });
 
+    // Clear cache after deleting
+    clearRoomTypesCache();
+
     return { success: true };
   } catch (error) {
     console.error('Error deleting room type:', error);
@@ -230,5 +269,6 @@ module.exports = {
   getRoomTypes,
   addRoomType,
   updateRoomType,
-  deleteRoomType
+  deleteRoomType,
+  clearRoomTypesCache
 };

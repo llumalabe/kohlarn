@@ -5,6 +5,29 @@ const path = require('path');
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 const FOLLOWED_HOTELS_SHEET = 'FollowedHotels';
 
+// Cache for followed hotels (30 seconds TTL)
+const CACHE_DURATION = 30 * 1000; // 30 seconds
+let followedHotelsCache = {
+  data: {},  // Store by username as key
+  timestamp: {}  // Store timestamp per username
+};
+
+/**
+ * Clear followed hotels cache
+ */
+function clearFollowedHotelsCache(username = null) {
+  if (username) {
+    // Clear specific user's cache
+    delete followedHotelsCache.data[username];
+    delete followedHotelsCache.timestamp[username];
+    console.log(`🗑️  Followed hotels cache cleared for ${username}`);
+  } else {
+    // Clear all cache
+    followedHotelsCache = { data: {}, timestamp: {} };
+    console.log('🗑️  All followed hotels cache cleared');
+  }
+}
+
 // Get Google Sheets instance
 let sheets;
 let canWrite = false;
@@ -61,6 +84,15 @@ async function getSheetIdByName(sheetName) {
  */
 async function getFollowedHotels(username) {
   try {
+    // Check cache
+    const now = Date.now();
+    if (followedHotelsCache.data[username] && 
+        followedHotelsCache.timestamp[username] &&
+        (now - followedHotelsCache.timestamp[username]) < CACHE_DURATION) {
+      console.log(`✅ Returning cached followed hotels for ${username}`);
+      return followedHotelsCache.data[username];
+    }
+
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${FOLLOWED_HOTELS_SHEET}!A2:E`,
@@ -78,6 +110,11 @@ async function getFollowedHotels(username) {
         hotel_name: row[3],
         followed_at: row[4]
       }));
+
+    // Update cache for this user
+    followedHotelsCache.data[username] = followedHotels;
+    followedHotelsCache.timestamp[username] = Date.now();
+    console.log(`💾 Followed hotels cached for ${username}`);
 
     return followedHotels;
   } catch (error) {
@@ -147,6 +184,9 @@ async function followHotel(username, hotelId, hotelName) {
       }
     });
 
+    // Clear cache for this user after following
+    clearFollowedHotelsCache(username);
+
     return { success: true, message: 'Hotel followed successfully' };
   } catch (error) {
     console.error('Error following hotel:', error);
@@ -200,6 +240,9 @@ async function unfollowHotel(username, hotelId) {
       }
     });
 
+    // Clear cache for this user after unfollowing
+    clearFollowedHotelsCache(username);
+
     return { success: true, message: 'Hotel unfollowed successfully' };
   } catch (error) {
     console.error('Error unfollowing hotel:', error);
@@ -225,5 +268,6 @@ module.exports = {
   isFollowing,
   followHotel,
   unfollowHotel,
+  clearFollowedHotelsCache
   getFollowCount
 };

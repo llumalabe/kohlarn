@@ -5,6 +5,29 @@ const fs = require('fs');
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 const LIKES_HISTORY_SHEET = 'LikesHistory';
 
+// Cache for likes history stats (30 seconds TTL)
+const CACHE_DURATION = 30 * 1000; // 30 seconds
+let likesHistoryCache = {
+  data: {},  // Store by hotelId as key
+  timestamp: {}
+};
+
+/**
+ * Clear likes history cache
+ */
+function clearLikesHistoryCache(hotelId = null) {
+  if (hotelId) {
+    // Clear specific hotel's cache
+    delete likesHistoryCache.data[hotelId];
+    delete likesHistoryCache.timestamp[hotelId];
+    console.log(`🗑️  Likes history cache cleared for hotel ${hotelId}`);
+  } else {
+    // Clear all cache
+    likesHistoryCache = { data: {}, timestamp: {} };
+    console.log('🗑️  All likes history cache cleared');
+  }
+}
+
 // Initialize Google Sheets API
 let sheets;
 let serviceAccount;
@@ -154,6 +177,12 @@ async function recordLike(hotelId, ipAddress) {
         });
 
         console.log(`✅ Recorded like: Hotel ${hotelId}, IP ${ipAddress}`);
+        
+        // Clear cache for this hotel after recording like
+        clearLikesHistoryCache(hotelId);
+        // Also clear global stats cache (if hotelId is null in getLikeStats)
+        clearLikesHistoryCache();
+        
         return true;
     } catch (error) {
         console.error('Error recording like:', error.message);
@@ -166,6 +195,16 @@ async function recordLike(hotelId, ipAddress) {
  */
 async function getLikeStats(hotelId) {
     try {
+        // Check cache
+        const cacheKey = hotelId || 'global';
+        const now = Date.now();
+        if (likesHistoryCache.data[cacheKey] && 
+            likesHistoryCache.timestamp[cacheKey] &&
+            (now - likesHistoryCache.timestamp[cacheKey]) < CACHE_DURATION) {
+            console.log(`✅ Returning cached likes stats for ${cacheKey}`);
+            return likesHistoryCache.data[cacheKey];
+        }
+
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
             range: `${LIKES_HISTORY_SHEET}!A2:D`,
@@ -173,28 +212,37 @@ async function getLikeStats(hotelId) {
 
         const rows = response.data.values || [];
         
+        let result;
+        
         if (!hotelId) {
             // Return total stats
             const totalLikes = rows.length;
             const uniqueIps = new Set(rows.map(row => row[1])).size;
             
-            return {
+            result = {
                 totalLikes,
                 uniqueIps,
                 avgLikesPerDay: totalLikes / Math.max(1, getDaysSinceFirstLike(rows))
             };
+        } else {
+            // Return stats for specific hotel
+            const hotelRows = rows.filter(row => row[0] === hotelId);
+            const uniqueIps = new Set(hotelRows.map(row => row[1])).size;
+            
+            result = {
+                totalLikes: hotelRows.length,
+                uniqueIps,
+                firstLike: hotelRows.length > 0 ? hotelRows[0][3] : null,
+                lastLike: hotelRows.length > 0 ? hotelRows[hotelRows.length - 1][3] : null
+            };
         }
 
-        // Return stats for specific hotel
-        const hotelRows = rows.filter(row => row[0] === hotelId);
-        const uniqueIps = new Set(hotelRows.map(row => row[1])).size;
-        
-        return {
-            totalLikes: hotelRows.length,
-            uniqueIps,
-            firstLike: hotelRows.length > 0 ? hotelRows[0][3] : null,
-            lastLike: hotelRows.length > 0 ? hotelRows[hotelRows.length - 1][3] : null
-        };
+        // Update cache
+        likesHistoryCache.data[cacheKey] = result;
+        likesHistoryCache.timestamp[cacheKey] = Date.now();
+        console.log(`💾 Likes stats cached for ${cacheKey}`);
+
+        return result;
     } catch (error) {
         console.error('Error getting like stats:', error.message);
         return null;
@@ -266,5 +314,6 @@ module.exports = {
     hasLikedToday,
     recordLike,
     getLikeStats,
-    cleanupOldRecords
+    cleanupOldRecords,
+    clearLikesHistoryCache
 };

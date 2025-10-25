@@ -225,6 +225,14 @@ function clearHotelsCache() {
 }
 
 /**
+ * Clear web settings cache
+ */
+function clearWebSettingsCache() {
+  webSettingsCache = { data: null, timestamp: 0 };
+  console.log('🗑️  Web settings cache cleared');
+}
+
+/**
  * Get single hotel by ID
  */
 async function getHotelById(hotelId) {
@@ -701,6 +709,13 @@ async function toggleHotelStatus(hotelId, newStatus, editorNickname = 'Admin', e
  */
 async function getWebSettings() {
   try {
+    // Check cache
+    const now = Date.now();
+    if (webSettingsCache.data && (now - webSettingsCache.timestamp) < CACHE_DURATION) {
+      console.log('✅ Returning cached web settings');
+      return webSettingsCache.data;
+    }
+
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${WEBSETTINGS_SHEET}!A2:B`,
@@ -715,11 +730,15 @@ async function getWebSettings() {
       }
     });
 
+    // Update cache
+    webSettingsCache = { data: settings, timestamp: Date.now() };
+    console.log('💾 Web settings cached');
+
     return settings;
   } catch (error) {
     console.error('Error fetching web settings:', error);
     // Return default settings if sheet doesn't exist or error occurs
-    return {
+    const defaultSettings = {
       site_name_th: '',
       site_name_en: '',
       site_name_th_color: '#2d3436',
@@ -737,6 +756,11 @@ async function getWebSettings() {
       footer_text: '',
       footer_text_color: '#ffffff'
     };
+    
+    // Cache default settings too
+    webSettingsCache = { data: defaultSettings, timestamp: Date.now() };
+    
+    return defaultSettings;
   }
 }
 
@@ -803,6 +827,9 @@ async function updateWebSettings(settings, modifiedBy = 'Admin') {
           data: updates
         }
       });
+      
+      // Clear web settings cache after update
+      clearWebSettingsCache();
       
       // Log activity with proper before/after format
       const beforeLines = changedSettings.map(change => `${change.field}: ${change.oldValue}`).join('\n');
@@ -1035,6 +1062,7 @@ module.exports = {
   getWebSettings,
   updateWebSettings,
   clearHotelsCache,
+  clearWebSettingsCache,
   clearAllCaches,
   getHotelClicks,
   updateHotelClick,
