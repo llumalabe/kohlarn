@@ -732,15 +732,41 @@ app.put('/api/admin/room-types/:id', verifyToken, async (req, res) => {
     const { roomType } = req.body;
     const { id } = req.params;
     
+    // Get current room type for comparison
+    const currentRoomTypes = await roomTypesService.getRoomTypes();
+    const currentRoomType = currentRoomTypes.find(rt => rt.id === id);
+    
     await roomTypesService.updateRoomType(id, roomType);
     
-    // Log activity
-    await activityLogService.logActivity(
-      req.user.username,
-      req.user.nickname,
-      'แก้ไขประเภทห้องพัก',
-      roomType.nameTh
-    );
+    // Track changes for detailed logging
+    const changes = [];
+    if (currentRoomType) {
+      if (currentRoomType.nameTh !== roomType.nameTh) {
+        changes.push({ field: 'ชื่อไทย', old: currentRoomType.nameTh, new: roomType.nameTh });
+      }
+      if (currentRoomType.nameEn !== roomType.nameEn) {
+        changes.push({ field: 'ชื่ออังกฤษ', old: currentRoomType.nameEn, new: roomType.nameEn });
+      }
+      if (currentRoomType.icon !== roomType.icon) {
+        changes.push({ field: 'ไอคอน', old: currentRoomType.icon, new: roomType.icon });
+      }
+    }
+    
+    // Log activity with before/after if there are changes
+    if (changes.length > 0) {
+      const beforeLines = changes.map(c => `${c.field}: ${c.old}`).join('\n');
+      const afterLines = changes.map(c => `${c.field}: ${c.new}`).join('\n');
+      const details = `ก่อน:\n${beforeLines}\nหลัง:\n${afterLines}`;
+      
+      await activityLogService.logActivity(
+        req.user.username,
+        req.user.nickname,
+        'แก้ไขประเภทห้องพัก',
+        roomType.nameTh,
+        'roomtype',
+        details
+      );
+    }
     
     res.json({ success: true, message: 'Room type updated successfully' });
   } catch (error) {
@@ -816,18 +842,44 @@ app.put('/api/admin/accommodation-types/:id', verifyToken, async (req, res) => {
     const { accommodationType } = req.body;
     const { id } = req.params;
     
+    // Get current accommodation type for comparison
+    const currentAccTypes = await accommodationTypesService.getAccommodationTypes();
+    const currentAccType = currentAccTypes.find(at => at.id === id);
+    
     const updatedType = await accommodationTypesService.updateAccommodationType(id, accommodationType);
     
-    // Log activity with details
-    const typeDetails = `แก้ไขประเภทที่พัก: ${accommodationType.nameTh} (${accommodationType.nameEn}) - Icon: ${accommodationType.icon}, Color: ${accommodationType.color}`;
-    await activityLogService.logActivity(
-      req.user.username,
-      req.user.nickname,
-      'แก้ไขประเภทที่พัก',
-      accommodationType.nameTh,
-      'accommodationType',
-      typeDetails
-    );
+    // Track changes for detailed logging
+    const changes = [];
+    if (currentAccType) {
+      if (currentAccType.nameTh !== accommodationType.nameTh) {
+        changes.push({ field: 'ชื่อไทย', old: currentAccType.nameTh, new: accommodationType.nameTh });
+      }
+      if (currentAccType.nameEn !== accommodationType.nameEn) {
+        changes.push({ field: 'ชื่ออังกฤษ', old: currentAccType.nameEn, new: accommodationType.nameEn });
+      }
+      if (currentAccType.icon !== accommodationType.icon) {
+        changes.push({ field: 'ไอคอน', old: currentAccType.icon, new: accommodationType.icon });
+      }
+      if (currentAccType.color !== accommodationType.color) {
+        changes.push({ field: 'สี', old: currentAccType.color, new: accommodationType.color });
+      }
+    }
+    
+    // Log activity with before/after if there are changes
+    if (changes.length > 0) {
+      const beforeLines = changes.map(c => `${c.field}: ${c.old}`).join('\n');
+      const afterLines = changes.map(c => `${c.field}: ${c.new}`).join('\n');
+      const details = `ก่อน:\n${beforeLines}\nหลัง:\n${afterLines}`;
+      
+      await activityLogService.logActivity(
+        req.user.username,
+        req.user.nickname,
+        'แก้ไขประเภทที่พัก',
+        accommodationType.nameTh,
+        'accommodationType',
+        details
+      );
+    }
     
     res.json({ success: true, message: 'Accommodation type updated successfully', data: updatedType });
   } catch (error) {
