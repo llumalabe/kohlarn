@@ -3213,7 +3213,7 @@ function displayActivityLog(logs) {
                     const allKeys = new Set([...Object.keys(beforeData), ...Object.keys(afterData)]);
                     
                     if (allKeys.size > 0) {
-                        detailsHtml += '<div class="activity-changes" style="margin-top: 10px; background: #f8f9fa; padding: 8px; border-radius: 8px; overflow-x: auto;">';
+                        detailsHtml += '<div class="activity-changes" style="margin-top: 10px; background: #f8f9fa; padding: 8px; border-radius: 8px; max-width: 100%; overflow: hidden;">';
                         detailsHtml += '<div style="display: grid; gap: 8px;">';
                         
                         allKeys.forEach(key => {
@@ -3222,17 +3222,17 @@ function displayActivityLog(logs) {
                             const isChanged = beforeValue !== afterValue;
                             
                             // Card-based layout for better mobile support
-                            detailsHtml += `<div style="background: ${isChanged ? '#fff3cd' : 'white'}; border: 1px solid #dee2e6; border-radius: 6px; padding: 10px;">`;
-                            detailsHtml += `<div style="font-weight: 600; color: #495057; margin-bottom: 6px; font-size: 13px;">${escapeHtml(key)}</div>`;
-                            detailsHtml += `<div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center;">`;
-                            detailsHtml += `<div style="padding: 8px; background: #fff; border: 1px solid #dee2e6; border-radius: 4px; font-size: 12px; word-wrap: break-word; overflow-wrap: break-word;">`;
-                            detailsHtml += `<div style="color: #6c757d; font-size: 10px; margin-bottom: 4px;">ก่อน</div>`;
-                            detailsHtml += `<div style="color: #e74c3c;">${escapeHtml(beforeValue)}</div>`;
+                            detailsHtml += `<div style="background: ${isChanged ? '#fff3cd' : 'white'}; border: 1px solid #dee2e6; border-radius: 6px; padding: 10px; max-width: 100%; box-sizing: border-box;">`;
+                            detailsHtml += `<div style="font-weight: 600; color: #495057; margin-bottom: 6px; font-size: 13px; word-wrap: break-word; overflow-wrap: break-word;">${escapeHtml(key)}</div>`;
+                            detailsHtml += `<div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">`;
+                            detailsHtml += `<div style="padding: 8px; background: #fff; border: 1px solid #dee2e6; border-radius: 4px; font-size: 11px; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; max-width: 100%; box-sizing: border-box;">`;
+                            detailsHtml += `<div style="color: #6c757d; font-size: 9px; margin-bottom: 4px; font-weight: 600;">ก่อน</div>`;
+                            detailsHtml += `<div style="color: #e74c3c; white-space: pre-wrap;">${escapeHtml(beforeValue)}</div>`;
                             detailsHtml += `</div>`;
-                            detailsHtml += `<div style="color: #6c757d; font-size: 18px; text-align: center;">→</div>`;
-                            detailsHtml += `<div style="padding: 8px; background: #fff; border: 1px solid #dee2e6; border-radius: 4px; font-size: 12px; word-wrap: break-word; overflow-wrap: break-word;">`;
-                            detailsHtml += `<div style="color: #6c757d; font-size: 10px; margin-bottom: 4px;">หลัง</div>`;
-                            detailsHtml += `<div style="color: #00d2a0; font-weight: 600;">${escapeHtml(afterValue)}</div>`;
+                            detailsHtml += `<div style="text-align: center; color: #6c757d; font-size: 14px;">↓</div>`;
+                            detailsHtml += `<div style="padding: 8px; background: #fff; border: 1px solid #dee2e6; border-radius: 4px; font-size: 11px; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; max-width: 100%; box-sizing: border-box;">`;
+                            detailsHtml += `<div style="color: #6c757d; font-size: 9px; margin-bottom: 4px; font-weight: 600;">หลัง</div>`;
+                            detailsHtml += `<div style="color: #00d2a0; font-weight: 600; white-space: pre-wrap;">${escapeHtml(afterValue)}</div>`;
                             detailsHtml += `</div>`;
                             detailsHtml += `</div>`;
                             detailsHtml += `</div>`;
