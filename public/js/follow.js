@@ -26,10 +26,10 @@ async function loadWebSettings() {
     } catch (error) {
         console.error('Error loading web settings:', error);
         webSettings = {
-            site_name_th: 'ค้นหาโรงแรมเกาะล้าน',
-            site_name_en: 'Koh Larn Hotel Search',
-            favicon_emoji: '🏝️',
-            footer_text: '2025 Koh Larn Hotel Search',
+            site_name_th: '',
+            site_name_en: '',
+            favicon_emoji: '',
+            footer_text: '',
             footer_text_color: '#ffffff'
         };
         applyWebSettings();

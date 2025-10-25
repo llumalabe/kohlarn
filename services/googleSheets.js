@@ -720,8 +720,8 @@ async function getWebSettings() {
     console.error('Error fetching web settings:', error);
     // Return default settings if sheet doesn't exist or error occurs
     return {
-      site_name_th: 'ค้นหาโรงแรมเกาะล้าน',
-      site_name_en: 'Koh Larn Hotel Search Engine',
+      site_name_th: '',
+      site_name_en: '',
       site_name_th_color: '#2d3436',
       site_name_en_color: '#636e72',
       header_bg_color: '#ffffff',
@@ -732,9 +732,9 @@ async function getWebSettings() {
       card_hotel_name_color: '#2d3436',
       card_price_color: '#0066cc',
       favicon_type: 'emoji',
-      favicon_emoji: '🏝️',
+      favicon_emoji: '',
       favicon_url: '',
-      footer_text: '2025 Koh Larn Hotel Search',
+      footer_text: '',
       footer_text_color: '#ffffff'
     };
   }

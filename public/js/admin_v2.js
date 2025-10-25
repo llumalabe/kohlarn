@@ -4778,7 +4778,7 @@ async function loadWebSettings() {
         toggleFaviconInput();
         
         // Footer settings
-        document.getElementById('footerText').value = settings.footer_text || '2025 Koh Larn Hotel Search';
+        document.getElementById('footerText').value = settings.footer_text || '';
         document.getElementById('footerTextColor').value = settings.footer_text_color || '#ffffff';
         document.getElementById('footerTextColorText').value = settings.footer_text_color || '#ffffff';
         
@@ -4804,9 +4804,9 @@ function previewChanges() {
     const siteNameEn = document.getElementById('siteNameEn').value;
     const previewTitleElement = document.getElementById('previewSiteNameTh');
     if (previewTitleElement) {
-        previewTitleElement.textContent = siteNameTh || 'ค้นหาโรงแรมเกาะล้าน';
+        previewTitleElement.textContent = siteNameTh || '';
     }
-    document.getElementById('previewSiteNameEn').textContent = siteNameEn || 'Koh Larn Hotel Search Engine';
+    document.getElementById('previewSiteNameEn').textContent = siteNameEn || '';
     
     // Update header icon in preview
     const faviconEmoji = document.getElementById('faviconEmoji').value;
@@ -4872,7 +4872,7 @@ function previewChanges() {
     const footerText = document.getElementById('footerText').value;
     const footerTextColor = document.getElementById('footerTextColor').value;
     document.getElementById('footerTextColorText').value = footerTextColor;
-    document.getElementById('previewFooterText').textContent = footerText || '2025 Koh Larn Hotel Search';
+    document.getElementById('previewFooterText').textContent = footerText || '';
     document.getElementById('previewFooter').style.color = footerTextColor;
     document.getElementById('previewFooter').style.background = 'transparent';
 }

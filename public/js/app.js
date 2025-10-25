@@ -55,8 +55,8 @@ async function loadWebSettings() {
         console.error('Error loading web settings:', error);
         // Use defaults if loading fails
         webSettings = {
-            site_name_th: 'ค้นหาโรงแรมเกาะล้าน',
-            site_name_en: 'Koh Larn Hotel Search Engine',
+            site_name_th: '',
+            site_name_en: '',
             header_bg_color: '#ffffff',
             body_bg_gradient_start: '#667eea',
             body_bg_gradient_end: '#764ba2',
@@ -64,7 +64,7 @@ async function loadWebSettings() {
             filter_button_bg_end: '#764ba2',
             card_hotel_name_color: '#2d3436',
             card_price_color: '#0066cc',
-            footer_text: '2025 Koh Larn Hotel Search',
+            footer_text: '',
             footer_text_color: '#ffffff'
         };
     }
