@@ -3209,7 +3209,7 @@ function displayActivityLog(logs) {
                         }
                     });
                     
-                    // Build comparison table
+                    // Build comparison table (สำหรับการแก้ไข)
                     const allKeys = new Set([...Object.keys(beforeData), ...Object.keys(afterData)]);
                     
                     if (allKeys.size > 0) {
@@ -3221,7 +3221,7 @@ function displayActivityLog(logs) {
                             const afterValue = afterData[key] || '-';
                             const isChanged = beforeValue !== afterValue;
                             
-                            // Compact card design
+                            // Compact card design for edit actions
                             detailsHtml += `<div style="background: ${isChanged ? '#fff9e6' : '#f8f9fa'}; border-left: 3px solid ${isChanged ? '#ffc107' : '#dee2e6'}; border-radius: 4px; padding: 8px; max-width: 100%; box-sizing: border-box;">`;
                             detailsHtml += `<div style="font-weight: 600; color: #495057; font-size: 11px; margin-bottom: 6px; word-wrap: break-word; overflow-wrap: break-word;">${escapeHtml(key)}</div>`;
                             detailsHtml += `<div style="display: flex; align-items: center; gap: 6px; width: 100%;">`;
@@ -3259,13 +3259,63 @@ function displayActivityLog(logs) {
                     detailsHtml += `<div class="activity-details" style="margin-top: 8px; padding: 10px; background: #f8f9fa; border-radius: 6px; line-height: 1.6;">${formattedDetails}</div>`;
                 }
             } else {
-                // For non-edit actions or simple details, display as-is with formatting
-                const formattedDetails = details
-                    .replace(/ก่อน:/g, '<strong style="color: #e74c3c;">ก่อน:</strong>')
-                    .replace(/หลัง:/g, '<strong style="color: #00d2a0;">หลัง:</strong>')
-                    .replace(/\n/g, '<br>');
+                // For non-edit actions (add, delete, etc.) - ดีไซน์แบบพิเศษ
+                const action = log.action || '';
+                let cardStyle = '';
+                let iconHtml = '';
                 
-                detailsHtml += `<div class="activity-details" style="margin-top: 8px; padding: 10px; background: #f8f9fa; border-radius: 6px; line-height: 1.6;">${formattedDetails}</div>`;
+                // กำหนดสีและไอคอนตาม action
+                if (action.includes('เพิ่ม') || action.includes('สร้าง')) {
+                    cardStyle = 'background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left: 4px solid #4caf50;';
+                    iconHtml = '<i class="fas fa-plus-circle" style="color: #4caf50; font-size: 20px; margin-right: 8px;"></i>';
+                } else if (action.includes('ลบ')) {
+                    cardStyle = 'background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); border-left: 4px solid #f44336;';
+                    iconHtml = '<i class="fas fa-trash-alt" style="color: #f44336; font-size: 20px; margin-right: 8px;"></i>';
+                } else if (action.includes('อัปโหลด') || action.includes('ภาพ')) {
+                    cardStyle = 'background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left: 4px solid #2196f3;';
+                    iconHtml = '<i class="fas fa-image" style="color: #2196f3; font-size: 20px; margin-right: 8px;"></i>';
+                } else {
+                    cardStyle = 'background: linear-gradient(135deg, #f5f5f5 0%, #eeeeee 100%); border-left: 4px solid #9e9e9e;';
+                    iconHtml = '<i class="fas fa-info-circle" style="color: #9e9e9e; font-size: 20px; margin-right: 8px;"></i>';
+                }
+                
+                // แสดงข้อมูลแบบ card พิเศษ
+                detailsHtml += `<div style="margin-top: 8px; ${cardStyle} border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 100%; box-sizing: border-box;">`;
+                detailsHtml += `<div style="display: flex; align-items: start; gap: 8px;">`;
+                detailsHtml += iconHtml;
+                detailsHtml += `<div style="flex: 1; min-width: 0;">`;
+                
+                // แยกข้อมูลแต่ละบรรทัด
+                const lines = details.split('\n').filter(line => line.trim());
+                lines.forEach((line, index) => {
+                    const trimmedLine = line.trim();
+                    if (trimmedLine) {
+                        if (trimmedLine.includes(':')) {
+                            // แยก key: value
+                            const colonIndex = trimmedLine.indexOf(':');
+                            const key = trimmedLine.substring(0, colonIndex).trim();
+                            const value = trimmedLine.substring(colonIndex + 1).trim();
+                            
+                            if (index === 0) {
+                                // บรรทัดแรกเป็นหัวข้อหลัก
+                                detailsHtml += `<div style="font-weight: 700; color: #212529; font-size: 13px; margin-bottom: 8px; word-wrap: break-word; overflow-wrap: break-word;">${escapeHtml(trimmedLine)}</div>`;
+                            } else {
+                                // บรรทัดอื่นๆ แสดงแบบ label-value
+                                detailsHtml += `<div style="margin-bottom: 4px; display: flex; gap: 6px; align-items: start; word-wrap: break-word; overflow-wrap: break-word;">`;
+                                detailsHtml += `<span style="color: #666; font-size: 10px; font-weight: 600; min-width: fit-content;">${escapeHtml(key)}:</span>`;
+                                detailsHtml += `<span style="color: #333; font-size: 10px; word-break: break-word;">${escapeHtml(value)}</span>`;
+                                detailsHtml += `</div>`;
+                            }
+                        } else {
+                            // ไม่มี colon - แสดงเป็นข้อความธรรมดา
+                            detailsHtml += `<div style="color: #333; font-size: 11px; margin-bottom: 4px; word-wrap: break-word; overflow-wrap: break-word;">${escapeHtml(trimmedLine)}</div>`;
+                        }
+                    }
+                });
+                
+                detailsHtml += `</div>`;
+                detailsHtml += `</div>`;
+                detailsHtml += `</div>`;
             }
         }
         
